@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; media-src 'none'"
+    />
+    <title>Spidey Sense</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="hang" id="hang">
+      <div class="thread"><i></i></div>
+      <main class="panel" id="panel" data-level="calm">
+        <header class="banner">
+          <span class="banner__a">SPIDEY</span><span class="banner__b">SENSE</span>
+          <i class="led" id="led" title="Spider-sense status"></i>
+        </header>
+
+        <canvas id="web" width="260" height="248" aria-label="System load drawn as a spider web"></canvas>
+
+        <ul class="readout" id="readout" aria-label="Current readings">
+          <li data-k="cpu"><b>CPU</b><span>–</span></li>
+          <li data-k="ram"><b>RAM</b><span>–</span></li>
+          <li data-k="disk"><b>DISK</b><span>–</span></li>
+          <li data-k="bat"><b>BAT</b><span>–</span></li>
+          <li data-k="net"><b>NET</b><span>–</span></li>
+        </ul>
+
+        <p class="caption" id="caption" role="status" aria-live="polite">ALL QUIET… FOR NOW.</p>
+
+        <section class="timer" aria-label="Web timer">
+          <button id="tmode" class="chip" title="Switch focus / break">FOCUS</button>
+          <output id="tclock">25:00</output>
+          <button id="tgo" class="round" title="Start / pause" aria-label="Start or pause">▶</button>
+          <button id="treset" class="round" title="Reset" aria-label="Reset timer">↺</button>
+        </section>
+      </main>
+    </div>
+    <script src="spider.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

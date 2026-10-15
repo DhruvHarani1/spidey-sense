@@ -1,0 +1,17 @@
+{
+  "name": "spidey-sense",
+  "productName": "Spidey Sense",
+  "version": "0.1.0",
+  "description": "A Spider-Man themed always-on-screen system monitor: a hanging spider-web radar that tingles when your PC is in trouble.",
+  "main": "main.js",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "icons": "electron scripts/make-icons.js",
+    "test": "node scripts/selftest.js"
+  },
+  "devDependencies": {
+    "electron": "^44.7.2"
+  }
+}

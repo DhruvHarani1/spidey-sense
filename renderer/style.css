@@ -1,0 +1,307 @@
+:root {
+  --red: #d4202a;
+  --red-hot: #ff3b3b;
+  --blue: #1d3fd8;
+  --navy: #0a1131;
+  --ink: #05060d;
+  --yellow: #ffd83a;
+  --paper: #f4f1e6;
+  --comic: 'Arial Black', 'Segoe UI Black', Impact, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  user-select: none;
+  cursor: default;
+  font-family: var(--comic);
+  color: var(--paper);
+}
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+/* ---------- hanging from a web thread ---------- */
+.hang {
+  position: absolute;
+  inset: 0 6px 0 6px;
+  transform-origin: 50% 0;
+  animation: sway 7s ease-in-out infinite;
+}
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-1.1deg);
+  }
+  50% {
+    transform: rotate(1.1deg);
+  }
+}
+.thread {
+  position: relative;
+  height: 24px;
+}
+.thread::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: linear-gradient(#ffffff00, #e8ecff 55%, #ffffffcc);
+}
+.thread i {
+  position: absolute;
+  left: 50%;
+  bottom: -3px;
+  width: 9px;
+  height: 9px;
+  margin-left: -4.5px;
+  border-radius: 50%;
+  background: #e8ecff;
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+/* ---------- comic panel ---------- */
+.panel {
+  position: relative;
+  height: calc(100% - 24px);
+  padding: 8px 10px 10px;
+  border: 3px solid #000;
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.075) 1px, transparent 1.6px) 0 0 / 7px 7px,
+    radial-gradient(120% 70% at 50% 0%, #1b2a78 0%, var(--navy) 62%);
+  box-shadow:
+    5px 5px 0 var(--red),
+    5px 5px 0 2px #000;
+  -webkit-app-region: drag;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.2s;
+}
+.panel[data-level='alert'] {
+  border-color: var(--yellow);
+}
+.panel[data-level='tingle'] {
+  border-color: var(--red-hot);
+  box-shadow:
+    5px 5px 0 var(--red),
+    5px 5px 0 2px #000,
+    0 0 26px 4px rgba(255, 59, 59, 0.55);
+  animation: shake 0.16s linear infinite;
+}
+@keyframes shake {
+  0% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(1.6px, -1px);
+  }
+  50% {
+    transform: translate(-1.2px, 1.3px);
+  }
+  75% {
+    transform: translate(1px, 1.4px);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+.banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: -2px -4px 0;
+  padding: 5px 12px 5px 14px;
+  font-style: italic;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  background: linear-gradient(100deg, var(--red) 0 58%, var(--blue) 58%);
+  border: 2.5px solid #000;
+  transform: skewX(-8deg);
+  box-shadow: 3px 3px 0 #000;
+}
+.banner > * {
+  transform: skewX(8deg);
+}
+.banner__a,
+.banner__b {
+  text-shadow:
+    2px 2px 0 #000,
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000;
+}
+.banner__b {
+  color: var(--yellow);
+}
+.led {
+  margin-left: auto;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid #000;
+  background: #3cff7a;
+  box-shadow: 0 0 8px #3cff7a;
+  transition: background 0.2s;
+}
+.panel[data-level='alert'] .led {
+  background: var(--yellow);
+  box-shadow: 0 0 9px var(--yellow);
+}
+.panel[data-level='tingle'] .led {
+  background: var(--red-hot);
+  box-shadow: 0 0 12px var(--red-hot);
+  animation: blink 0.4s steps(2) infinite;
+}
+@keyframes blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+canvas {
+  display: block;
+  width: 260px;
+  height: 248px;
+  align-self: center;
+  margin-top: 2px;
+}
+
+/* ---------- readout chips ---------- */
+.readout {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+.readout li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3px 0 4px;
+  border: 2px solid #000;
+  border-radius: 6px;
+  background: rgba(5, 6, 13, 0.72);
+  font-size: 9px;
+  line-height: 1.15;
+}
+.readout b {
+  color: #8da2ff;
+  letter-spacing: 0.06em;
+  font-size: 8px;
+}
+.readout span {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.readout li[data-hot='1'] span {
+  color: var(--yellow);
+}
+.readout li[data-hot='2'] span {
+  color: var(--red-hot);
+}
+
+/* ---------- caption box ---------- */
+.caption {
+  margin: 2px 2px 0;
+  padding: 7px 9px;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  color: #111;
+  background: var(--yellow);
+  border: 2.5px solid #000;
+  box-shadow: 3px 3px 0 #000;
+  transform: rotate(-0.8deg);
+}
+.panel[data-level='tingle'] .caption {
+  background: #ffefe9;
+  color: #b00d18;
+}
+
+/* ---------- web timer ---------- */
+.timer {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 7px;
+  border: 2.5px solid #000;
+  border-radius: 9px;
+  background: rgba(5, 6, 13, 0.8);
+}
+.chip {
+  padding: 3px 8px;
+  font-size: 10px;
+  font-style: italic;
+  letter-spacing: 0.05em;
+  background: var(--blue);
+  border: 2px solid #000;
+  border-radius: 6px;
+  box-shadow: 2px 2px 0 #000;
+}
+.chip[data-mode='break'] {
+  background: #129a52;
+}
+output {
+  flex: 1;
+  text-align: center;
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  text-shadow: 2px 2px 0 var(--red);
+}
+.round {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font-size: 13px;
+  background: var(--red);
+  border: 2px solid #000;
+  border-radius: 50%;
+  box-shadow: 2px 2px 0 #000;
+  transition: transform 0.1s;
+}
+.round:hover,
+.chip:hover {
+  filter: brightness(1.15);
+}
+.round:active,
+.chip:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #000;
+}
+button:focus-visible {
+  outline: 2px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hang,
+  .panel[data-level='tingle'],
+  .led {
+    animation: none !important;
+  }
+}
