@@ -10,7 +10,9 @@ Always-on-top comic-book desktop widget. Your PC's vitals drawn as a spider web;
 
 ## Install
 
-`npm run dist` builds `release/Spidey-Sense-Setup-<version>.exe` (per-user NSIS). Tray → "Launch at startup" writes the Run key; uninstall removes it.
+`npm run dist` builds `release/Spidey-Sense-Setup-<version>.exe` (per-user NSIS).
+
+**Launch at login is on by default** (tray → "Launch at startup" turns it off). It writes a per-user `Run` entry (no admin), reads it back to verify, and repairs it on every start if the install folder moved or something deleted it. Uninstalling removes it.
 
 ## Run
 

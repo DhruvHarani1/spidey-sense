@@ -4,6 +4,7 @@ const fs = require('node:fs')
 const os = require('node:os')
 const path = require('node:path')
 const { execFile } = require('node:child_process')
+const autostart = require('./autostart')
 const guardian = require('./guardian')
 const karenLlm = require('./karen-llm')
 const notifications = require('./notifications')
@@ -21,7 +22,8 @@ const DEFAULTS = {
   sound: true,
   notifications: true,
   netProbe: true,
-  startup: false,
+  startup: true, // launch at login (per-user); the tray toggle turns it off
+  startupDefaulted: false,
   karenVoice: false, // Karen reads her replies aloud
   llmModel: '', // preferred Ollama model (blank = auto)
   bugleDaily: true, // 21:00 nudge that the day's front page is ready
@@ -47,6 +49,11 @@ function loadSettings() {
     settings = { ...DEFAULTS }
   }
   settings.opacity = Math.min(1, Math.max(0.3, Number(settings.opacity) || 1))
+  if (!settings.startupDefaulted) {
+    settings.startup = true // earlier versions saved "off" without ever asking
+    settings.startupDefaulted = true
+    saveSettings()
+  }
 }
 
 function saveSettings() {
@@ -164,25 +171,23 @@ function applySettings() {
   syncLoginItem(settings.startup)
 }
 
-let loginState = null
+/** Launch at login: HKCU Run entry, verified after writing and repaired on every start (see autostart.js). */
 function syncLoginItem(enable) {
   if (!app.isPackaged) return
-  // act on a change, and once at startup when enabled (repairs a path that moved after an update)
-  if (loginState === enable || (loginState === null && !enable)) {
-    loginState = enable
-    return
-  }
-  loginState = enable
+  autostart
+    .sync({ enable, exe: process.execPath })
+    .then((r) => {
+      if (!r.ok) logStartup(`autostart ${enable ? 'enable' : 'disable'} failed: ${r.error}`)
+    })
+    .catch((e) => logStartup(`autostart error: ${e.message}`))
+}
+
+function logStartup(line) {
   try {
-    app.setLoginItemSettings({ openAtLogin: enable, name: 'SpideySense', path: process.execPath })
-  } catch (e) {
-    console.warn('setLoginItemSettings failed', e.message)
+    fs.appendFileSync(path.join(app.getPath('userData'), 'startup.log'), `${new Date().toISOString()} ${line}\n`)
+  } catch {
+    /* best effort */
   }
-  const key = String.raw`HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
-  const args = enable ? ['add', key, '/v', 'SpideySense', '/t', 'REG_SZ', '/d', '"' + process.execPath + '"', '/f'] : ['delete', key, '/v', 'SpideySense', '/f']
-  execFile('reg.exe', args, { windowsHide: true }, (err) => {
-    if (err) fs.appendFileSync(path.join(app.getPath('userData'), 'startup.log'), new Date().toISOString() + ' ' + err.message + '\n')
-  })
 }
 
 function iconPath() {
