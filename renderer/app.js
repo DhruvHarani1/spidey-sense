@@ -271,6 +271,8 @@
   /** Make the widget tingle for a few seconds with a custom caption (used by reminders). */
   function fireNote(text, kind) {
     window.Day.add('note:' + String(kind).split(':')[0])
+    const base = String(kind).split(':')[0]
+    if (base === 'eye' || base === 'remind') window.Suits.award(base)
     state.note = text
     state.timerAlert = Date.now() + 10000
     chirp()
@@ -327,7 +329,7 @@
     document.body.dataset.unread = total ? '1' : '0'
   }
 
-  window.Core = { fireNote, say, timerOp, snapshot, setUnread, test }
+  window.Core = { fireNote, say, timerOp, snapshot, setUnread, repaint: () => schedule(), test }
 
   function timerDone() {
     state.note = null
@@ -336,6 +338,7 @@
     if (finished === 'focus') {
       window.Day.add('focusMin', 25)
       window.Day.add('focusSessions')
+      window.Suits.award('focus')
       if (streak.day !== todayKey()) streak = { day: todayKey(), n: 0 }
       streak.n++
       try {

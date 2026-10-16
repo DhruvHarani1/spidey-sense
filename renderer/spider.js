@@ -3,6 +3,16 @@
 ;(function () {
   const TAU = Math.PI * 2
 
+  // suit colours (see suits.js); alert colours stay fixed so warnings always look like warnings
+  let pal = { hi: '#ff5a5a', lo: '#a50f1a', line: '#ff3b3b', vert: '#4a7bff' }
+  function setPalette(p) {
+    pal = { ...pal, ...p }
+  }
+  function rgba(hex, a) {
+    const n = parseInt(hex.slice(1), 16)
+    return 'rgba(' + ((n >> 16) & 255) + ', ' + ((n >> 8) & 255) + ', ' + (n & 255) + ', ' + a + ')'
+  }
+
   // leg polylines in emblem units (right side; mirrored for the left)
   const LEGS = [
     [[0.16, -0.18], [0.55, -0.88], [0.94, -0.64]],
@@ -87,18 +97,18 @@
 
     // value polygon
     const pts = s.values.map((v, i) => pointAt(cx, cy, disc + ((R - disc) * Math.max(2, Math.min(100, v))) / 100, i, n))
-    const hotColor = s.level === 'tingle' ? '#ff3b3b' : s.level === 'alert' ? '#ffd83a' : '#4a7bff'
+    const hotColor = s.level === 'tingle' ? '#ff3b3b' : s.level === 'alert' ? '#ffd83a' : pal.vert
     ctx.beginPath()
     ctx.moveTo(pts[0][0], pts[0][1])
     for (let i = 1; i <= n; i++) sagTo(ctx, cx, cy, pts[i - 1], pts[i % n], 0.97)
     ctx.closePath()
     const g = ctx.createRadialGradient(cx, cy, disc, cx, cy, R)
-    g.addColorStop(0, 'rgba(255, 59, 59, 0.55)')
-    g.addColorStop(1, 'rgba(212, 32, 42, 0.22)')
+    g.addColorStop(0, rgba(pal.line, 0.5))
+    g.addColorStop(1, rgba(pal.lo, 0.3))
     ctx.fillStyle = g
     ctx.fill()
     ctx.lineWidth = 2.6
-    ctx.strokeStyle = '#ff3b3b'
+    ctx.strokeStyle = pal.line
     ctx.lineJoin = 'round'
     ctx.stroke()
 
@@ -108,7 +118,7 @@
       const pulse = hot ? 1 + 0.35 * Math.sin(s.t * 9 + i) : 1
       ctx.beginPath()
       ctx.arc(x, y, (hot ? 5 : 3.6) * pulse, 0, TAU)
-      ctx.fillStyle = hot ? hotColor : '#4a7bff'
+      ctx.fillStyle = hot ? hotColor : pal.vert
       ctx.fill()
       ctx.lineWidth = 2
       ctx.strokeStyle = '#05060d'
@@ -135,8 +145,8 @@
 
     // emblem disc
     const dg = ctx.createRadialGradient(cx - 8, cy - 9, 4, cx, cy, disc)
-    dg.addColorStop(0, '#ff5a5a')
-    dg.addColorStop(1, '#a50f1a')
+    dg.addColorStop(0, pal.hi)
+    dg.addColorStop(1, pal.lo)
     ctx.beginPath()
     ctx.arc(cx, cy, disc, 0, TAU)
     ctx.fillStyle = dg
@@ -165,5 +175,5 @@
     })
   }
 
-  window.Spider = { drawSpider, drawWeb }
+  window.Spider = { drawSpider, drawWeb, setPalette }
 })()

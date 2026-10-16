@@ -36,6 +36,7 @@
       .edithScan()
       .then((r) => {
         last = r
+        if (r) window.Suits.award('edith')
         paint(r)
         return r
       })

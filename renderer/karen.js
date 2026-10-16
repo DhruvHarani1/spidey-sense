@@ -98,6 +98,11 @@
 
     if (/\b(daily web|newspaper|front page|how was my day|recap my day|day recap|end of day)\b/.test(t)) return { action: { type: 'bugle' } }
     if (/\b(edith|e\.d\.i\.t\.h|threat (assessment|level|scan)|security (check|scan|status)|(scan|check) (my )?(pc|computer|laptop|security)|am i safe|is my (pc|computer|laptop) safe)\b/.test(t)) return { action: { type: 'edith' } }
+    {
+      const suit = ctx.findSuit ? ctx.findSuit(t) : null
+      if (suit && /\b(equip|wear|put on|switch|change|use|suit|armor|armour)\b/.test(t)) return { action: { type: 'equip', id: suit.id } }
+      if (/\b(suits?|locker|wardrobe|my level|what level|xp|experience)\b/.test(t)) return { action: { type: 'locker' } }
+    }
 
     // ---- readings
     if (!st) return { unknown: true }
@@ -146,6 +151,7 @@
       battery: snap.battery,
       timer: snap.timer,
       parseReminder: window.Reminders.parse,
+      findSuit: window.Suits.findSuit,
       reminders: window.Reminders.count(),
       pendingKill
     }
@@ -187,6 +193,17 @@
       case 'bugle':
         window.dispatchEvent(new CustomEvent('spidey:bugle'))
         break
+      case 'locker': {
+        window.Locker.open()
+        const s = window.Suits.state()
+        say(`LEVEL ${s.level} · ${s.xp} XP · ${s.next - s.xp} TO THE NEXT LEVEL.`)
+        break
+      }
+      case 'equip': {
+        const r = window.Suits.equip(action.id)
+        say(r.ok ? `SUIT ON: ${r.suit.name.toUpperCase()}.` : r.error)
+        break
+      }
       case 'edith': {
         say('E.D.I.T.H. SCANNING…')
         say(window.Edith.summary(await window.Edith.open()))

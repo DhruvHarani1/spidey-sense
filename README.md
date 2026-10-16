@@ -46,6 +46,10 @@ A comic newspaper built from your own day: focus time, tingles by cause, the mem
 
 Ask Karen "am I safe?" (or tray → E.D.I.T.H.) for a read-only security check: antivirus, firewall, UAC, Remote Desktop, open listening ports (and which apps own them), startup items running from Temp/Downloads, pending restarts. You get a score and a green/amber/red level. It only reads (`reg`, `sc`, `netstat`, `tasklist`), needs no admin and changes nothing.
 
+## Suit Locker (XP and suits)
+
+Healthy habits earn XP: focus session +40, guardian alert +10, Daily Web +15 and E.D.I.T.H. scan +10 (once a day each), eye break / reminder +5. Levels unlock colour schemes — Classic, Midnight, Gold Armor, Neon Noir, Pop Art, Prism. Click ★ in the banner, or ask Karen ("my level", "wear the neon suit"). Alert colours (yellow/red) never change with a suit.
+
 ## Reminders
 
 Type into the panel's THWIP box (or press **Ctrl+Alt+S** anywhere to open it focused): `in 20m stretch`, `in 2h call mum`, `at 15:30 standup`, `at 7pm dinner`. When due, the widget tingles, chirps and notifies. Up to 6 pending, stored locally.

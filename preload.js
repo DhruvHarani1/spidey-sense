@@ -45,6 +45,11 @@ contextBridge.exposeInMainWorld('spidey', {
     ipcRenderer.on('open-edith', l)
     return () => ipcRenderer.removeListener('open-edith', l)
   },
+  onOpenLocker: (cb) => {
+    const l = () => cb()
+    ipcRenderer.on('open-locker', l)
+    return () => ipcRenderer.removeListener('open-locker', l)
+  },
   setView: (v) => ipcRenderer.send('view:set', v),
   drag: {
     start: () => ipcRenderer.send('drag:start'),

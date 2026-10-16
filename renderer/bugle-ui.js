@@ -8,6 +8,7 @@
   function open() {
     const day = window.Day.today()
     const composed = window.Bugle.compose(day)
+    window.Suits.award('bugle')
     window.Bugle.render(paper, composed, day)
     $('slog').hidden = true
     $('inbox').hidden = true

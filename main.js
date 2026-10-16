@@ -231,6 +231,7 @@ function buildTray() {
       { label: "Today's Daily Web (front page)", click: () => openBugle() },
       check('Daily Web ready nudge (9 pm)', 'bugleDaily'),
       { label: 'E.D.I.T.H. threat assessment', click: () => openEdith() },
+      { label: 'Suit locker (XP)', click: () => openLocker() },
       check('Notification inbox', 'inbox'),
       check('Guardian (danger sense)', 'guardian'),
       check('Desktop notifications', 'notifications'),
@@ -399,6 +400,13 @@ ipcMain.handle('karen:ask', async (e, text, ctx) => {
   if (e.sender !== win?.webContents || typeof text !== 'string') return null
   return karenLlm.ask(text, ctx, settings.llmModel)
 })
+function openLocker() {
+  if (!win) return
+  win.show()
+  setView('panel')
+  win.webContents.send('open-locker')
+}
+
 function openEdith() {
   if (!win) return
   win.show()

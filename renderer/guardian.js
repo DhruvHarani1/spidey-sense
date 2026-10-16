@@ -50,6 +50,7 @@
     save()
     unread++
     window.Day.add('guardian')
+    window.Suits.award('guardian')
     render()
     window.Core.fireNote(`SPIDEY-SENSE: ${e.text.toUpperCase()}`, `guardian:${e.kind}`)
   }

@@ -72,3 +72,15 @@ assert.equal(pickModel([], ''), '')
 assert.match(brief({ stats, battery }), /cpu 12%, ram 97%, disk 82%.*chrome 1703MB.*ping 38ms.*battery 80% charging/)
 
 console.log('karen: ALL PASS')
+
+// suits + locker intents
+{
+  const S = require('../renderer/suits.js')
+  const c2 = { ...ctx, findSuit: S.findSuit }
+  assert.deepEqual(interpret('wear the neon suit', c2).action, { type: 'equip', id: 'neon' })
+  assert.deepEqual(interpret('switch to midnight', c2).action, { type: 'equip', id: 'midnight' })
+  assert.deepEqual(interpret('show my level', c2).action, { type: 'locker' })
+  assert.deepEqual(interpret('open the suit locker', c2).action, { type: 'locker' })
+  assert.deepEqual(interpret('am i safe', c2).action, { type: 'edith' }, 'threat/security still wins')
+  console.log('karen suits: ALL PASS')
+}

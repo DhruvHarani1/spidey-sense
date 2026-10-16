@@ -20,6 +20,7 @@
         <header class="banner">
           <span class="banner__a">SPIDEY</span><span class="banner__b">SENSE</span>
           <i class="led" id="led" title="Spider-sense status"></i>
+          <button class="fold" id="lockerbtn" title="Suit locker (XP and suits)" aria-label="Suit locker">★</button>
           <button class="fold mail" id="inboxbtn" title="Notification inbox" aria-label="Notification inbox">✉<b id="icount" hidden>0</b></button>
           <button class="fold" id="collapse" title="Collapse to badge" aria-label="Collapse to badge">▲</button>
         </header>
@@ -43,6 +44,12 @@
           <header><b>E.D.I.T.H.</b><button id="erescan">RESCAN</button><button id="eclose" aria-label="Close">✕</button></header>
           <div class="eflag" id="eflag" data-level="green"><strong id="escore">–</strong><span id="elevel">SCANNING…</span></div>
           <ul id="echecks"></ul>
+        </aside>
+
+        <aside class="slog" id="locker" hidden aria-label="Suit locker">
+          <header><b>SUIT LOCKER</b><button id="lclose" aria-label="Close">✕</button></header>
+          <div class="xpbar"><strong id="lvl">LEVEL 1</strong><div class="bar"><i id="xpfill"></i></div><small id="xptext"></small></div>
+          <ul id="suits"></ul>
         </aside>
 
         <canvas id="web" width="260" height="248" aria-label="System load drawn as a spider web"></canvas>
@@ -71,6 +78,7 @@
       </main>
     </div>
     <script src="spider.js"></script>
+    <script src="suits.js"></script>
     <script src="daystats.js"></script>
     <script src="app.js"></script>
     <script src="reminders.js"></script>
@@ -80,5 +88,6 @@
     <script src="bugle.js"></script>
     <script src="bugle-ui.js"></script>
     <script src="edith-ui.js"></script>
+    <script src="locker-ui.js"></script>
   </body>
 </html>
