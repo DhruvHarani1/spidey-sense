@@ -96,6 +96,8 @@
     }
     if (/\b(more )?transparent\b/.test(t)) return { action: { type: 'opacity', value: 0.7 }, say: 'MORE SEE-THROUGH NOW.' }
 
+    if (/\b(install|apply)( the)? update\b|\brestart (and|to) update\b|\bupdate now\b/.test(t)) return { action: { type: 'update-install' } }
+    if (/\b(check (for )?updates?|any updates?|is there an update|new version|update (the )?(app|widget|spidey( sense)?)|am i up to date|what version)\b/.test(t)) return { action: { type: 'update-check' } }
     if (/\b(daily web|newspaper|front page|how was my day|recap my day|day recap|end of day)\b/.test(t)) return { action: { type: 'bugle' } }
     if (/\b(edith|e\.d\.i\.t\.h|threat (assessment|level|scan)|security (check|scan|status)|(scan|check) (my )?(pc|computer|laptop|security)|am i safe|is my (pc|computer|laptop) safe)\b/.test(t)) return { action: { type: 'edith' } }
     {
@@ -161,6 +163,29 @@
     window.Core.say(text, SAY_MS)
   }
 
+  function describeUpdate(s) {
+    if (!s) return 'COULDN’T REACH THE UPDATER.'
+    const now = `V${s.version_now}`
+    switch (s.state) {
+      case 'ready':
+        return `UPDATE ${String(s.version).toUpperCase()} IS READY. SAY "INSTALL UPDATE" (YOU'RE ON ${now}).`
+      case 'downloading':
+        return `DOWNLOADING V${s.version}… ${s.percent ?? 0}%.`
+      case 'none':
+        return `YOU'RE UP TO DATE (${now}).`
+      case 'error':
+        return `UPDATE CHECK FAILED: ${s.message}`.toUpperCase()
+      case 'disabled':
+        return `DEV BUILD (${now}) — UPDATES WORK IN THE INSTALLED APP.`
+      default:
+        return `UPDATER IS ${String(s.state).toUpperCase()} (${now}).`
+    }
+  }
+
+  window.spidey.onUpdate((s) => {
+    if (s.state === 'ready') say(`UPDATE V${s.version} IS READY — SAY "INSTALL UPDATE" OR USE THE TRAY.`)
+  })
+
   async function run(action) {
     switch (action.type) {
       case 'remind': {
@@ -192,6 +217,17 @@
       }
       case 'bugle':
         window.dispatchEvent(new CustomEvent('spidey:bugle'))
+        break
+      case 'update-check': {
+        say('CHECKING GITHUB FOR A NEWER SUIT…')
+        say(describeUpdate(await window.spidey.updateCheck()))
+        break
+      }
+      case 'update-install':
+        if ((await window.spidey.updateState()).state === 'ready') {
+          say('RESTARTING TO UPDATE. BACK IN A MOMENT!')
+          window.spidey.updateInstall()
+        } else say('NO UPDATE IS READY TO INSTALL YET. SAY "CHECK FOR UPDATES".')
         break
       case 'locker': {
         window.Locker.open()

@@ -14,6 +14,10 @@ Always-on-top comic-book desktop widget. Your PC's vitals drawn as a spider web;
 
 **Launch at login is on by default** (tray → "Launch at startup" turns it off). It writes a per-user `Run` entry (no admin), reads it back to verify, and repairs it on every start if the install folder moved or something deleted it. Uninstalling removes it.
 
+## Auto-update
+
+The installed app checks GitHub releases 30 s after start and every 6 h, downloads only the changed blocks, verifies the hash, and installs on quit (or via tray → "Restart to update", or ask Karen: "check for updates" / "install update"). Tray → "Check for updates" works any time.
+
 ## Run
 
 ```bash

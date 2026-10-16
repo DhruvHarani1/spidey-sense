@@ -84,3 +84,11 @@ console.log('karen: ALL PASS')
   assert.deepEqual(interpret('am i safe', c2).action, { type: 'edith' }, 'threat/security still wins')
   console.log('karen suits: ALL PASS')
 }
+
+// updater intents
+assert.deepEqual(interpret('check for updates', ctx).action, { type: 'update-check' })
+assert.deepEqual(interpret('is there an update', ctx).action, { type: 'update-check' })
+assert.deepEqual(interpret('am i up to date?', ctx).action, { type: 'update-check' })
+assert.deepEqual(interpret('install update', ctx).action, { type: 'update-install' })
+assert.deepEqual(interpret('restart to update', ctx).action, { type: 'update-install' })
+console.log('karen updater: ALL PASS')

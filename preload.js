@@ -50,6 +50,14 @@ contextBridge.exposeInMainWorld('spidey', {
     ipcRenderer.on('open-locker', l)
     return () => ipcRenderer.removeListener('open-locker', l)
   },
+  updateState: () => ipcRenderer.invoke('update:state'),
+  updateCheck: () => ipcRenderer.invoke('update:check'),
+  updateInstall: () => ipcRenderer.send('update:install'),
+  onUpdate: (cb) => {
+    const l = (_e, s) => cb(s)
+    ipcRenderer.on('update:state', l)
+    return () => ipcRenderer.removeListener('update:state', l)
+  },
   setView: (v) => ipcRenderer.send('view:set', v),
   drag: {
     start: () => ipcRenderer.send('drag:start'),

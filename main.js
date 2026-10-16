@@ -5,6 +5,7 @@ const os = require('node:os')
 const path = require('node:path')
 const { execFile } = require('node:child_process')
 const autostart = require('./autostart')
+const { updater } = require('./updater')
 const guardian = require('./guardian')
 const karenLlm = require('./karen-llm')
 const notifications = require('./notifications')
@@ -173,7 +174,7 @@ function applySettings() {
 
 /** Launch at login: HKCU Run entry, verified after writing and repaired on every start (see autostart.js). */
 function syncLoginItem(enable) {
-  if (!app.isPackaged) return
+  if (!app.isPackaged || process.env.SPIDEY_TEST) return // tests must never touch the real startup entry
   autostart
     .sync({ enable, exe: process.execPath })
     .then((r) => {
@@ -201,7 +202,7 @@ function buildTray() {
   const img = p ? nativeImage.createFromPath(p).resize({ width: 32, height: 32 }) : fallbackIcon()
   if (!tray) {
     tray = new Tray(img)
-    tray.setToolTip('Spidey Sense')
+    tray.setToolTip(`Spidey Sense v${app.getVersion()}`)
     tray.on('click', toggleVisible)
   }
   const check = (label, key) => ({ label, type: 'checkbox', checked: !!settings[key], click: (i) => update({ [key]: i.checked }) })
@@ -243,10 +244,21 @@ function buildTray() {
       check('Network check (pings gstatic.com)', 'netProbe'),
       check('Launch at startup', 'startup'),
       { type: 'separator' },
+      updateMenuItem(),
+      { type: 'separator' },
       { label: 'Reset position', click: () => { settings.position = null; const d = defaultPosition(); win?.setPosition(d.x, d.y); saveSettings() } },
       { label: 'Quit Spidey Sense', click: () => app.quit() }
     ])
   )
+}
+
+function updateMenuItem() {
+  const s = updater.state
+  if (s.state === 'ready') return { label: `Restart to update to v${s.version}`, click: () => updater.install() }
+  if (s.state === 'downloading') return { label: `Downloading update… ${s.percent ?? 0}%`, enabled: false }
+  if (s.state === 'checking') return { label: 'Checking for updates…', enabled: false }
+  if (s.state === 'disabled') return { label: `Version ${app.getVersion()} (dev build)`, enabled: false }
+  return { label: `Check for updates (v${app.getVersion()})`, click: () => void updater.check() }
 }
 
 function fallbackIcon() {
@@ -456,6 +468,11 @@ ipcMain.handle('bugle:copy', (e, dataUrl) => {
   return { ok: true }
 })
 
+ipcMain.handle('update:state', (e) => (e.sender === win?.webContents ? { ...updater.state, version_now: app.getVersion() } : null))
+ipcMain.handle('update:check', async (e) => (e.sender === win?.webContents ? { ...(await updater.check()), version_now: app.getVersion() } : null))
+ipcMain.on('update:install', (e) => {
+  if (e.sender === win?.webContents) updater.install()
+})
 ipcMain.handle('settings:get', () => publicSettings())
 ipcMain.on('notify', (e, payload) => {
   if (e.sender !== win?.webContents || !settings.notifications || !Notification.isSupported()) return
@@ -516,6 +533,16 @@ if (!app.requestSingleInstanceLock()) {
         n.show()
       }
     }, 60_000)
+    updater.on('state', (s) => {
+      buildTray()
+      win?.webContents.send('update:state', s)
+      if (s.state === 'ready' && Notification.isSupported()) {
+        const n = new Notification({ title: 'Spidey Sense update ready', body: `Version ${s.version} is downloaded. Click to restart and update.`, silent: true })
+        n.on('click', () => updater.install())
+        n.show()
+      }
+    })
+    updater.start()
     stopInbox = notifications.start({
       selfIds: ['dev.spidey.sense'],
       emit: (items) => {
@@ -537,6 +564,7 @@ if (!app.requestSingleInstanceLock()) {
     stopGuardian?.()
     stopInbox?.()
     clearInterval(bugleTimer)
+    updater.dispose()
     quitting = true
     clearInterval(topTimer)
   })
