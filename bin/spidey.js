@@ -129,7 +129,7 @@ function hotkeys() {
 
 function tray() {
   banner()
-  out(dim('  Right-click the red spider by the clock:\n'))
+  out(dim('  Right-click the badge, the open panel, or the red spider by the clock (click ^ first if Windows hid it):\n'))
   D.tray.forEach((t) => out('  ▸ ' + t))
   out()
 }

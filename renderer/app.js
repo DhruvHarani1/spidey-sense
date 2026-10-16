@@ -286,21 +286,12 @@
     }, 10200)
   }
   /** Karen speaks: caption for a few seconds, and out loud when "Karen speaks" is on */
-  function say(text, ms = 12000) {
+  function say(text, ms = 12000, forceSpeak = false) {
     state.say = text
     state.sayUntil = Date.now() + ms
     refreshCaption(true)
     setTimeout(() => refreshCaption(true), ms + 100)
-    if (settings.karenVoice && 'speechSynthesis' in window) {
-      try {
-        speechSynthesis.cancel()
-        const u = new SpeechSynthesisUtterance(text.toLowerCase())
-        u.rate = 1.05
-        speechSynthesis.speak(u)
-      } catch {
-        /* no voice available */
-      }
-    }
+    if (settings.karenVoice || forceSpeak) window.spidey.speak(text)
   }
 
   function timerOp(op) {
@@ -459,6 +450,10 @@
       b.addEventListener('chargingchange', read)
     })
   }
+  window.addEventListener('contextmenu', (e) => {
+    e.preventDefault()
+    if (!(e.target instanceof HTMLInputElement)) window.spidey.showMenu()
+  })
   window.addEventListener('focus', schedule)
   schedule()
 

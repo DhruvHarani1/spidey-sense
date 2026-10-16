@@ -59,6 +59,8 @@ contextBridge.exposeInMainWorld('spidey', {
   },
   startCapture: () => ipcRenderer.send('capture:start'),
   openHelp: () => ipcRenderer.send('help:open'),
+  showMenu: () => ipcRenderer.send('menu:show'),
+  speak: (text) => ipcRenderer.send('speak', text),
   setView: (v) => ipcRenderer.send('view:set', v),
   drag: {
     start: () => ipcRenderer.send('drag:start'),

@@ -15,7 +15,7 @@ const DATA = {
     'Install it, run it: a small swinging spider badge appears at the top-right of your screen.',
     'Click the badge to open the full widget. Click ▲ in its banner to fold it back into the badge. Drag either to move it.',
     'Press Ctrl+Alt+K anywhere and type to Karen: "status", "what is eating my ram", "in 20m stretch".',
-    'Right-click the tray icon (the red spider by the clock) for every option, including this manual.'
+    'Right-click the badge (or anywhere on the open panel) for the full menu: every option, including this manual. The same menu lives on the tray icon by the clock; Windows often hides new tray icons under the ^ arrow, so drag the red spider out onto the taskbar to keep it visible.'
   ],
 
   hotkeys: [
@@ -65,6 +65,9 @@ const DATA = {
       group: 'The widget itself',
       items: [
         { say: 'open the manual', does: 'Opens this manual in its own window (also: "docs", "all commands", "what can you do").', try: 'open the manual', aka: ['docs', 'what can you do'] },
+        { say: 'speak to me', does: 'Karen reads every reply aloud with a Windows voice (Zira, or David if that is all you have). Say \"stop talking\" to silence her; the tray has the same switch.', try: 'speak to me', aka: ['talk to me', 'read it aloud', 'turn on the voice'] },
+        { say: 'stop talking', does: 'Turns the spoken replies off and cuts off anything she is saying.', try: 'stop talking', aka: ['voice off', 'stop speaking'] },
+        { say: 'say hello', does: 'Speaks one test sentence so you can check your speakers, without switching the voice on.', try: 'say hello', aka: ['test your voice', 'can you hear me'] },
         { say: 'collapse', does: 'Folds the panel back into the badge.', try: 'collapse' },
         { say: 'mute / unmute', does: 'Turns the alert chirp off or on.', try: 'mute' },
         { say: 'opacity 70', does: 'Sets window opacity from 30 to 100.', try: 'opacity 70' },
@@ -282,6 +285,8 @@ const DATA = {
   ],
 
   troubleshooting: [
+    { q: 'Where is the tray menu? I can’t find the tray icon.', a: 'Right-click the little spider badge (or anywhere on the open panel): it shows the exact same menu. The tray icon is the red spider next to the clock, but Windows 11 hides new icons under the ^ arrow: click the ^ and drag the spider onto the taskbar so it stays visible.' },
+    { q: 'I can’t hear Karen.', a: 'Say "say hello" to test your speakers, then "speak to me" to switch spoken replies on (tray: "Karen speaks her replies"). She uses the Windows voices Zira / David, so check your volume and the Windows output device. Say "stop talking" to turn her off.' },
     { q: 'The widget disappeared.', a: 'Right-click the tray spider → "Show the web". If it is off-screen: tray → "Reset position".' },
     { q: 'Ctrl+Alt+K / Ctrl+Alt+C does nothing.', a: 'Another program owns that shortcut. Close it, or use the tray menu / Karen instead — everything the hotkeys do is also in the tray.' },
     { q: 'My RAM is always at 97 % — will it tingle forever?', a: 'No. RAM alerts use "Auto" mode: they fire on jumps above this PC’s normal level. Choose a fixed threshold or "never" in tray → RAM alerts.' },

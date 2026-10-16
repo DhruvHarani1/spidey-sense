@@ -104,3 +104,11 @@ assert.deepEqual(interpret('open the manual', ctx).action, { type: 'help-window'
 assert.deepEqual(interpret('what can you do', ctx).action, { type: 'help-window' })
 assert.equal(interpret('help', ctx).action, undefined, 'plain help stays a quick list')
 console.log('karen manual: ALL PASS')
+
+// voice
+for (const q of ['speak to me', 'talk to me', 'read it aloud', 'turn on the voice', 'enable voice']) assert.deepEqual(interpret(q, ctx).action, { type: 'voice', on: true }, q)
+for (const q of ['stop talking', 'stop speaking', 'turn off the voice', 'voice off', 'be silent']) assert.deepEqual(interpret(q, ctx).action, { type: 'voice', on: false }, q)
+for (const q of ['say hello', 'test your voice', 'can you hear me', 'let me hear you']) assert.deepEqual(interpret(q, ctx).action, { type: 'speak-test' }, q)
+assert.deepEqual(interpret('mute', ctx).action, { type: 'sound', on: false }, 'mute still means the chirp')
+assert.deepEqual(interpret('be quiet', ctx).action, { type: 'sound', on: false })
+console.log('karen voice: ALL PASS')

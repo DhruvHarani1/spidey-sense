@@ -87,6 +87,10 @@
 
     // ---- UI + settings
     if (/\b(collapse|minimi[sz]e|shrink)\b|^(hide|close)( the)?( panel| widget| this)?$/.test(t)) return { action: { type: 'collapse' } }
+    // ---- Karen's voice (spoken replies)
+    if (/\b(stop (talking|speaking)|(turn off|disable|stop) (the |your )?(voice|speech)|voice off|don'?t (talk|speak)|be silent)\b/.test(t)) return { action: { type: 'voice', on: false } }
+    if (/\b(speak( to me| up| out loud)?|talk( to me)?|read (it |them |your replies )?(out|aloud)|say it (out loud|aloud)|(turn on|enable|start) (the |your )?(voice|speech)|voice on)\b/.test(t) && !/\b(speaker|speaking of)\b/.test(t)) return { action: { type: 'voice', on: true } }
+    if (/\b(test (the |your )?voice|say (hello|hi|something)|let me hear you|can you hear me|are you there)\b/.test(t)) return { action: { type: 'speak-test' } }
     if (/\b(unmute|sound on|enable sound)\b/.test(t)) return { action: { type: 'sound', on: true }, say: 'SOUND ON.' }
     if (/\b(mute|silence|sound off|quiet)\b/.test(t)) return { action: { type: 'sound', on: false }, say: 'MUTED. SILENT RUNNING.' }
     m = /\bopacity\s+(?:to\s+)?(\d{1,3})\b|\bset opacity (\d{1,3})\b/.exec(t)
@@ -222,6 +226,17 @@
         break
       case 'capture':
         window.spidey.startCapture()
+        break
+      case 'voice':
+        window.spidey.patchSettings({ karenVoice: action.on })
+        if (action.on) window.Core.say('HELLO, I’M KAREN. I’LL READ MY ANSWERS ALOUD NOW. SAY "STOP TALKING" TO SILENCE ME.', 12000, true)
+        else {
+          say('OKAY, VOICE OFF. I’LL KEEP IT TO THE CAPTION.')
+          window.spidey.speak('') // cut off anything still being spoken (IPC keeps the order)
+        }
+        break
+      case 'speak-test':
+        window.Core.say('HELLO! KAREN HERE. IF YOU CAN HEAR THIS, MY VOICE WORKS. SAY "SPEAK TO ME" TO KEEP IT ON.', 12000, true)
         break
       case 'help-window':
         window.spidey.openHelp()

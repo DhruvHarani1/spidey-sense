@@ -11,7 +11,7 @@
     "icons": "electron scripts/make-icons.js",
     "test": "node scripts/selftest.js",
     "dist": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dist-local.ps1",
-    "test:unit": "node scripts/guardian-test.js && node scripts/karen-test.js && node scripts/notifications-test.js && node scripts/bugle-test.js && node scripts/edith-test.js && node scripts/suits-test.js && node scripts/autostart-test.js && node scripts/updater-test.js && node scripts/comic-test.js && node scripts/help-test.js",
+    "test:unit": "node scripts/guardian-test.js && node scripts/karen-test.js && node scripts/notifications-test.js && node scripts/bugle-test.js && node scripts/edith-test.js && node scripts/suits-test.js && node scripts/autostart-test.js && node scripts/updater-test.js && node scripts/comic-test.js && node scripts/help-test.js && node scripts/speech-test.js",
     "docs": "node scripts/build-docs.js",
     "help": "node bin/spidey.js help"
   },
@@ -39,7 +39,8 @@
       "updater.js",
       "preload-capture.js",
       "bin/**/*",
-      "help-data.js"
+      "help-data.js",
+      "speech.js"
     ],
     "extraResources": [
       {

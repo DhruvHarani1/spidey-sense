@@ -5,6 +5,7 @@ const os = require('node:os')
 const path = require('node:path')
 const { execFile } = require('node:child_process')
 const autostart = require('./autostart')
+const speech = require('./speech')
 const { updater } = require('./updater')
 const guardian = require('./guardian')
 const karenLlm = require('./karen-llm')
@@ -30,6 +31,7 @@ const DEFAULTS = {
   bugleDaily: true, // 21:00 nudge that the day's front page is ready
   lastBugle: '',
   inbox: true, // mirror Windows notifications from all apps into the widget's inbox (local only)
+  trayHinted: false,
   guardian: true, // danger sense: first-time internet contact, new auto-start, hosts change, new drive
   eyeBreak: true, // 20-20-20 nudge after 20 min of continuous use
   view: 'badge', // badge = small swinging spider | panel = full widget
@@ -130,6 +132,11 @@ function createWindow() {
     }
   })
   win.setMenuBarVisibility(false)
+  // right-click on the draggable panel would otherwise open the plain Windows window menu
+  win.on('system-context-menu', (e) => {
+    e.preventDefault()
+    showMenu()
+  })
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
   win.webContents.on('will-navigate', (e) => e.preventDefault())
   win.once('ready-to-show', () => {
@@ -205,9 +212,13 @@ function buildTray() {
     tray.setToolTip(`Spidey Sense v${app.getVersion()}`)
     tray.on('click', toggleVisible)
   }
+  tray.setContextMenu(Menu.buildFromTemplate(menuTemplate()))
+}
+
+/** The one menu: used by the tray icon and by right-clicking the badge or the panel. */
+function menuTemplate() {
   const check = (label, key) => ({ label, type: 'checkbox', checked: !!settings[key], click: (i) => update({ [key]: i.checked }) })
-  tray.setContextMenu(
-    Menu.buildFromTemplate([
+  return [
       { label: win?.isVisible() ? 'Hide the web' : 'Show the web', click: toggleVisible },
       { label: settings.view === 'panel' ? 'Collapse to badge' : 'Open widget', click: () => { win?.showInactive(); setView(settings.view === 'panel' ? 'badge' : 'panel') } },
       { type: 'separator' },
@@ -250,9 +261,16 @@ function buildTray() {
       { label: 'Help & all commands (manual)', click: () => openHelp() },
       { label: 'Reset position', click: () => { settings.position = null; const d = defaultPosition(); win?.setPosition(d.x, d.y); saveSettings() } },
       { label: 'Quit Spidey Sense', click: () => app.quit() }
-    ])
-  )
+  ]
 }
+
+function showMenu() {
+  if (win) Menu.buildFromTemplate(menuTemplate()).popup({ window: win })
+}
+
+ipcMain.on('menu:show', (e) => {
+  if (e.sender === win?.webContents) showMenu()
+})
 
 function updateMenuItem() {
   const s = updater.state
@@ -388,7 +406,7 @@ ipcMain.on('drag:move', (e, d) => {
 ipcMain.on('drag:end', () => {
   dragFrom = null
 })
-const PATCHABLE = { sound: 'boolean', notifications: 'boolean', opacity: 'number' }
+const PATCHABLE = { sound: 'boolean', notifications: 'boolean', opacity: 'number', karenVoice: 'boolean' }
 ipcMain.on('settings:patch', (e, patch) => {
   if (e.sender !== win?.webContents || !patch || typeof patch !== 'object') return
   const clean = {}
@@ -581,6 +599,9 @@ ipcMain.handle('update:check', async (e) => (e.sender === win?.webContents ? { .
 ipcMain.on('update:install', (e) => {
   if (e.sender === win?.webContents) updater.install()
 })
+ipcMain.on('speak', (e, text) => {
+  if (e.sender === win?.webContents) void speech.speak(typeof text === 'string' ? text : '')
+})
 ipcMain.handle('settings:get', () => publicSettings())
 ipcMain.on('notify', (e, payload) => {
   if (e.sender !== win?.webContents || !settings.notifications || !Notification.isSupported()) return
@@ -651,6 +672,17 @@ if (!app.requestSingleInstanceLock()) {
       }
     })
     updater.start()
+    if (!settings.trayHinted && Notification.isSupported()) {
+      settings.trayHinted = true
+      saveSettings()
+      setTimeout(() => {
+        new Notification({
+          title: 'Spidey Sense is running',
+          body: 'Right-click the little spider badge for the menu. The tray icon by the clock may be under the ^ arrow — drag it onto the taskbar to keep it visible.',
+          silent: true
+        }).show()
+      }, 6000)
+    }
     stopInbox = notifications.start({
       selfIds: ['dev.spidey.sense'],
       emit: (items) => {
@@ -674,6 +706,7 @@ if (!app.requestSingleInstanceLock()) {
     stopInbox?.()
     clearInterval(bugleTimer)
     updater.dispose()
+    speech.stop()
     quitting = true
     clearInterval(topTimer)
   })

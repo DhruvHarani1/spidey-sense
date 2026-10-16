@@ -158,7 +158,7 @@ function render(D) {
   <section id="features"><h2>🕸 Features in depth</h2>${features}</section>
 
   <section id="tray"><h2>🕷 Tray menu</h2>
-    <div class="card" data-s="${s('tray menu', ...D.tray)}"><p style="margin-top:0">Right-click the red spider next to the clock:</p>
+    <div class="card" data-s="${s('tray menu', ...D.tray)}"><p style="margin-top:0">Right-click the badge, the open panel, or the red spider next to the clock (click the ^ arrow first if Windows hid it):</p>
     <ul class="tray">${D.tray.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>
   </section>
 
