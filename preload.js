@@ -27,6 +27,11 @@ contextBridge.exposeInMainWorld('spidey', {
   killProcess: (name) => ipcRenderer.invoke('proc:kill', name),
   karenAsk: (text, ctx) => ipcRenderer.invoke('karen:ask', text, ctx),
   karenLlm: () => ipcRenderer.invoke('karen:llm'),
+  onInbox: (cb) => {
+    const l = (_e, items) => cb(items)
+    ipcRenderer.on('inbox', l)
+    return () => ipcRenderer.removeListener('inbox', l)
+  },
   setView: (v) => ipcRenderer.send('view:set', v),
   drag: {
     start: () => ipcRenderer.send('drag:start'),

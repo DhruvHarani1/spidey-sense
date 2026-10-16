@@ -34,6 +34,10 @@ Press **Ctrl+Alt+K** anywhere (or click the box in the panel) and ask in plain w
 
 Karen has two layers: a fast offline rule engine, and — for anything else — an optional **local open-source model through [Ollama](https://ollama.com)** (e.g. `ollama pull qwen2.5:1.5b`). Nothing leaves your PC. The model can only trigger a short whitelist of safe actions. Tray → "Karen speaks her replies" reads answers aloud with Windows voices.
 
+## Notification inbox
+
+Click the ✉ in the banner: every Windows notification from every app (WhatsApp, Mail, Edge/YouTube, Lyra, system…) is listed there, and the unread count shows on the badge. It reads the notification database Windows already keeps for your account (read-only, local, nothing is sent anywhere) and keeps the last 100 in the widget. Tray → "Notification inbox" turns it off.
+
 ## Reminders
 
 Type into the panel's THWIP box (or press **Ctrl+Alt+S** anywhere to open it focused): `in 20m stretch`, `in 2h call mum`, `at 15:30 standup`, `at 7pm dinner`. When due, the widget tingles, chirps and notifies. Up to 6 pending, stored locally.

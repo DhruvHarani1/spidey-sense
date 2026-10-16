@@ -20,12 +20,18 @@
         <header class="banner">
           <span class="banner__a">SPIDEY</span><span class="banner__b">SENSE</span>
           <i class="led" id="led" title="Spider-sense status"></i>
+          <button class="fold mail" id="inboxbtn" title="Notification inbox" aria-label="Notification inbox">✉<b id="icount" hidden>0</b></button>
           <button class="fold" id="collapse" title="Collapse to badge" aria-label="Collapse to badge">▲</button>
         </header>
 
         <aside class="slog" id="slog" hidden aria-label="Spider-sense log">
           <header><b>SENSE LOG</b><button id="sclear">CLEAR</button><button id="sclose" aria-label="Close log">✕</button></header>
           <ul id="sitems"></ul>
+        </aside>
+
+        <aside class="slog" id="inbox" hidden aria-label="Notification inbox">
+          <header><b>INBOX</b><button id="iclear">CLEAR</button><button id="iclose" aria-label="Close inbox">✕</button></header>
+          <ul id="iitems"></ul>
         </aside>
 
         <canvas id="web" width="260" height="248" aria-label="System load drawn as a spider web"></canvas>
@@ -58,5 +64,6 @@
     <script src="reminders.js"></script>
     <script src="karen.js"></script>
     <script src="guardian.js"></script>
+    <script src="inbox.js"></script>
   </body>
 </html>

@@ -40,8 +40,7 @@
           })
         : [Object.assign(document.createElement('li'), { className: 'empty', textContent: 'NOTHING LURKING. SENSE IS QUIET.' })])
     )
-    balert.hidden = unread === 0
-    balert.textContent = unread > 9 ? '9+' : String(unread)
+    window.Core.setUnread('guardian', unread)
   }
 
   function onEvent(e) {

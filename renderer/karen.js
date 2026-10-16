@@ -195,7 +195,7 @@
     if (r.action) await run(r.action)
     if (!r.unknown) return
     if (!llm.available) {
-      say('NOT SURE I FOLLOW. ' + window.KarenCore.HELP + ' (INSTALL OLLAMA FOR FREE-FORM CHAT.)')
+      say('NOT SURE I FOLLOW — SAY "HELP". (INSTALL OLLAMA FOR FREE-FORM CHAT.)')
       return
     }
     busy = true

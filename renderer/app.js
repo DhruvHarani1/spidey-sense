@@ -307,7 +307,18 @@
     return { stats: state.raw, battery: state.battery, timer: { mode: timer.mode, left: timer.left, running: timer.running }, level: state.level }
   }
 
-  window.Core = { fireNote, say, timerOp, snapshot, test }
+  /** one badge count for everything that wants your attention (guardian alerts + inbox) */
+  const unread = { guardian: 0, inbox: 0 }
+  function setUnread(kind, n) {
+    unread[kind] = n
+    const total = unread.guardian + unread.inbox
+    const b = $('balert')
+    b.hidden = total === 0
+    b.textContent = total > 99 ? '99+' : String(total)
+    document.body.dataset.unread = total ? '1' : '0'
+  }
+
+  window.Core = { fireNote, say, timerOp, snapshot, setUnread, test }
 
   function timerDone() {
     state.note = null

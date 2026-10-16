@@ -159,6 +159,23 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
   check('Karen: unknown request is handled', /NOT SURE|THINKING|LOCAL BRAIN|[A-Z]/.test(await cap()))
   await sleep(1000)
 
+  // notification inbox
+  await ev('__inbox.items.length = 0; __inbox.toggle(false)')
+  await ev('__inbox.onItems([{id:900001,app:"WhatsApp",appId:"t.whatsapp",title:"Mum",body:"Dinner at 8?",at:Date.now()},{id:900002,app:"Mail",appId:"t.mail",title:"Invoice",body:"",at:Date.now()}])')
+  check('inbox: badge counts unread', (await ev('document.getElementById("icount").textContent')) === '2')
+  check('inbox: badge on the spider shows it too', (await ev('document.getElementById("balert").hidden')) === false)
+  await ev('__inbox.onItems([{id:900001,app:"WhatsApp",appId:"t.whatsapp",title:"Mum",body:"dup",at:Date.now()}])')
+  check('inbox: duplicates ignored', (await ev('__inbox.items.length')) === 2)
+  await ev('document.getElementById("inboxbtn").click()')
+  check('inbox: opens with entries', (await ev('document.querySelectorAll("#iitems li").length')) === 2 && (await ev('document.getElementById("inbox").hidden')) === false)
+  check('inbox: opening marks read', (await ev('document.getElementById("icount").hidden')) === true)
+  await shot('inbox')
+  await ev('document.querySelector("#iitems li").click()')
+  check('inbox: click dismisses', (await ev('__inbox.items.length')) === 1)
+  await ev('document.getElementById("iclear").click()')
+  check('inbox: clear empties', (await ev('__inbox.items.length')) === 0)
+  await ev('document.getElementById("iclose").click()')
+
   // timer
   if ((await ev('__spidey.timer.mode')) !== 'focus') await ev('document.getElementById("tmode").click()')
   await ev('document.getElementById("tgo").click()')

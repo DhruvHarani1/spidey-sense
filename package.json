@@ -11,7 +11,7 @@
     "icons": "electron scripts/make-icons.js",
     "test": "node scripts/selftest.js",
     "dist": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dist-local.ps1",
-    "test:unit": "node scripts/guardian-test.js && node scripts/karen-test.js"
+    "test:unit": "node scripts/guardian-test.js && node scripts/karen-test.js && node scripts/notifications-test.js"
   },
   "devDependencies": {
     "electron": "^44.7.2",
@@ -28,6 +28,7 @@
       "preload.js",
       "guardian.js",
       "karen-llm.js",
+      "notifications.js",
       "renderer/**/*",
       "assets/icon.png",
       "package.json"

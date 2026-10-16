@@ -6,6 +6,7 @@ const path = require('node:path')
 const { execFile } = require('node:child_process')
 const guardian = require('./guardian')
 const karenLlm = require('./karen-llm')
+const notifications = require('./notifications')
 
 const SIZES = { badge: { w: 96, h: 124 }, panel: { w: 300, h: 580 } }
 const size = () => SIZES[settings.view] || SIZES.badge
@@ -22,6 +23,7 @@ const DEFAULTS = {
   startup: false,
   karenVoice: false, // Karen reads her replies aloud
   llmModel: '', // preferred Ollama model (blank = auto)
+  inbox: true, // mirror Windows notifications from all apps into the widget's inbox (local only)
   guardian: true, // danger sense: first-time internet contact, new auto-start, hosts change, new drive
   eyeBreak: true, // 20-20-20 nudge after 20 min of continuous use
   view: 'badge', // badge = small swinging spider | panel = full widget
@@ -72,6 +74,7 @@ let win = null
 let tray = null
 let topTimer = null
 let stopGuardian = null
+let stopInbox = null
 let quitting = false
 
 function clampToDisplay(x, y) {
@@ -221,6 +224,7 @@ function buildTray() {
       check('Spider-sense sound', 'sound'),
       check('Eye-rest nudge (20-20-20)', 'eyeBreak'),
       check('Karen speaks her replies', 'karenVoice'),
+      check('Notification inbox', 'inbox'),
       check('Guardian (danger sense)', 'guardian'),
       check('Desktop notifications', 'notifications'),
       check('Network check (pings gstatic.com)', 'netProbe'),
@@ -403,7 +407,10 @@ const notifiedAt = {}
 
 // ---------------------------------------------------------------- lifecycle
 // tests run against a throwaway profile so they never fight (or touch) an installed copy
-if (process.env.SPIDEY_TEST) app.setPath('userData', path.join(app.getPath('temp'), 'spidey-test'))
+if (process.env.SPIDEY_TEST) {
+  const dir = path.join(app.getPath('temp'), 'spidey-test-' + process.pid)
+  app.setPath('userData', dir) // fresh profile per test run
+}
 
 if (!app.requestSingleInstanceLock()) {
   app.quit()
@@ -432,6 +439,12 @@ if (!app.requestSingleInstanceLock()) {
       win.focus()
       win.webContents.send('focus-remind')
     }
+    stopInbox = notifications.start({
+      selfIds: ['dev.spidey.sense'],
+      emit: (items) => {
+        if (settings.inbox) win?.webContents.send('inbox', items)
+      }
+    })
     globalShortcut.register('Control+Alt+K', summon) // Karen
     globalShortcut.register('Control+Alt+S', summon) // kept from the reminders hotkey
     setInterval(sample, SAMPLE_MS)
@@ -445,6 +458,7 @@ if (!app.requestSingleInstanceLock()) {
   app.on('before-quit', () => {
     globalShortcut.unregisterAll()
     stopGuardian?.()
+    stopInbox?.()
     quitting = true
     clearInterval(topTimer)
   })
