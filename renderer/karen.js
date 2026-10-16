@@ -96,6 +96,8 @@
     }
     if (/\b(more )?transparent\b/.test(t)) return { action: { type: 'opacity', value: 0.7 }, say: 'MORE SEE-THROUGH NOW.' }
 
+    if (/\b(daily web|newspaper|front page|how was my day|recap my day|day recap|end of day)\b/.test(t)) return { action: { type: 'bugle' } }
+
     // ---- readings
     if (!st) return { unknown: true }
     if (!/^how (much|many)/.test(t) && /(eating|hogging|hog|what('?s| is) using|taking up|slow|heavy|top (process|app))/.test(t) && /(ram|memory|pc|computer|laptop|slow|process|app)/.test(t)) {
@@ -181,6 +183,9 @@
         say(r.ok ? `DONE. ${r.count} ${name.toUpperCase()} PROCESS${r.count === 1 ? '' : 'ES'} STOPPED.` : r.error.toUpperCase())
         break
       }
+      case 'bugle':
+        window.dispatchEvent(new CustomEvent('spidey:bugle'))
+        break
       case 'cancel-kill':
         pendingKill = null
         break

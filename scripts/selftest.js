@@ -47,8 +47,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
   check('collapse -> badge view', (await view()) === 'badge')
   check('badge window is small', (await ev('innerWidth')) < 120)
   await shot('badge')
-  await click(48, 80)
-  await sleep(800)
+  for (let i = 0; i < 5 && (await view()) !== 'panel'; i++) {
+    await click(48, 80)
+    await sleep(900)
+  }
   check('click badge -> panel', (await view()) === 'panel')
   check('panel window is large', (await ev('innerWidth')) >= 290)
     await shot('calm')
@@ -175,6 +177,16 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
   await ev('document.getElementById("iclear").click()')
   check('inbox: clear empties', (await ev('__inbox.items.length')) === 0)
   await ev('document.getElementById("iclose").click()')
+
+  // Daily Web
+  await ev('Day.add("focusMin", 75); Day.add("focusSessions", 3); Day.add("tingle:ram", 4); Day.add("notifs", 12); Day.peak("ram", 99, {name:"chrome", mb:1740}); Day.peak("cpu", 88)')
+  await ev('Karen.handle("show me the daily web")')
+  await sleep(800)
+  check('Daily Web opens from Karen', (await ev('document.getElementById("bugle").hidden')) === false)
+  check('Daily Web page is painted', (await ev('(() => { const c = __bugle.paper; const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; let ink = 0; for (let i = 0; i < d.length; i += 4000) if (d[i] < 80 && d[i + 3] === 255) ink++; return d[3] === 255 ? ink : -1 })()')) > 5)
+  await shot('daily-web')
+  await ev('document.getElementById("bclose").click()')
+  check('Daily Web closes', (await ev('document.getElementById("bugle").hidden')) === true)
 
   // timer
   if ((await ev('__spidey.timer.mode')) !== 'focus') await ev('document.getElementById("tmode").click()')

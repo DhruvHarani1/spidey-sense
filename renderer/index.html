@@ -34,6 +34,11 @@
           <ul id="iitems"></ul>
         </aside>
 
+        <aside class="slog" id="bugle" hidden aria-label="The Daily Web">
+          <header><b>THE DAILY WEB</b><button id="bsave">SAVE</button><button id="bcopy">COPY</button><button id="bclose" aria-label="Close">✕</button></header>
+          <canvas id="bpaper" width="1080" height="1500"></canvas>
+        </aside>
+
         <canvas id="web" width="260" height="248" aria-label="System load drawn as a spider web"></canvas>
 
         <ul class="readout" id="readout" aria-label="Current readings">
@@ -60,10 +65,13 @@
       </main>
     </div>
     <script src="spider.js"></script>
+    <script src="daystats.js"></script>
     <script src="app.js"></script>
     <script src="reminders.js"></script>
     <script src="karen.js"></script>
     <script src="guardian.js"></script>
     <script src="inbox.js"></script>
+    <script src="bugle.js"></script>
+    <script src="bugle-ui.js"></script>
   </body>
 </html>

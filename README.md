@@ -38,6 +38,10 @@ Karen has two layers: a fast offline rule engine, and — for anything else — 
 
 Click the ✉ in the banner: every Windows notification from every app (WhatsApp, Mail, Edge/YouTube, Lyra, system…) is listed there, and the unread count shows on the badge. It reads the notification database Windows already keeps for your account (read-only, local, nothing is sent anywhere) and keeps the last 100 in the widget. Tray → "Notification inbox" turns it off.
 
+## The Daily Web (end-of-day front page)
+
+A comic newspaper built from your own day: focus time, tingles by cause, the memory hog, notifications received, guardian alerts, with a headline like `CHROME HOARDS MEMORY — CITY ON EDGE!`. Ask Karen ("daily web", "how was my day"), use the tray, or click the 9 pm nudge. **Save** or **Copy** it as a PNG. Everything is computed locally from counters kept for the last 14 days.
+
 ## Reminders
 
 Type into the panel's THWIP box (or press **Ctrl+Alt+S** anywhere to open it focused): `in 20m stretch`, `in 2h call mum`, `at 15:30 standup`, `at 7pm dinner`. When due, the widget tingles, chirps and notifies. Up to 6 pending, stored locally.

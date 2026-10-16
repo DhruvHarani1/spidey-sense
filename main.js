@@ -1,5 +1,5 @@
 'use strict'
-const { app, BrowserWindow, globalShortcut, Menu, powerMonitor, Notification, Tray, ipcMain, nativeImage, net, screen } = require('electron')
+const { app, BrowserWindow, clipboard, dialog, globalShortcut, Menu, powerMonitor, Notification, Tray, ipcMain, nativeImage, net, screen } = require('electron')
 const fs = require('node:fs')
 const os = require('node:os')
 const path = require('node:path')
@@ -23,6 +23,8 @@ const DEFAULTS = {
   startup: false,
   karenVoice: false, // Karen reads her replies aloud
   llmModel: '', // preferred Ollama model (blank = auto)
+  bugleDaily: true, // 21:00 nudge that the day's front page is ready
+  lastBugle: '',
   inbox: true, // mirror Windows notifications from all apps into the widget's inbox (local only)
   guardian: true, // danger sense: first-time internet contact, new auto-start, hosts change, new drive
   eyeBreak: true, // 20-20-20 nudge after 20 min of continuous use
@@ -75,6 +77,7 @@ let tray = null
 let topTimer = null
 let stopGuardian = null
 let stopInbox = null
+let bugleTimer = null
 let quitting = false
 
 function clampToDisplay(x, y) {
@@ -224,6 +227,8 @@ function buildTray() {
       check('Spider-sense sound', 'sound'),
       check('Eye-rest nudge (20-20-20)', 'eyeBreak'),
       check('Karen speaks her replies', 'karenVoice'),
+      { label: "Today's Daily Web (front page)", click: () => openBugle() },
+      check('Daily Web ready nudge (9 pm)', 'bugleDaily'),
       check('Notification inbox', 'inbox'),
       check('Guardian (danger sense)', 'guardian'),
       check('Desktop notifications', 'notifications'),
@@ -392,6 +397,37 @@ ipcMain.handle('karen:ask', async (e, text, ctx) => {
   if (e.sender !== win?.webContents || typeof text !== 'string') return null
   return karenLlm.ask(text, ctx, settings.llmModel)
 })
+function openBugle() {
+  if (!win) return
+  win.show()
+  setView('panel')
+  win.webContents.send('open-bugle')
+}
+
+const MAX_IMG = 12 * 1024 * 1024
+const pngFrom = (dataUrl) => {
+  if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/png;base64,') || dataUrl.length > MAX_IMG * 1.4) return null
+  const img = nativeImage.createFromDataURL(dataUrl)
+  return img.isEmpty() ? null : img
+}
+ipcMain.handle('bugle:save', async (e, dataUrl, suggested) => {
+  if (e.sender !== win?.webContents) return { ok: false }
+  const img = pngFrom(dataUrl)
+  if (!img) return { ok: false }
+  const name = String(suggested || 'Daily-Web.png').replace(/[^\w.-]/g, '_').slice(0, 60)
+  const r = await dialog.showSaveDialog(win, { defaultPath: path.join(app.getPath('pictures'), name), filters: [{ name: 'PNG image', extensions: ['png'] }] })
+  if (r.canceled || !r.filePath) return { ok: false }
+  fs.writeFileSync(r.filePath, img.toPNG())
+  return { ok: true }
+})
+ipcMain.handle('bugle:copy', (e, dataUrl) => {
+  if (e.sender !== win?.webContents) return { ok: false }
+  const img = pngFrom(dataUrl)
+  if (!img) return { ok: false }
+  clipboard.writeImage(img)
+  return { ok: true }
+})
+
 ipcMain.handle('settings:get', () => publicSettings())
 ipcMain.on('notify', (e, payload) => {
   if (e.sender !== win?.webContents || !settings.notifications || !Notification.isSupported()) return
@@ -439,6 +475,19 @@ if (!app.requestSingleInstanceLock()) {
       win.focus()
       win.webContents.send('focus-remind')
     }
+    // once a day after 21:00: tell the user their front page is ready (click opens it)
+    bugleTimer = setInterval(() => {
+      const d = new Date()
+      const key = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`
+      if (!settings.bugleDaily || d.getHours() < 21 || settings.lastBugle === key) return
+      settings.lastBugle = key
+      saveSettings()
+      if (Notification.isSupported()) {
+        const n = new Notification({ title: "Today's Daily Web is out!", body: 'Your front page is ready — click to read it.', silent: true })
+        n.on('click', openBugle)
+        n.show()
+      }
+    }, 60_000)
     stopInbox = notifications.start({
       selfIds: ['dev.spidey.sense'],
       emit: (items) => {
@@ -459,6 +508,7 @@ if (!app.requestSingleInstanceLock()) {
     globalShortcut.unregisterAll()
     stopGuardian?.()
     stopInbox?.()
+    clearInterval(bugleTimer)
     quitting = true
     clearInterval(topTimer)
   })

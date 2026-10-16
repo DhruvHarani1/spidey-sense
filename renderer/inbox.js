@@ -96,6 +96,7 @@
         isNew: panel.hidden && Date.now() - (Number(b.at) || Date.now()) < 600000
       })
       added++
+      if (Date.now() - (Number(b.at) || Date.now()) < 600000) window.Day.add('notifs')
     }
     if (!added) return
     items = items.slice(0, MAX)

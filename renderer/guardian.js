@@ -49,6 +49,7 @@
     log = log.slice(0, MAX)
     save()
     unread++
+    window.Day.add('guardian')
     render()
     window.Core.fireNote(`SPIDEY-SENSE: ${e.text.toUpperCase()}`, `guardian:${e.kind}`)
   }

@@ -32,6 +32,13 @@ contextBridge.exposeInMainWorld('spidey', {
     ipcRenderer.on('inbox', l)
     return () => ipcRenderer.removeListener('inbox', l)
   },
+  bugleSave: (dataUrl, name) => ipcRenderer.invoke('bugle:save', dataUrl, name),
+  bugleCopy: (dataUrl) => ipcRenderer.invoke('bugle:copy', dataUrl),
+  onOpenBugle: (cb) => {
+    const l = () => cb()
+    ipcRenderer.on('open-bugle', l)
+    return () => ipcRenderer.removeListener('open-bugle', l)
+  },
   setView: (v) => ipcRenderer.send('view:set', v),
   drag: {
     start: () => ipcRenderer.send('drag:start'),

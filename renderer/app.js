@@ -102,7 +102,10 @@
   function trackActivity(idleS) {
     if (!Number.isFinite(idleS)) return
     document.body.dataset.idle = idleS >= 180 ? '1' : '0'
-    if (idleS < 60) activity.activeS++
+    if (idleS < 60) {
+      activity.activeS++
+      window.Day.add('activeS')
+    }
     else if (idleS >= 120) activity.activeS = 0
     if (settings.eyeBreak && activity.activeS >= EYE_AFTER_S) {
       activity.activeS = 0
@@ -114,6 +117,10 @@
     if (override) raw = { ...raw, ...override.raw }
     state.raw = raw
     trackActivity(raw.idleS)
+    window.Day.peak('cpu', raw.cpu)
+    window.Day.peak('ram', raw.ram, raw.hog)
+    window.Day.peak('disk', raw.disk)
+    window.Day.peak('latency', raw.latencyMs)
     state.target = dangerFrom(raw)
     if (override && override.danger) override.danger.forEach((v, i) => v != null && (state.target[i] = v))
     state.alert = state.target.slice()
@@ -219,6 +226,7 @@
   const focusQuiet = () => timer.running && timer.mode === 'focus'
 
   function onTingle() {
+    window.Day.add('tingle:' + AXES[state.alert.indexOf(Math.max(...state.alert))])
     if (focusQuiet()) return
     chirp()
     if (state.timerAlert > Date.now()) return
@@ -262,6 +270,7 @@
   }
   /** Make the widget tingle for a few seconds with a custom caption (used by reminders). */
   function fireNote(text, kind) {
+    window.Day.add('note:' + String(kind).split(':')[0])
     state.note = text
     state.timerAlert = Date.now() + 10000
     chirp()
@@ -325,6 +334,8 @@
     timer.running = false
     const finished = timer.mode
     if (finished === 'focus') {
+      window.Day.add('focusMin', 25)
+      window.Day.add('focusSessions')
       if (streak.day !== todayKey()) streak = { day: todayKey(), n: 0 }
       streak.n++
       try {
