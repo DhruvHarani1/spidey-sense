@@ -35,6 +35,8 @@
     streak: { dir: 0, n: 0 },
     battery: { level: 1, charging: true, present: false },
     timerAlert: 0,
+    say: null, // Karen's latest reply, shown in the caption for a while
+    sayUntil: 0,
     note: null, // one-off message that overrides the caption while a reminder fires
     lastChirp: 0
   }
@@ -172,6 +174,7 @@
     let text
     if (state.note && state.timerAlert > Date.now()) text = state.note
     else if (state.timerAlert > Date.now()) text = timer.mode === 'focus' ? 'TIME! BREAK SWING — YOU EARNED IT!' : 'BREAK OVER — BACK TO THE WEB!'
+    else if (state.say && state.sayUntil > Date.now()) text = state.say
     else if (state.level === 'tingle') text = culprit(state.raw || { cpu: 0, ram: 0, disk: 0, online: true })
     else if (state.level === 'alert') text = ALERT[calmIdx % ALERT.length]
     else text = CALM[calmIdx % CALM.length]
@@ -271,7 +274,40 @@
       setLevel(rawLevel())
     }, 10200)
   }
-  window.Core = { fireNote, test }
+  /** Karen speaks: caption for a few seconds, and out loud when "Karen speaks" is on */
+  function say(text, ms = 12000) {
+    state.say = text
+    state.sayUntil = Date.now() + ms
+    refreshCaption(true)
+    setTimeout(() => refreshCaption(true), ms + 100)
+    if (settings.karenVoice && 'speechSynthesis' in window) {
+      try {
+        speechSynthesis.cancel()
+        const u = new SpeechSynthesisUtterance(text.toLowerCase())
+        u.rate = 1.05
+        speechSynthesis.speak(u)
+      } catch {
+        /* no voice available */
+      }
+    }
+  }
+
+  function timerOp(op) {
+    if (op === 'pause') {
+      if (timer.running) go.click()
+    } else if (op === 'reset') {
+      $('treset').click()
+    } else if (op === 'focus' || op === 'break') {
+      if (timer.mode !== op) modeBtn.click()
+      if (!timer.running) go.click()
+    }
+  }
+
+  function snapshot() {
+    return { stats: state.raw, battery: state.battery, timer: { mode: timer.mode, left: timer.left, running: timer.running }, level: state.level }
+  }
+
+  window.Core = { fireNote, say, timerOp, snapshot, test }
 
   function timerDone() {
     state.note = null
@@ -384,6 +420,7 @@
     settings.sound = !!s.sound
     settings.ramMode = s.ramMode || 'auto'
     settings.eyeBreak = s.eyeBreak !== false
+    settings.karenVoice = !!s.karenVoice
     document.body.dataset.view = s.view === 'panel' ? 'panel' : 'badge'
     schedule()
   }

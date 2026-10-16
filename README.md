@@ -28,6 +28,12 @@ npm test
 
 Fan art; not affiliated with Marvel. All artwork is original/procedural.
 
+## Karen (the suit AI)
+
+Press **Ctrl+Alt+K** anywhere (or click the box in the panel) and ask in plain words: `status`, `cpu?`, `what is eating my ram`, `remind me to stretch in 20 minutes`, `at 3pm call mum`, `start focus`, `take a break`, `mute`, `opacity 70`, `collapse`, `kill chrome` (always asks first; system processes are protected).
+
+Karen has two layers: a fast offline rule engine, and — for anything else — an optional **local open-source model through [Ollama](https://ollama.com)** (e.g. `ollama pull qwen2.5:1.5b`). Nothing leaves your PC. The model can only trigger a short whitelist of safe actions. Tray → "Karen speaks her replies" reads answers aloud with Windows voices.
+
 ## Reminders
 
 Type into the panel's THWIP box (or press **Ctrl+Alt+S** anywhere to open it focused): `in 20m stretch`, `in 2h call mum`, `at 15:30 standup`, `at 7pm dinner`. When due, the widget tingles, chirps and notifies. Up to 6 pending, stored locally.

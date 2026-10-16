@@ -6,14 +6,14 @@
   const $ = (id) => document.getElementById(id)
   const input = $('rin')
   const list = $('rlist')
-  const UNIT = { s: 1000, sec: 1000, m: 60000, min: 60000, h: 3600000, hr: 3600000, hrs: 3600000 }
+  const UNIT = { s: 1000, m: 60000, h: 3600000 } // keyed by the unit's first letter
 
   /** @returns {{due:number,text:string}|null} */
   function parse(raw, now = Date.now()) {
     const s = raw.trim()
-    let m = s.match(/^(?:in\s+)?(\d+)\s*(s|sec|m|min|h|hr|hrs)\b\s*(.*)$/i)
+    let m = s.match(/^(?:in\s+)?(\d+)\s*(seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h)\b\s*(.*)$/i)
     if (m) {
-      const due = now + Number(m[1]) * UNIT[m[2].toLowerCase()]
+      const due = now + Number(m[1]) * UNIT[m[2][0].toLowerCase()]
       return { due, text: m[3].trim() || 'Time’s up!' }
     }
     m = s.match(/^at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b\s*(.*)$/i)
@@ -86,7 +86,6 @@
       input.classList.remove('bad')
       void input.offsetWidth // restart the shake
       input.classList.add('bad')
-      input.placeholder = p ? 'TOO MANY WEBS (6 MAX)' : 'TRY: in 20m stretch · at 15:30 call'
       return false
     }
     items.push({ id: Math.random().toString(36).slice(2), ...p })
@@ -95,12 +94,6 @@
     return true
   }
 
-  input.addEventListener('keydown', (e) => {
-    e.stopPropagation()
-    if (e.key === 'Enter' && input.value.trim()) {
-      if (add(input.value)) input.value = ''
-    }
-  })
   input.addEventListener('input', () => input.classList.remove('bad'))
 
   setInterval(() => {
@@ -120,5 +113,7 @@
     input.select()
   })
 
+  // Karen (karen.js) owns the input box and calls into this API
+  window.Reminders = { parse, add, count: () => items.length }
   if (window.Core.test) window.__reminders = { parse, add, get items() { return items } }
 })()

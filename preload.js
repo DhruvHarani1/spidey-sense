@@ -23,6 +23,10 @@ contextBridge.exposeInMainWorld('spidey', {
     ipcRenderer.on('guardian', l)
     return () => ipcRenderer.removeListener('guardian', l)
   },
+  patchSettings: (patch) => ipcRenderer.send('settings:patch', patch),
+  killProcess: (name) => ipcRenderer.invoke('proc:kill', name),
+  karenAsk: (text, ctx) => ipcRenderer.invoke('karen:ask', text, ctx),
+  karenLlm: () => ipcRenderer.invoke('karen:llm'),
   setView: (v) => ipcRenderer.send('view:set', v),
   drag: {
     start: () => ipcRenderer.send('drag:start'),

@@ -5,6 +5,7 @@ const os = require('node:os')
 const path = require('node:path')
 const { execFile } = require('node:child_process')
 const guardian = require('./guardian')
+const karenLlm = require('./karen-llm')
 
 const SIZES = { badge: { w: 96, h: 124 }, panel: { w: 300, h: 580 } }
 const size = () => SIZES[settings.view] || SIZES.badge
@@ -19,6 +20,8 @@ const DEFAULTS = {
   notifications: true,
   netProbe: true,
   startup: false,
+  karenVoice: false, // Karen reads her replies aloud
+  llmModel: '', // preferred Ollama model (blank = auto)
   guardian: true, // danger sense: first-time internet contact, new auto-start, hosts change, new drive
   eyeBreak: true, // 20-20-20 nudge after 20 min of continuous use
   view: 'badge', // badge = small swinging spider | panel = full widget
@@ -61,7 +64,7 @@ function update(patch) {
   buildTray()
 }
 
-const publicSettings = () => ({ opacity: settings.opacity, sound: settings.sound, notifications: settings.notifications, netProbe: settings.netProbe, ramMode: settings.ramMode, eyeBreak: settings.eyeBreak, view: settings.view })
+const publicSettings = () => ({ opacity: settings.opacity, sound: settings.sound, notifications: settings.notifications, netProbe: settings.netProbe, ramMode: settings.ramMode, eyeBreak: settings.eyeBreak, karenVoice: settings.karenVoice, view: settings.view })
 
 // ---------------------------------------------------------------- window
 /** @type {BrowserWindow | null} */
@@ -217,6 +220,7 @@ function buildTray() {
       { type: 'separator' },
       check('Spider-sense sound', 'sound'),
       check('Eye-rest nudge (20-20-20)', 'eyeBreak'),
+      check('Karen speaks her replies', 'karenVoice'),
       check('Guardian (danger sense)', 'guardian'),
       check('Desktop notifications', 'notifications'),
       check('Network check (pings gstatic.com)', 'netProbe'),
@@ -353,6 +357,37 @@ ipcMain.on('drag:move', (e, d) => {
 ipcMain.on('drag:end', () => {
   dragFrom = null
 })
+const PATCHABLE = { sound: 'boolean', notifications: 'boolean', opacity: 'number' }
+ipcMain.on('settings:patch', (e, patch) => {
+  if (e.sender !== win?.webContents || !patch || typeof patch !== 'object') return
+  const clean = {}
+  for (const [k, type] of Object.entries(PATCHABLE)) {
+    if (typeof patch[k] !== type) continue
+    clean[k] = k === 'opacity' ? Math.min(1, Math.max(0.3, patch[k])) : patch[k]
+  }
+  if (Object.keys(clean).length) update(clean)
+})
+
+// never let a chat command take down the OS or this app
+const PROTECTED = /^(system|registry|smss|csrss|wininit|winlogon|services|lsass|svchost|dwm|explorer|fontdrvhost|spidey sense|electron|conhost|sihost|ctfmon|taskhostw|searchhost|startmenuexperiencehost|shellexperiencehost|runtimebroker|audiodg|msmpeng|securityhealthservice|wudfhost)$/i
+ipcMain.handle('proc:kill', (e, name) => {
+  if (e.sender !== win?.webContents) return { ok: false, error: 'not allowed' }
+  const n = String(name || '').replace(/\.exe$/i, '').trim()
+  if (!/^[\w .-]{1,60}$/.test(n)) return { ok: false, error: 'invalid process name' }
+  if (PROTECTED.test(n)) return { ok: false, error: `${n} is protected — I won't touch it` }
+  return new Promise((resolve) => {
+    execFile('taskkill', ['/IM', `${n}.exe`, '/F'], { windowsHide: true }, (err, out) => {
+      const count = (String(out).match(/SUCCESS/gi) || []).length
+      resolve(count ? { ok: true, count } : { ok: false, error: `no running process named ${n}` })
+    })
+  })
+})
+
+ipcMain.handle('karen:llm', async () => karenLlm.status(settings.llmModel))
+ipcMain.handle('karen:ask', async (e, text, ctx) => {
+  if (e.sender !== win?.webContents || typeof text !== 'string') return null
+  return karenLlm.ask(text, ctx, settings.llmModel)
+})
 ipcMain.handle('settings:get', () => publicSettings())
 ipcMain.on('notify', (e, payload) => {
   if (e.sender !== win?.webContents || !settings.notifications || !Notification.isSupported()) return
@@ -390,13 +425,15 @@ if (!app.requestSingleInstanceLock()) {
         if (settings.guardian) win?.webContents.send('guardian', ev)
       }
     })
-    globalShortcut.register('Control+Alt+S', () => {
+    const summon = () => {
       if (!win) return
       win.show()
       setView('panel')
       win.focus()
       win.webContents.send('focus-remind')
-    })
+    }
+    globalShortcut.register('Control+Alt+K', summon) // Karen
+    globalShortcut.register('Control+Alt+S', summon) // kept from the reminders hotkey
     setInterval(sample, SAMPLE_MS)
     topTimer = setInterval(() => {
       if (win?.isVisible() && settings.alwaysOnTop) {
