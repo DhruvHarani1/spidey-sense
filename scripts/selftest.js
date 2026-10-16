@@ -92,6 +92,19 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
   check('mode off => 0', (await ev('__spidey.ramAlert(99)')) === 0)
   await ev('__spidey.settings.ramMode="auto"')
 
+  // reminders
+  const p1 = await ev('JSON.stringify(__reminders.parse("in 20m stretch", 0))')
+  check('parse "in 20m stretch"', p1 === '{"due":1200000,"text":"stretch"}', p1)
+  check('parse garbage => null', (await ev('__reminders.parse("blah")')) === null)
+  check('parse "at 3pm x" valid', (await ev('__reminders.parse("at 3pm call").text')) === 'call')
+  await ev('__spidey.force({raw:{cpu:10,ram:30,disk:40,online:true,latencyMs:30},danger:[10,30,40,0,6]})')
+  await ev('__reminders.add("in 2s drink water")')
+  check('reminder listed', (await ev('document.querySelectorAll("#rlist li").length')) === 1)
+  await sleep(3500)
+  check('reminder fires -> tingle + caption', (await ev('document.getElementById("panel").dataset.level')) === 'tingle' && /DRINK WATER/.test(await ev('document.getElementById("caption").textContent')))
+  await shot('reminder')
+  check('reminder consumed', (await ev('__reminders.items.length')) === 0)
+
   // timer
   if ((await ev('__spidey.timer.mode')) !== 'focus') await ev('document.getElementById("tmode").click()')
   await ev('document.getElementById("tgo").click()')

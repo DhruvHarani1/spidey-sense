@@ -27,3 +27,12 @@ npm test
 ```
 
 Fan art; not affiliated with Marvel. All artwork is original/procedural.
+
+## Reminders
+
+Type into the panel's THWIP box (or press **Ctrl+Alt+S** anywhere to open it focused): `in 20m stretch`, `in 2h call mum`, `at 15:30 standup`, `at 7pm dinner`. When due, the widget tingles, chirps and notifies. Up to 6 pending, stored locally.
+
+## Ideas for later
+
+- Per-process panel (top 5 RAM/CPU hogs).
+- Daily "web strength" history.

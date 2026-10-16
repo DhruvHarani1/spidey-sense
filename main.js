@@ -1,11 +1,11 @@
 'use strict'
-const { app, BrowserWindow, Menu, Notification, Tray, ipcMain, nativeImage, net, screen } = require('electron')
+const { app, BrowserWindow, globalShortcut, Menu, Notification, Tray, ipcMain, nativeImage, net, screen } = require('electron')
 const fs = require('node:fs')
 const os = require('node:os')
 const path = require('node:path')
 const { execFile } = require('node:child_process')
 
-const SIZES = { badge: { w: 96, h: 124 }, panel: { w: 300, h: 490 } }
+const SIZES = { badge: { w: 96, h: 124 }, panel: { w: 300, h: 580 } }
 const size = () => SIZES[settings.view] || SIZES.badge
 const MARGIN = 20
 const SAMPLE_MS = 1000
@@ -360,6 +360,9 @@ ipcMain.on('notify', (e, payload) => {
 const notifiedAt = {}
 
 // ---------------------------------------------------------------- lifecycle
+// tests run against a throwaway profile so they never fight (or touch) an installed copy
+if (process.env.SPIDEY_TEST) app.setPath('userData', path.join(app.getPath('temp'), 'spidey-test'))
+
 if (!app.requestSingleInstanceLock()) {
   app.quit()
 } else {
@@ -373,6 +376,13 @@ if (!app.requestSingleInstanceLock()) {
     createWindow()
     buildTray()
     syncLoginItem(settings.startup)
+    globalShortcut.register('Control+Alt+S', () => {
+      if (!win) return
+      win.show()
+      setView('panel')
+      win.focus()
+      win.webContents.send('focus-remind')
+    })
     setInterval(sample, SAMPLE_MS)
     topTimer = setInterval(() => {
       if (win?.isVisible() && settings.alwaysOnTop) {
@@ -382,6 +392,7 @@ if (!app.requestSingleInstanceLock()) {
     }, 3000)
   })
   app.on('before-quit', () => {
+    globalShortcut.unregisterAll()
     quitting = true
     clearInterval(topTimer)
   })

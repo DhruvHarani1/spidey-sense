@@ -395,3 +395,73 @@ body[data-view='panel'] .badge {
     animation: none !important;
   }
 }
+
+/* ---------- reminders ---------- */
+.remind {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  -webkit-app-region: no-drag;
+}
+#rin {
+  width: 100%;
+  padding: 5px 8px;
+  font: inherit;
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  color: var(--paper);
+  background: rgba(5, 6, 13, 0.8);
+  border: 2px solid #000;
+  border-radius: 6px;
+  outline: none;
+  user-select: text;
+  cursor: text;
+}
+#rin::placeholder {
+  color: #7d8bc4;
+}
+#rin:focus {
+  border-color: var(--yellow);
+}
+#rin.bad {
+  border-color: var(--red-hot);
+  animation: shake 0.16s linear 3;
+}
+#rlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 72px;
+  overflow: hidden;
+}
+#rlist li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 6px;
+  font-size: 10px;
+  background: rgba(29, 63, 216, 0.35);
+  border: 2px solid #000;
+  border-radius: 5px;
+}
+#rlist .r-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#rlist em {
+  font-style: normal;
+  color: var(--yellow);
+  font-variant-numeric: tabular-nums;
+}
+.r-del {
+  padding: 0 3px;
+  font-size: 9px;
+  background: none;
+  border: none;
+  color: #ff8a8a;
+}

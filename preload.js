@@ -13,6 +13,11 @@ contextBridge.exposeInMainWorld('spidey', {
     ipcRenderer.on('settings', l)
     return () => ipcRenderer.removeListener('settings', l)
   },
+  onFocusRemind: (cb) => {
+    const l = () => cb()
+    ipcRenderer.on('focus-remind', l)
+    return () => ipcRenderer.removeListener('focus-remind', l)
+  },
   setView: (v) => ipcRenderer.send('view:set', v),
   drag: {
     start: () => ipcRenderer.send('drag:start'),

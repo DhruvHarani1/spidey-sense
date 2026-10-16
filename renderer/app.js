@@ -33,6 +33,7 @@
     streak: { dir: 0, n: 0 },
     battery: { level: 1, charging: true, present: false },
     timerAlert: 0,
+    note: null, // one-off message that overrides the caption while a reminder fires
     lastChirp: 0
   }
   const test = new URLSearchParams(location.search).has('test')
@@ -154,7 +155,8 @@
 
   function refreshCaption(force) {
     let text
-    if (state.timerAlert > Date.now()) text = timer.mode === 'focus' ? 'TIME! BREAK SWING — YOU EARNED IT!' : 'BREAK OVER — BACK TO THE WEB!'
+    if (state.note && state.timerAlert > Date.now()) text = state.note
+    else if (state.timerAlert > Date.now()) text = timer.mode === 'focus' ? 'TIME! BREAK SWING — YOU EARNED IT!' : 'BREAK OVER — BACK TO THE WEB!'
     else if (state.level === 'tingle') text = culprit(state.raw || { cpu: 0, ram: 0, disk: 0, online: true })
     else if (state.level === 'alert') text = ALERT[calmIdx % ALERT.length]
     else text = CALM[calmIdx % CALM.length]
@@ -227,7 +229,24 @@
     if (timer.left === 0) timerDone()
     renderTimer()
   }
+  /** Make the widget tingle for a few seconds with a custom caption (used by reminders). */
+  function fireNote(text, kind) {
+    state.note = text
+    state.timerAlert = Date.now() + 10000
+    chirp()
+    window.spidey.notify(kind, 'Spider-sense tingling!', text)
+    setLevel('tingle')
+    setTimeout(() => {
+      if (state.timerAlert > Date.now()) return
+      state.note = null
+      updateLevel()
+      setLevel(rawLevel())
+    }, 10200)
+  }
+  window.Core = { fireNote, test }
+
   function timerDone() {
+    state.note = null
     timer.running = false
     const finished = timer.mode
     timer.mode = finished === 'focus' ? 'break' : 'focus'
