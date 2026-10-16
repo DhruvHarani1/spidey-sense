@@ -11,7 +11,9 @@
     "icons": "electron scripts/make-icons.js",
     "test": "node scripts/selftest.js",
     "dist": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dist-local.ps1",
-    "test:unit": "node scripts/guardian-test.js && node scripts/karen-test.js && node scripts/notifications-test.js && node scripts/bugle-test.js && node scripts/edith-test.js && node scripts/suits-test.js && node scripts/autostart-test.js && node scripts/updater-test.js && node scripts/comic-test.js"
+    "test:unit": "node scripts/guardian-test.js && node scripts/karen-test.js && node scripts/notifications-test.js && node scripts/bugle-test.js && node scripts/edith-test.js && node scripts/suits-test.js && node scripts/autostart-test.js && node scripts/updater-test.js && node scripts/comic-test.js && node scripts/help-test.js",
+    "docs": "node scripts/build-docs.js",
+    "help": "node bin/spidey.js help"
   },
   "devDependencies": {
     "electron": "^44.7.2",
@@ -35,12 +37,18 @@
       "package.json",
       "autostart.js",
       "updater.js",
-      "preload-capture.js"
+      "preload-capture.js",
+      "bin/**/*",
+      "help-data.js"
     ],
     "extraResources": [
       {
         "from": "assets/icon.png",
         "to": "icon.png"
+      },
+      {
+        "from": "renderer/help.html",
+        "to": "help.html"
       }
     ],
     "win": {
@@ -69,9 +77,18 @@
         "repo": "spidey-sense",
         "releaseType": "release"
       }
+    ],
+    "extraFiles": [
+      {
+        "from": "build/spidey.cmd",
+        "to": "spidey.cmd"
+      }
     ]
   },
   "dependencies": {
     "electron-updater": "^6.8.9"
+  },
+  "bin": {
+    "spidey": "bin/spidey.js"
   }
 }

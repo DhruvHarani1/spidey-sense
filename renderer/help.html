@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:">
+<title>Spidey Sense — manual</title>
+<style>
+:root{--red:#d4202a;--hot:#ff3b3b;--blue:#1d3fd8;--navy:#0a1131;--navy2:#141c4a;--ink:#05060d;--yellow:#ffd83a;--paper:#f4f1e6;--mute:#9fb0ff;--comic:'Arial Black','Segoe UI Black',Impact,sans-serif}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(circle at 1px 1px,rgba(255,255,255,.06) 1px,transparent 1.6px) 0 0/8px 8px,radial-gradient(120% 60% at 50% 0,#1b2a78 0,var(--navy) 60%);background-attachment:fixed;color:var(--paper);font:16px/1.6 'Segoe UI',system-ui,sans-serif}
+a{color:var(--yellow)}
+header.hero{padding:56px 24px 40px;text-align:center;border-bottom:4px solid #000;background:linear-gradient(100deg,var(--red) 0 58%,var(--blue) 58%);box-shadow:0 6px 0 #000}
+.hero h1{margin:0;font:italic 900 clamp(34px,7vw,72px)/1 var(--comic);letter-spacing:.02em;text-shadow:4px 4px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000}
+.hero h1 em{color:var(--yellow);font-style:italic}
+.hero p{margin:14px auto 0;max-width:760px;font-size:18px;text-shadow:2px 2px 0 #000}
+.hero .badge{display:inline-block;margin-top:18px;padding:6px 14px;background:var(--yellow);color:#111;font:italic 900 14px var(--comic);border:3px solid #000;box-shadow:4px 4px 0 #000;transform:rotate(-1.5deg)}
+.layout{display:grid;grid-template-columns:230px 1fr;gap:28px;max-width:1180px;margin:0 auto;padding:28px 20px 80px}
+nav{position:sticky;top:16px;align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding:14px;background:rgba(5,6,13,.8);border:3px solid #000;border-radius:12px;box-shadow:5px 5px 0 var(--red)}
+nav b{display:block;margin:10px 0 4px;font:900 11px var(--comic);color:var(--mute);letter-spacing:.08em}
+nav a{display:block;padding:4px 8px;border-radius:6px;color:var(--paper);text-decoration:none;font-size:14px}
+nav a:hover{background:var(--blue)}
+#q{width:100%;padding:9px 11px;font:inherit;font-size:14px;color:#111;background:var(--yellow);border:3px solid #000;border-radius:8px}
+main section{margin:0 0 44px;scroll-margin-top:16px}
+h2{margin:0 0 14px;font:italic 900 28px var(--comic);text-shadow:3px 3px 0 var(--red);display:flex;align-items:center;gap:10px}
+h3{margin:22px 0 8px;font:900 15px var(--comic);color:var(--yellow);letter-spacing:.04em;text-transform:uppercase}
+.card{background:rgba(5,6,13,.72);border:3px solid #000;border-radius:12px;padding:16px 18px;box-shadow:5px 5px 0 #000;margin:0 0 14px}
+.card.red{box-shadow:5px 5px 0 var(--red)}.card.blue{box-shadow:5px 5px 0 var(--blue)}
+ol.steps{margin:0;padding-left:22px}ol.steps li{margin:6px 0}
+.keys{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+kbd{display:inline-block;padding:3px 9px;margin:0 2px;font:900 13px var(--comic);color:#111;background:var(--paper);border:3px solid #000;border-bottom-width:5px;border-radius:6px}
+.cmds{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}
+.cmd{position:relative;background:rgba(20,28,74,.7);border:3px solid #000;border-radius:10px;padding:12px 14px 12px;box-shadow:4px 4px 0 #000}
+.cmd code{display:block;margin:0 0 6px;padding:6px 10px;font:700 15px Consolas,'Cascadia Mono',monospace;color:#111;background:var(--yellow);border:2px solid #000;border-radius:6px;cursor:pointer}
+.cmd code:hover{filter:brightness(1.08)}
+.cmd p{margin:0;font-size:14px;color:#dfe5ff}.cmd small{display:block;margin-top:6px;color:var(--mute)}.cmd .note{color:#ff9a9a}
+.feature{padding:0}
+.feature>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 18px}
+.feature>summary::-webkit-details-marker{display:none}
+.feature .ico{font-size:28px;width:38px;text-align:center}
+.feature .ttl{font:900 17px var(--comic);color:var(--paper)}.feature .sum{display:block;font-size:14px;color:var(--mute);font-weight:400;font-family:'Segoe UI',system-ui,sans-serif}
+.feature[open]>summary{border-bottom:3px solid #000;background:rgba(29,63,216,.25)}
+.feature .body{padding:6px 22px 16px}.feature .body li{margin:9px 0}
+.reads{margin:12px 0 0;padding:10px 12px;border-left:5px solid var(--yellow);background:rgba(255,216,58,.08);font-size:14px}
+.tray{columns:2;column-gap:28px;margin:0;padding-left:20px}.tray li{margin:4px 0;break-inside:avoid}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:8px 10px;text-align:left;border-bottom:2px solid #000;vertical-align:top}th{color:var(--yellow);font:900 12px var(--comic);text-transform:uppercase}
+td code{color:var(--yellow)}
+details.faq{background:rgba(5,6,13,.72);border:3px solid #000;border-radius:10px;margin:0 0 10px;box-shadow:4px 4px 0 #000}
+details.faq summary{cursor:pointer;padding:11px 14px;font-weight:700}details.faq p{margin:0;padding:0 16px 14px;color:#dfe5ff}
+.hidden{display:none!important}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:8px 18px;background:var(--yellow);color:#111;font:900 14px var(--comic);border:3px solid #000;box-shadow:4px 4px 0 #000;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+footer{padding:26px;text-align:center;color:var(--mute);border-top:4px solid #000;font-size:14px}
+@media(max-width:860px){.layout{grid-template-columns:1fr}nav{position:static;max-height:none}.tray{columns:1}}
+</style></head><body>
+<header class="hero">
+  <h1>SPIDEY <em>SENSE</em></h1>
+  <p>Your PC’s friendly neighbourhood spider-sense. Spidey Sense is a small always-on-top comic-book widget for Windows. It watches your PC the way a spider-sense would — CPU, RAM, disk, battery, network — and &quot;tingles&quot; when something is wrong. Around that core it has an AI-style command bar (Karen), a notification inbox, a security check, an end-of-day newspaper, comic screenshots and more. Everything runs locally; there are no accounts and no API keys.</p>
+  <span class="badge">THE COMPLETE MANUAL</span>
+</header>
+<div class="layout">
+<nav>
+  <input id="q" type="search" placeholder="Search everything…" aria-label="Search the manual"><div id="count" style="font-size:12px;color:var(--mute);min-height:18px;margin-top:4px"></div>
+  <b>GUIDE</b><a href="#start">Start here</a><a href="#hotkeys">Hotkeys</a><a href="#karen">Karen commands</a><a href="#features">Features in depth</a><a href="#tray">Tray menu</a><a href="#privacy">Privacy & data</a><a href="#trouble">Troubleshooting</a><a href="#cli">Command line</a>
+  <b>FEATURES</b><a href="#radar">🕸 Web radar &amp; spider-sense</a><a href="#badge">🕷 Badge &amp; panel</a><a href="#timer">⏱ Web timer</a><a href="#reminders">📌 THWIP reminders</a><a href="#karen">🤖 Karen</a><a href="#inbox">✉ Notification inbox</a><a href="#guardian">🛡 Guardian</a><a href="#edith">🔍 E.D.I.T.H.</a><a href="#daily">📰 The Daily Web</a><a href="#locker">★ Suit Locker</a><a href="#capture">📸 Web-Capture</a><a href="#eye">👁 Eye-rest nudge (20-20-20)</a><a href="#startup">🚀 Launch at login &amp; auto-update</a>
+</nav>
+<main>
+  <section id="start"><h2>🚀 Start here</h2>
+    <div class="card blue"><ol class="steps"><li>Install it, run it: a small swinging spider badge appears at the top-right of your screen.</li><li>Click the badge to open the full widget. Click ▲ in its banner to fold it back into the badge. Drag either to move it.</li><li>Press Ctrl+Alt+K anywhere and type to Karen: &quot;status&quot;, &quot;what is eating my ram&quot;, &quot;in 20m stretch&quot;.</li><li>Right-click the tray icon (the red spider by the clock) for every option, including this manual.</li></ol></div>
+  </section>
+
+  <section id="hotkeys"><h2>⌨ Hotkeys</h2>
+    <div class="keys"><div class="card" data-s="ctrl+alt+k open the widget and focus karen’s command box (works from any app)."><div><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>K</kbd></div><p style="margin:8px 0 0">Open the widget and focus Karen’s command box (works from any app).</p></div><div class="card" data-s="ctrl+alt+s same as ctrl+alt+k (kept from the old reminders shortcut)."><div><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>S</kbd></div><p style="margin:8px 0 0">Same as Ctrl+Alt+K (kept from the old reminders shortcut).</p></div><div class="card" data-s="ctrl+alt+c web-capture: freeze the screen and turn a region into a comic panel."><div><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd></div><p style="margin:8px 0 0">Web-Capture: freeze the screen and turn a region into a comic panel.</p></div><div class="card" data-s="esc close any open overlay (inbox, log, newspaper, locker…) or cancel a capture."><div><kbd>Esc</kbd></div><p style="margin:8px 0 0">Close any open overlay (inbox, log, newspaper, locker…) or cancel a capture.</p></div><div class="card" data-s="enter send what you typed to karen."><div><kbd>Enter</kbd></div><p style="margin:8px 0 0">Send what you typed to Karen.</p></div></div>
+  </section>
+
+  <section id="karen"><h2>🤖 Karen — everything you can type</h2>
+    <div class="card red"><b>How:</b> press <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>K</kbd> (or click the box in the panel), type, press <kbd>Enter</kbd>. <b>Click any yellow command below to copy an example.</b>
+      <ul><li>Karen is a fast offline rule engine: it understands the phrases above and many variations (&quot;how is my pc&quot;, &quot;cpu&quot;, &quot;remind me at 5pm to …&quot;).</li><li>Anything it does not recognise can go to an optional local AI model through Ollama (https://ollama.com): install it, run `ollama pull qwen2.5:1.5b` (about 1 GB), and Karen answers free-form questions. It stays on your PC (127.0.0.1) and can only trigger a short whitelist of safe actions: set a reminder, control the timer, mute, collapse.</li><li>The model never gets to kill processes or touch files. Tray → &quot;Karen speaks her replies&quot; reads answers aloud using Windows voices.</li><li>Ask &quot;help&quot; for a quick list at any time.</li></ul></div>
+    
+    <h3>Ask about your PC</h3>
+    <div class="cmds">
+      <div class="cmd" data-s="status one-line summary of cpu, ram, disk, battery and network. report sitrep how is my pc">
+        <code data-copy="status" title="Click to copy an example">status</code>
+        <p>One-line summary of CPU, RAM, disk, battery and network.</p>
+        <small>also: report · sitrep · how is my pc</small>
+        
+      </div>
+      <div class="cmd" data-s="cpu? current processor load.">
+        <code data-copy="cpu?" title="Click to copy an example">cpu?</code>
+        <p>Current processor load.</p>
+        
+        
+      </div>
+      <div class="cmd" data-s="ram memory use, plus the biggest app using it.">
+        <code data-copy="how much ram am i using" title="Click to copy an example">ram</code>
+        <p>Memory use, plus the biggest app using it.</p>
+        
+        
+      </div>
+      <div class="cmd" data-s="what is eating my ram names the biggest memory hog and how much it uses.">
+        <code data-copy="what is eating my ram" title="Click to copy an example">what is eating my ram</code>
+        <p>Names the biggest memory hog and how much it uses.</p>
+        
+        
+      </div>
+      <div class="cmd" data-s="disk how full the system drive is.">
+        <code data-copy="disk space" title="Click to copy an example">disk</code>
+        <p>How full the system drive is.</p>
+        
+        
+      </div>
+      <div class="cmd" data-s="battery charge level and whether it is charging (or &quot;ac&quot; on a desktop).">
+        <code data-copy="battery" title="Click to copy an example">battery</code>
+        <p>Charge level and whether it is charging (or &quot;AC&quot; on a desktop).</p>
+        
+        
+      </div>
+      <div class="cmd" data-s="am i online? connection state and latency to the web.">
+        <code data-copy="am i online" title="Click to copy an example">am I online?</code>
+        <p>Connection state and latency to the web.</p>
+        
+        
+      </div>
+      <div class="cmd" data-s="uptime how long the pc has been on.">
+        <code data-copy="uptime" title="Click to copy an example">uptime</code>
+        <p>How long the PC has been on.</p>
+        
+        
+      </div>
+      <div class="cmd" data-s="what time is it date and time.">
+        <code data-copy="what time is it" title="Click to copy an example">what time is it</code>
+        <p>Date and time.</p>
+        
+        
+      </div></div>
+    <h3>Reminders (THWIP)</h3>
+    <div class="cmds">
+      <div class="cmd" data-s="in 20m stretch reminder in 20 minutes. units: s / m / h (or seconds, minutes, hours).">
+        <code data-copy="in 20m stretch" title="Click to copy an example">in 20m stretch</code>
+        <p>Reminder in 20 minutes. Units: s / m / h (or seconds, minutes, hours).</p>
+        
+        
+      </div>
+      <div class="cmd" data-s="at 3pm call mum reminder at a clock time (24 h &quot;at 15:30&quot; works too; if it already passed, it means tomorrow).">
+        <code data-copy="at 3pm call mum" title="Click to copy an example">at 3pm call mum</code>
+        <p>Reminder at a clock time (24 h &quot;at 15:30&quot; works too; if it already passed, it means tomorrow).</p>
+        
+        
+      </div>
+      <div class="cmd" data-s="remind me to drink water in 10 minutes natural phrasing works as well.">
+        <code data-copy="remind me to drink water in 10 minutes" title="Click to copy an example">remind me to drink water in 10 minutes</code>
+        <p>Natural phrasing works as well.</p>
+        
+        
+      </div>
+      <div class="cmd" data-s="list reminders how many are pending (up to 6; they are listed under the box).">
+        <code data-copy="list reminders" title="Click to copy an example">list reminders</code>
+        <p>How many are pending (up to 6; they are listed under the box).</p>
+        
+        
+      </div></div>
+    <h3>Timer (focus / break)</h3>
+    <div class="cmds">
+      <div class="cmd" data-s="start focus starts a 25-minute focus session.">
+        <code data-copy="start focus" title="Click to copy an example">start focus</code>
+        <p>Starts a 25-minute focus session.</p>
+        
+        
+      </div>
+      <div class="cmd" data-s="take a break starts a 5-minute break.">
+        <code data-copy="take a break" title="Click to copy an example">take a break</code>
+        <p>Starts a 5-minute break.</p>
+        
+        
+      </div>
+      <div class="cmd" data-s="pause the timer pauses the running timer.">
+        <code data-copy="pause the timer" title="Click to copy an example">pause the timer</code>
+        <p>Pauses the running timer.</p>
+        
+        
+      </div>
+      <div class="cmd" data-s="reset timer resets it to the full length.">
+        <code data-copy="reset timer" title="Click to copy an example">reset timer</code>
+        <p>Resets it to the full length.</p>
+        
+        
+      </div>
+      <div class="cmd" data-s="how much time left remaining time on the timer.">
+        <code data-copy="how much time left" title="Click to copy an example">how much time left</code>
+        <p>Remaining time on the timer.</p>
+        
+        
+      </div></div>
+    <h3>The widget itself</h3>
+    <div class="cmds">
+      <div class="cmd" data-s="open the manual opens this manual in its own window (also: &quot;docs&quot;, &quot;all commands&quot;, &quot;what can you do&quot;). docs what can you do">
+        <code data-copy="open the manual" title="Click to copy an example">open the manual</code>
+        <p>Opens this manual in its own window (also: &quot;docs&quot;, &quot;all commands&quot;, &quot;what can you do&quot;).</p>
+        <small>also: docs · what can you do</small>
+        
+      </div>
+      <div class="cmd" data-s="collapse folds the panel back into the badge.">
+        <code data-copy="collapse" title="Click to copy an example">collapse</code>
+        <p>Folds the panel back into the badge.</p>
+        
+        
+      </div>
+      <div class="cmd" data-s="mute / unmute turns the alert chirp off or on.">
+        <code data-copy="mute" title="Click to copy an example">mute / unmute</code>
+        <p>Turns the alert chirp off or on.</p>
+        
+        
+      </div>
+      <div class="cmd" data-s="opacity 70 sets window opacity from 30 to 100.">
+        <code data-copy="opacity 70" title="Click to copy an example">opacity 70</code>
+        <p>Sets window opacity from 30 to 100.</p>
+        
+        
+      </div>
+      <div class="cmd" data-s="make it more transparent shortcut for opacity 70.">
+        <code data-copy="make it more transparent" title="Click to copy an example">make it more transparent</code>
+        <p>Shortcut for opacity 70.</p>
+        
+        
+      </div></div>
+    <h3>Features by voice… well, by typing</h3>
+    <div class="cmds">
+      <div class="cmd" data-s="am i safe? runs e.d.i.t.h., the security assessment.">
+        <code data-copy="am i safe" title="Click to copy an example">am I safe?</code>
+        <p>Runs E.D.I.T.H., the security assessment.</p>
+        
+        
+      </div>
+      <div class="cmd" data-s="daily web opens today’s comic newspaper front page.">
+        <code data-copy="show me the daily web" title="Click to copy an example">daily web</code>
+        <p>Opens today’s comic newspaper front page.</p>
+        
+        
+      </div>
+      <div class="cmd" data-s="take a screenshot starts web-capture (comic screenshot).">
+        <code data-copy="take a screenshot" title="Click to copy an example">take a screenshot</code>
+        <p>Starts Web-Capture (comic screenshot).</p>
+        
+        
+      </div>
+      <div class="cmd" data-s="my level opens the suit locker and tells you your xp.">
+        <code data-copy="show my level" title="Click to copy an example">my level</code>
+        <p>Opens the Suit Locker and tells you your XP.</p>
+        
+        
+      </div>
+      <div class="cmd" data-s="wear the neon suit equips a suit you have unlocked (midnight, gold, neon, pop, prism).">
+        <code data-copy="wear the neon suit" title="Click to copy an example">wear the neon suit</code>
+        <p>Equips a suit you have unlocked (midnight, gold, neon, pop, prism).</p>
+        
+        
+      </div>
+      <div class="cmd" data-s="check for updates asks github for a newer version.">
+        <code data-copy="check for updates" title="Click to copy an example">check for updates</code>
+        <p>Asks GitHub for a newer version.</p>
+        
+        
+      </div>
+      <div class="cmd" data-s="install update restarts and installs a downloaded update.">
+        <code data-copy="install update" title="Click to copy an example">install update</code>
+        <p>Restarts and installs a downloaded update.</p>
+        
+        
+      </div></div>
+    <h3>Careful ones</h3>
+    <div class="cmds">
+      <div class="cmd" data-s="kill chrome ends all processes named chrome — but only after you answer &quot;yes&quot;. system processes (explorer, svchost, antivirus, …) are protected and refused.">
+        <code data-copy="kill chrome" title="Click to copy an example">kill chrome</code>
+        <p>Ends all processes named chrome — but only after you answer &quot;yes&quot;. System processes (explorer, svchost, antivirus, …) are protected and refused.</p>
+        
+        <small class="note">Always asks first. Say &quot;no&quot; to cancel.</small>
+      </div></div>
+  </section>
+
+  <section id="features"><h2>🕸 Features in depth</h2>
+    <details class="card feature red" id="radar" data-s="web radar &amp; spider-sense five vital signs drawn as a spider web. when one spikes, the widget tingles. the web has five spokes: cpu, ram, disk, bat (battery drain) and net (latency). the further a dot sits from the centre, the worse that reading is. calm = green light, nothing to do. alert = yellow border at 75 % or more on any axis. tingle = red shaking border, a chirp and a notification at 90 % or more, or when you are offline. alerts need 3 consecutive readings to start and 5 to stop, so a one-second blip never triggers anything. the same kind of notification is held back for 2 minutes. ram is special: windows keeps ram nearly full on purpose, so by default (auto) it only alerts on a jump above this pc’s usual level. tray → ram alerts lets you use &quot;above 90 %&quot;, &quot;above 95 %&quot; or &quot;never&quot; instead. disk only alerts above 90 % (95 % for a tingle). battery alerts only while unplugged. offline is always a tingle. cpu, ram and uptime from windows; disk with a free-space query; battery from the browser engine; network by one tiny head request to gstatic.com every 8 s (tray → &quot;network check&quot; turns that off).">
+      <summary><span class="ico">🕸</span><span class="ttl">Web radar &amp; spider-sense<span class="sum">Five vital signs drawn as a spider web. When one spikes, the widget tingles.</span></span></summary>
+      <div class="body"><ul><li>The web has five spokes: CPU, RAM, DISK, BAT (battery drain) and NET (latency). The further a dot sits from the centre, the worse that reading is.</li><li>Calm = green light, nothing to do. Alert = yellow border at 75 % or more on any axis. Tingle = red shaking border, a chirp and a notification at 90 % or more, or when you are offline.</li><li>Alerts need 3 consecutive readings to start and 5 to stop, so a one-second blip never triggers anything. The same kind of notification is held back for 2 minutes.</li><li>RAM is special: Windows keeps RAM nearly full on purpose, so by default (Auto) it only alerts on a jump above this PC’s usual level. Tray → RAM alerts lets you use &quot;above 90 %&quot;, &quot;above 95 %&quot; or &quot;never&quot; instead.</li><li>Disk only alerts above 90 % (95 % for a tingle). Battery alerts only while unplugged. Offline is always a tingle.</li></ul>
+      <div class="reads"><b>What it reads:</b> CPU, RAM and uptime from Windows; disk with a free-space query; battery from the browser engine; network by one tiny HEAD request to gstatic.com every 8 s (tray → &quot;Network check&quot; turns that off).</div></div>
+    </details>
+    <details class="card feature red" id="badge" data-s="badge &amp; panel a tiny swinging spider that opens into the full widget. the widget starts as a small badge hanging from a thread. a coloured ring shows the mood: none = calm, yellow = alert, red + shake = tingle. a number on it counts unread items. click it to open the panel; ▲ in the panel banner folds it back. drag either to move; the position is remembered and clamped to your screen (tray → reset position if it ever goes missing). after 3 minutes without keyboard or mouse the badge naps (dims, &quot;z z&quot;) and wakes when you come back. always-on-top and opacity are in the tray menu; close (alt+f4) only hides the widget — quit is in the tray. ">
+      <summary><span class="ico">🕷</span><span class="ttl">Badge &amp; panel<span class="sum">A tiny swinging spider that opens into the full widget.</span></span></summary>
+      <div class="body"><ul><li>The widget starts as a small badge hanging from a thread. A coloured ring shows the mood: none = calm, yellow = alert, red + shake = tingle. A number on it counts unread items.</li><li>Click it to open the panel; ▲ in the panel banner folds it back. Drag either to move; the position is remembered and clamped to your screen (tray → Reset position if it ever goes missing).</li><li>After 3 minutes without keyboard or mouse the badge naps (dims, &quot;z z&quot;) and wakes when you come back.</li><li>Always-on-top and opacity are in the tray menu; close (Alt+F4) only hides the widget — Quit is in the tray.</li></ul>
+      </div>
+    </details>
+    <details class="card feature red" id="timer" data-s="web timer a focus/break timer with a streak. focus is 25 minutes, break is 5. press ▶ to start/pause, ↺ to reset, click the focus/break chip to switch. when time is up the widget tingles, chirps and notifies, then switches to the other mode. finished focus sessions today show as ★n on the chip. &quot;focus quiet&quot;: while a focus timer runs, system alerts (cpu, ram…) stay visual — no chirp, no popup — so they cannot break your concentration. reminders and the timer itself still speak up. ">
+      <summary><span class="ico">⏱</span><span class="ttl">Web timer<span class="sum">A focus/break timer with a streak.</span></span></summary>
+      <div class="body"><ul><li>FOCUS is 25 minutes, BREAK is 5. Press ▶ to start/pause, ↺ to reset, click the FOCUS/BREAK chip to switch.</li><li>When time is up the widget tingles, chirps and notifies, then switches to the other mode.</li><li>Finished focus sessions today show as ★N on the chip.</li><li>&quot;Focus quiet&quot;: while a focus timer runs, system alerts (CPU, RAM…) stay visual — no chirp, no popup — so they cannot break your concentration. Reminders and the timer itself still speak up.</li></ul>
+      </div>
+    </details>
+    <details class="card feature red" id="reminders" data-s="thwip reminders type &quot;in 20m stretch&quot; or &quot;at 3pm call mum&quot;. use the command box (ctrl+alt+k). up to 6 pending reminders appear as chips under it with a live countdown; ✕ cancels one. when due: the widget tingles, the caption reads &quot;thwip! &lt;your text&gt;&quot;, and windows shows a notification. reminders are stored locally and survive a restart. ">
+      <summary><span class="ico">📌</span><span class="ttl">THWIP reminders<span class="sum">Type &quot;in 20m stretch&quot; or &quot;at 3pm call mum&quot;.</span></span></summary>
+      <div class="body"><ul><li>Use the command box (Ctrl+Alt+K). Up to 6 pending reminders appear as chips under it with a live countdown; ✕ cancels one.</li><li>When due: the widget tingles, the caption reads &quot;THWIP! &lt;your text&gt;&quot;, and Windows shows a notification.</li><li>Reminders are stored locally and survive a restart.</li></ul>
+      </div>
+    </details>
+    <details class="card feature red" id="karen" data-s="karen — the suit ai a command bar that understands plain words. ctrl+alt+k opens it anywhere. see the full command list below. replies appear in the yellow caption box for ~12 seconds (and can be spoken aloud). ">
+      <summary><span class="ico">🤖</span><span class="ttl">Karen — the suit AI<span class="sum">A command bar that understands plain words.</span></span></summary>
+      <div class="body"><ul><li>Ctrl+Alt+K opens it anywhere. See the full command list below.</li><li>Replies appear in the yellow caption box for ~12 seconds (and can be spoken aloud).</li></ul>
+      </div>
+    </details>
+    <details class="card feature red" id="inbox" data-s="notification inbox every windows notification from every app, in one place. click ✉ in the banner. each row shows the app, the title, the message and the time. click a row to dismiss it; clear empties the list. the newest 100 are kept. the unread count shows on the ✉ and on the badge. opening the inbox marks everything read. on first start it also shows the last few notifications from the past 12 hours, so it is not empty. windows keeps a database of recent notifications for your account (wpndatabase.db). spidey sense reads a private, read-only copy of it every few seconds. nothing is sent anywhere. tray → &quot;notification inbox&quot; turns it off.">
+      <summary><span class="ico">✉</span><span class="ttl">Notification inbox<span class="sum">Every Windows notification from every app, in one place.</span></span></summary>
+      <div class="body"><ul><li>Click ✉ in the banner. Each row shows the app, the title, the message and the time. Click a row to dismiss it; CLEAR empties the list. The newest 100 are kept.</li><li>The unread count shows on the ✉ and on the badge. Opening the inbox marks everything read.</li><li>On first start it also shows the last few notifications from the past 12 hours, so it is not empty.</li></ul>
+      <div class="reads"><b>What it reads:</b> Windows keeps a database of recent notifications for your account (wpndatabase.db). Spidey Sense reads a private, read-only copy of it every few seconds. Nothing is sent anywhere. Tray → &quot;Notification inbox&quot; turns it off.</div></div>
+    </details>
+    <details class="card feature red" id="guardian" data-s="guardian — danger sense notices things that should make you look twice. it tingles (and logs, see the status light in the banner) when: a program contacts the internet for the first time; a new auto-start entry appears; the hosts file changes; or a new drive (usb stick, card, phone) is connected. for the first 3 minutes after the very first run it only learns what is normal, so it does not alert on everything you already use. at most one alert every 20 seconds. click the round status light in the banner to read the log. uses netstat, tasklist and reg.exe plus a hash of the hosts file. no admin rights, no network calls. tray → &quot;guardian&quot; turns it off.">
+      <summary><span class="ico">🛡</span><span class="ttl">Guardian — danger sense<span class="sum">Notices things that should make you look twice.</span></span></summary>
+      <div class="body"><ul><li>It tingles (and logs, see the status light in the banner) when: a program contacts the internet for the first time; a new auto-start entry appears; the hosts file changes; or a new drive (USB stick, card, phone) is connected.</li><li>For the first 3 minutes after the very first run it only learns what is normal, so it does not alert on everything you already use.</li><li>At most one alert every 20 seconds. Click the round status light in the banner to read the log.</li></ul>
+      <div class="reads"><b>What it reads:</b> Uses netstat, tasklist and reg.exe plus a hash of the hosts file. No admin rights, no network calls. Tray → &quot;Guardian&quot; turns it off.</div></div>
+    </details>
+    <details class="card feature red" id="edith" data-s="e.d.i.t.h. — threat assessment a read-only security check with a score. ask karen &quot;am i safe?&quot; or use the tray. it checks: antivirus running, windows firewall, user account control, remote desktop, which ports listen to the network (and which app owns them), startup entries running from temp/downloads, and whether windows is waiting for a restart. you get a score out of 100 and green / amber / red, with one line of explanation per check (✔ fine, ⚠ worth a look, ✖ fix this, ? could not tell). it never changes any setting. a third-party antivirus shows as &quot;?&quot; because it cannot be verified from outside. ">
+      <summary><span class="ico">🔍</span><span class="ttl">E.D.I.T.H. — threat assessment<span class="sum">A read-only security check with a score.</span></span></summary>
+      <div class="body"><ul><li>Ask Karen &quot;am I safe?&quot; or use the tray. It checks: antivirus running, Windows Firewall, User Account Control, Remote Desktop, which ports listen to the network (and which app owns them), startup entries running from Temp/Downloads, and whether Windows is waiting for a restart.</li><li>You get a score out of 100 and GREEN / AMBER / RED, with one line of explanation per check (✔ fine, ⚠ worth a look, ✖ fix this, ? could not tell).</li><li>It never changes any setting. A third-party antivirus shows as &quot;?&quot; because it cannot be verified from outside.</li></ul>
+      </div>
+    </details>
+    <details class="card feature red" id="daily" data-s="the daily web an end-of-day comic newspaper made from your own day. ask karen &quot;daily web&quot; or &quot;how was my day&quot;, or use the tray. a front page opens with a headline chosen from your day (a memory hog, a long focus run, a security scare, or &quot;quiet day&quot;), a photo of the web at its peak, and stats: focus time, tingles by cause, notifications, guardian alerts, eye breaks. save writes a png, copy puts it on the clipboard. after 9 pm spidey sense also nudges you once that today’s edition is out (tray toggle). the counters behind it are kept on your pc for 14 days. ">
+      <summary><span class="ico">📰</span><span class="ttl">The Daily Web<span class="sum">An end-of-day comic newspaper made from your own day.</span></span></summary>
+      <div class="body"><ul><li>Ask Karen &quot;daily web&quot; or &quot;how was my day&quot;, or use the tray. A front page opens with a headline chosen from your day (a memory hog, a long focus run, a security scare, or &quot;quiet day&quot;), a photo of the web at its peak, and stats: focus time, tingles by cause, notifications, guardian alerts, eye breaks.</li><li>SAVE writes a PNG, COPY puts it on the clipboard. After 9 pm Spidey Sense also nudges you once that today’s edition is out (tray toggle).</li><li>The counters behind it are kept on your PC for 14 days.</li></ul>
+      </div>
+    </details>
+    <details class="card feature red" id="locker" data-s="suit locker healthy habits earn xp; levels unlock colour suits. xp: focus session +40 · guardian alert +10 · daily web opened +15 (once a day) · e.d.i.t.h. scan +10 (once a day) · eye-rest nudge +5 · reminder fired +5. level = floor(√(xp ÷ 50)) + 1. suits: classic (l1), midnight (l2), gold armor (l3), neon noir (l4), pop art (l5), prism (l7). click ★ in the banner, or tell karen &quot;wear the neon suit&quot;. alert colours (yellow / red) never change with a suit, so a warning always looks like a warning. ">
+      <summary><span class="ico">★</span><span class="ttl">Suit Locker<span class="sum">Healthy habits earn XP; levels unlock colour suits.</span></span></summary>
+      <div class="body"><ul><li>XP: focus session +40 · guardian alert +10 · Daily Web opened +15 (once a day) · E.D.I.T.H. scan +10 (once a day) · eye-rest nudge +5 · reminder fired +5.</li><li>Level = floor(√(XP ÷ 50)) + 1. Suits: Classic (L1), Midnight (L2), Gold Armor (L3), Neon Noir (L4), Pop Art (L5), Prism (L7).</li><li>Click ★ in the banner, or tell Karen &quot;wear the neon suit&quot;. Alert colours (yellow / red) never change with a suit, so a warning always looks like a warning.</li></ul>
+      </div>
+    </details>
+    <details class="card feature red" id="capture" data-s="web-capture comic-book screenshots. press ctrl+alt+c (or ask karen &quot;take a screenshot&quot;). the widget hides, the screen freezes, and you drag a box around what you want. it becomes a comic panel: posterised colour, black ink outlines, halftone shading, a frame, and a yellow caption box. edit the caption (default thwip!) and the panel updates live. copy → clipboard, save → png file, again → pick another region, close or esc → done. nothing is uploaded. ">
+      <summary><span class="ico">📸</span><span class="ttl">Web-Capture<span class="sum">Comic-book screenshots.</span></span></summary>
+      <div class="body"><ul><li>Press Ctrl+Alt+C (or ask Karen &quot;take a screenshot&quot;). The widget hides, the screen freezes, and you drag a box around what you want.</li><li>It becomes a comic panel: posterised colour, black ink outlines, halftone shading, a frame, and a yellow caption box. Edit the caption (default THWIP!) and the panel updates live.</li><li>COPY → clipboard, SAVE → PNG file, AGAIN → pick another region, CLOSE or Esc → done. Nothing is uploaded.</li></ul>
+      </div>
+    </details>
+    <details class="card feature red" id="eye" data-s="eye-rest nudge (20-20-20) every 20 minutes of continuous use: look 20 feet away for 20 seconds. counts only time you are actually active; a 2-minute pause counts as a real break and resets it. tray → &quot;eye-rest nudge&quot; turns it off. ">
+      <summary><span class="ico">👁</span><span class="ttl">Eye-rest nudge (20-20-20)<span class="sum">Every 20 minutes of continuous use: look 20 feet away for 20 seconds.</span></span></summary>
+      <div class="body"><ul><li>Counts only time you are actually active; a 2-minute pause counts as a real break and resets it.</li><li>Tray → &quot;Eye-rest nudge&quot; turns it off.</li></ul>
+      </div>
+    </details>
+    <details class="card feature red" id="startup" data-s="launch at login &amp; auto-update starts with windows and keeps itself current. launch at login is on by default. it writes a per-user startup entry (no admin), reads it back to verify, and repairs it on every launch if the folder moved or something deleted it. tray → &quot;launch at startup&quot; turns it off. updates: 30 seconds after start and every 6 hours it checks github releases, downloads only the changed blocks, verifies the hash, and installs when you quit — or tray → &quot;restart to update&quot;, or tell karen &quot;install update&quot;. ">
+      <summary><span class="ico">🚀</span><span class="ttl">Launch at login &amp; auto-update<span class="sum">Starts with Windows and keeps itself current.</span></span></summary>
+      <div class="body"><ul><li>Launch at login is ON by default. It writes a per-user startup entry (no admin), reads it back to verify, and repairs it on every launch if the folder moved or something deleted it. Tray → &quot;Launch at startup&quot; turns it off.</li><li>Updates: 30 seconds after start and every 6 hours it checks GitHub releases, downloads only the changed blocks, verifies the hash, and installs when you quit — or tray → &quot;Restart to update&quot;, or tell Karen &quot;install update&quot;.</li></ul>
+      </div>
+    </details></section>
+
+  <section id="tray"><h2>🕷 Tray menu</h2>
+    <div class="card" data-s="tray menu show / hide the web open widget / collapse to badge always on top opacity (100 / 85 / 70 / 55 %) ram alerts (auto / above 90 % / above 95 % / never) spider-sense sound eye-rest nudge (20-20-20) karen speaks her replies web-capture: comic screenshot suit locker (xp) e.d.i.t.h. threat assessment today’s daily web (front page) daily web ready nudge (9 pm) notification inbox guardian (danger sense) desktop notifications network check (pings gstatic.com) launch at startup check for updates / restart to update help &amp; all commands (this manual) reset position quit spidey sense"><p style="margin-top:0">Right-click the red spider next to the clock:</p>
+    <ul class="tray"><li>Show / Hide the web</li><li>Open widget / Collapse to badge</li><li>Always on top</li><li>Opacity (100 / 85 / 70 / 55 %)</li><li>RAM alerts (Auto / above 90 % / above 95 % / never)</li><li>Spider-sense sound</li><li>Eye-rest nudge (20-20-20)</li><li>Karen speaks her replies</li><li>Web-Capture: comic screenshot</li><li>Suit locker (XP)</li><li>E.D.I.T.H. threat assessment</li><li>Today’s Daily Web (front page)</li><li>Daily Web ready nudge (9 pm)</li><li>Notification inbox</li><li>Guardian (danger sense)</li><li>Desktop notifications</li><li>Network check (pings gstatic.com)</li><li>Launch at startup</li><li>Check for updates / Restart to update</li><li>Help &amp; all commands (this manual)</li><li>Reset position</li><li>Quit Spidey Sense</li></ul></div>
+  </section>
+
+  <section id="privacy"><h2>🔒 Privacy & your data</h2>
+    <div class="card blue" data-s="privacy no accounts, no analytics, no api keys. nothing you do is uploaded. network use, in full: a tiny head request to gstatic.com every 8 seconds (can be turned off), a github check for updates (30 s after start, then every 6 h), and — only if you install ollama — local traffic to 127.0.0.1. read-only access to windows facilities: the notification database, `netstat`, `tasklist`, `reg query`, `sc query`, and a hash of the hosts file. it changes nothing on your system except its own startup entry and its own files."><ul><li>No accounts, no analytics, no API keys. Nothing you do is uploaded.</li><li>Network use, in full: a tiny HEAD request to gstatic.com every 8 seconds (can be turned off), a GitHub check for updates (30 s after start, then every 6 h), and — only if you install Ollama — local traffic to 127.0.0.1.</li><li>Read-only access to Windows facilities: the notification database, `netstat`, `tasklist`, `reg query`, `sc query`, and a hash of the hosts file. It changes nothing on your system except its own startup entry and its own files.</li></ul></div>
+    <div class="card" data-s="data files storage settings%appdata%\spidey sense\settings.json guardian memory%appdata%\spidey sense\guardian.json reminders, inbox, xp, daily countersthe widget’s local storage under %appdata%\spidey sense startup log%appdata%\spidey sense\startup.log downloaded updates&lt;install folder&gt;-updates"><table><tr><th>What</th><th>Where</th><th>Notes</th></tr>
+      <tr><td>Settings</td><td><code>%APPDATA%\Spidey Sense\settings.json</code></td><td>opacity, toggles, window position, view</td></tr><tr><td>Guardian memory</td><td><code>%APPDATA%\Spidey Sense\guardian.json</code></td><td>which programs / startup entries / drives are &quot;normal&quot;</td></tr><tr><td>Reminders, inbox, XP, daily counters</td><td><code>the widget’s local storage under %APPDATA%\Spidey Sense</code></td><td>last 100 inbox items, 14 days of counters</td></tr><tr><td>Startup log</td><td><code>%APPDATA%\Spidey Sense\startup.log</code></td><td>only written if enabling launch-at-login ever fails</td></tr><tr><td>Downloaded updates</td><td><code>&lt;install folder&gt;-updates</code></td><td>removed on uninstall</td></tr></table></div>
+  </section>
+
+  <section id="trouble"><h2>🛠 Troubleshooting</h2>
+    <details class="faq" data-s="the widget disappeared. right-click the tray spider → &quot;show the web&quot;. if it is off-screen: tray → &quot;reset position&quot;."><summary>The widget disappeared.</summary><p>Right-click the tray spider → &quot;Show the web&quot;. If it is off-screen: tray → &quot;Reset position&quot;.</p></details><details class="faq" data-s="ctrl+alt+k / ctrl+alt+c does nothing. another program owns that shortcut. close it, or use the tray menu / karen instead — everything the hotkeys do is also in the tray."><summary>Ctrl+Alt+K / Ctrl+Alt+C does nothing.</summary><p>Another program owns that shortcut. Close it, or use the tray menu / Karen instead — everything the hotkeys do is also in the tray.</p></details><details class="faq" data-s="my ram is always at 97 % — will it tingle forever? no. ram alerts use &quot;auto&quot; mode: they fire on jumps above this pc’s normal level. choose a fixed threshold or &quot;never&quot; in tray → ram alerts."><summary>My RAM is always at 97 % — will it tingle forever?</summary><p>No. RAM alerts use &quot;Auto&quot; mode: they fire on jumps above this PC’s normal level. Choose a fixed threshold or &quot;never&quot; in tray → RAM alerts.</p></details><details class="faq" data-s="the inbox is empty. it only shows notifications windows recorded. check windows settings → system → notifications, and tray → &quot;notification inbox&quot; is ticked. some apps (and do not disturb) never create a notification record."><summary>The inbox is empty.</summary><p>It only shows notifications Windows recorded. Check Windows Settings → System → Notifications, and tray → &quot;Notification inbox&quot; is ticked. Some apps (and Do Not Disturb) never create a notification record.</p></details><details class="faq" data-s="karen says &quot;not sure i follow&quot;. say &quot;help&quot; for the phrasing she knows, or install ollama and a small model for free-form chat."><summary>Karen says &quot;not sure I follow&quot;.</summary><p>Say &quot;help&quot; for the phrasing she knows, or install Ollama and a small model for free-form chat.</p></details><details class="faq" data-s="e.d.i.t.h. shows &quot;?&quot; for antivirus. windows defender is not running, usually because a third-party antivirus is in charge. that is normal; spidey sense cannot verify other products."><summary>E.D.I.T.H. shows &quot;?&quot; for antivirus.</summary><p>Windows Defender is not running, usually because a third-party antivirus is in charge. That is normal; Spidey Sense cannot verify other products.</p></details><details class="faq" data-s="smartscreen warns about the installer. the installer is not code-signed yet. click more info → run anyway."><summary>SmartScreen warns about the installer.</summary><p>The installer is not code-signed yet. Click More info → Run anyway.</p></details><details class="faq" data-s="it does not start with windows. tray → &quot;launch at startup&quot; should be ticked. check task manager → startup apps that &quot;spidey sense&quot; is not disabled there. the log %appdata%\spidey sense\startup.log lists any write failure."><summary>It does not start with Windows.</summary><p>Tray → &quot;Launch at startup&quot; should be ticked. Check Task Manager → Startup apps that &quot;Spidey Sense&quot; is not disabled there. The log %APPDATA%\Spidey Sense\startup.log lists any write failure.</p></details><details class="faq" data-s="how do i uninstall? windows settings → apps → spidey sense. the startup entry and downloaded updates are removed with it."><summary>How do I uninstall?</summary><p>Windows Settings → Apps → Spidey Sense. The startup entry and downloaded updates are removed with it.</p></details><details class="faq" data-s="an update failed. tray → &quot;check for updates&quot; retries. or download the newest installer from the releases page and run it over the old one."><summary>An update failed.</summary><p>Tray → &quot;Check for updates&quot; retries. Or download the newest installer from the releases page and run it over the old one.</p></details>
+  </section>
+
+  <section id="cli"><h2>⌨ The command line</h2>
+    <div class="card" data-s="command line cli spidey.cmd terminal"><p style="margin-top:0">Prefer a terminal? The installer drops a <code>spidey.cmd</code> next to the app. From a checkout use <code>node bin/spidey.js</code> (or <code>npm run help</code>).</p>
+    <table><tr><th>Command</th><th>Shows</th></tr>
+    <tr><td><code>spidey help</code></td><td>Overview and topics</td></tr>
+    <tr><td><code>spidey commands</code></td><td>Every Karen command with examples</td></tr>
+    <tr><td><code>spidey features</code> · <code>spidey feature guardian</code></td><td>Feature list, or one feature in full</td></tr>
+    <tr><td><code>spidey hotkeys</code> · <code>tray</code> · <code>privacy</code> · <code>data</code> · <code>troubleshoot</code></td><td>The matching section of this manual</td></tr>
+    <tr><td><code>spidey search ram</code></td><td>Search the whole manual</td></tr>
+    <tr><td><code>spidey docs</code></td><td>Open this page</td></tr></table></div>
+  </section>
+</main></div>
+<footer>Spidey Sense · fan-made, not affiliated with Marvel · all artwork is original/procedural · <a href="https://github.com/DhruvHarani1/spidey-sense">https://github.com/DhruvHarani1/spidey-sense</a></footer>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const q=document.getElementById('q');
+const blocks=[...document.querySelectorAll('[data-s]')];
+q.addEventListener('input',()=>{const t=q.value.trim().toLowerCase();let n=0;
+ blocks.forEach(b=>{const hit=!t||b.dataset.s.includes(t);b.classList.toggle('hidden',!hit);if(hit&&t)n++;if(b.tagName==='DETAILS'&&t)b.open=hit});
+ document.getElementById('count').textContent=t?n+' match'+(n===1?'':'es'):''});
+const toast=document.getElementById('toast');
+document.addEventListener('click',e=>{const c=e.target.closest('code[data-copy]');if(!c)return;
+ (navigator.clipboard?navigator.clipboard.writeText(c.dataset.copy):Promise.reject()).then(()=>{toast.textContent='COPIED: '+c.dataset.copy;toast.classList.add('on');setTimeout(()=>toast.classList.remove('on'),1400)}).catch(()=>{})});
+</script>
+</body></html>

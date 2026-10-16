@@ -48,7 +48,7 @@
       if (/^(n|no|nope|cancel|stop|never ?mind)$/.test(t)) return { say: 'OKAY, WEB’S UNTOUCHED.', action: { type: 'cancel-kill' } }
     }
 
-    if (/^(help|\?|what can you do|commands)$/.test(t)) return { say: HELP }
+    if (/^(help|\?|commands)$/.test(t)) return { say: HELP }
     if (/^(hi|hello|hey|yo|sup)( karen)?$/.test(t)) return { say: 'HEY. FRIENDLY NEIGHBOURHOOD KAREN HERE.' }
     if (/^(thanks|thank you|thx|nice|good job)/.test(t)) return { say: 'ANYTIME. WITH GREAT POWER…' }
     if (/\b(what('?s| is)? the )?(time|date|day)\b/.test(t) && /^(what|time|date|day|tell)/.test(t)) {
@@ -98,6 +98,7 @@
 
     if (/\b(install|apply)( the)? update\b|\brestart (and|to) update\b|\bupdate now\b/.test(t)) return { action: { type: 'update-install' } }
     if (/\b(check (for )?updates?|any updates?|is there an update|new version|update (the )?(app|widget|spidey( sense)?)|am i up to date|what version)\b/.test(t)) return { action: { type: 'update-check' } }
+    if (/\b(manual|documentation|docs|user guide|all (the )?commands|full help|help (me )?(page|window)|what can (you|this) do)\b/.test(t)) return { action: { type: 'help-window' }, say: 'OPENING THE MANUAL.' }
     if (/\b(web[- ]?capture|screen ?shot|capture( the)?( my)? screen|comic (panel|shot|screenshot)|snap (the|my) screen)\b/.test(t)) return { action: { type: 'capture' }, say: 'SMILE! DRAG A BOX AROUND WHAT YOU WANT.' }
     if (/\b(daily web|newspaper|front page|how was my day|recap my day|day recap|end of day)\b/.test(t)) return { action: { type: 'bugle' } }
     if (/\b(edith|e\.d\.i\.t\.h|threat (assessment|level|scan)|security (check|scan|status)|(scan|check) (my )?(pc|computer|laptop|security)|am i safe|is my (pc|computer|laptop) safe)\b/.test(t)) return { action: { type: 'edith' } }
@@ -221,6 +222,9 @@
         break
       case 'capture':
         window.spidey.startCapture()
+        break
+      case 'help-window':
+        window.spidey.openHelp()
         break
       case 'update-check': {
         say('CHECKING GITHUB FOR A NEWER SUIT…')

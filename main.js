@@ -1,5 +1,5 @@
 'use strict'
-const { app, BrowserWindow, desktopCapturer, dialog, globalShortcut, Menu, powerMonitor, Notification, Tray, ipcMain, nativeImage, net, screen } = require('electron')
+const { app, BrowserWindow, desktopCapturer, shell, dialog, globalShortcut, Menu, powerMonitor, Notification, Tray, ipcMain, nativeImage, net, screen } = require('electron')
 const fs = require('node:fs')
 const os = require('node:os')
 const path = require('node:path')
@@ -247,6 +247,7 @@ function buildTray() {
       { type: 'separator' },
       updateMenuItem(),
       { type: 'separator' },
+      { label: 'Help & all commands (manual)', click: () => openHelp() },
       { label: 'Reset position', click: () => { settings.position = null; const d = defaultPosition(); win?.setPosition(d.x, d.y); saveSettings() } },
       { label: 'Quit Spidey Sense', click: () => app.quit() }
     ])
@@ -486,6 +487,49 @@ ipcMain.handle('capture:save', async (e, dataUrl, suggested) => {
   if (r.canceled || !r.filePath) return false
   fs.writeFileSync(r.filePath, img.toPNG())
   return true
+})
+
+/** @type {BrowserWindow | null} */
+let helpWin = null
+
+/** The offline manual (generated from help-data.js) in its own window. */
+function openHelp() {
+  if (helpWin) {
+    helpWin.show()
+    helpWin.focus()
+    return
+  }
+  helpWin = new BrowserWindow({
+    width: 1180,
+    height: 820,
+    minWidth: 700,
+    minHeight: 500,
+    backgroundColor: '#0a1131',
+    title: 'Spidey Sense — manual',
+    icon: iconPath(),
+    autoHideMenuBar: true,
+    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true }
+  })
+  helpWin.setMenuBarVisibility(false)
+  // the manual is static local HTML; any real link opens in the browser, never inside this window
+  helpWin.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https:\/\//i.test(url)) void shell.openExternal(url)
+    return { action: 'deny' }
+  })
+  helpWin.webContents.on('will-navigate', (e, url) => {
+    if (!url.startsWith('file:')) {
+      e.preventDefault()
+      if (/^https:\/\//i.test(url)) void shell.openExternal(url)
+    }
+  })
+  helpWin.on('closed', () => {
+    helpWin = null
+  })
+  helpWin.loadFile(path.join(__dirname, 'renderer', 'help.html'))
+}
+
+ipcMain.on('help:open', (e) => {
+  if (e.sender === win?.webContents) openHelp()
 })
 
 function openLocker() {

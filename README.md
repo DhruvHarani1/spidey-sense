@@ -34,6 +34,14 @@ npm test
 
 Fan art; not affiliated with Marvel. All artwork is original/procedural.
 
+## Manual & command line
+
+Everything the gadget can do is documented in one place, three ways — all generated from `help-data.js`, and tested so the manual can never describe a command that does not work:
+
+- **In the app:** tray → "Help & all commands", or tell Karen "open the manual". A searchable, offline, illustrated manual opens in its own window.
+- **In a terminal:** the installer puts `spidey.cmd` next to the app. `spidey help`, `spidey commands`, `spidey features`, `spidey feature guardian`, `spidey hotkeys`, `spidey tray`, `spidey privacy`, `spidey troubleshoot`, `spidey search ram`, `spidey docs`. To type just `spidey` anywhere, add the install folder to your PATH. From a checkout: `npm run help` or `node bin/spidey.js commands`.
+- **On the web:** `docs/index.html` (regenerate with `npm run docs`; it is also what the app shows).
+
 ## Karen (the suit AI)
 
 Press **Ctrl+Alt+K** anywhere (or click the box in the panel) and ask in plain words: `status`, `cpu?`, `what is eating my ram`, `remind me to stretch in 20 minutes`, `at 3pm call mum`, `start focus`, `take a break`, `mute`, `opacity 70`, `collapse`, `kill chrome` (always asks first; system processes are protected).

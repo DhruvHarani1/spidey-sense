@@ -98,3 +98,9 @@ assert.deepEqual(interpret('take a screenshot', ctx).action, { type: 'capture' }
 assert.deepEqual(interpret('web capture', ctx).action, { type: 'capture' })
 assert.deepEqual(interpret('make a comic panel', ctx).action, { type: 'capture' })
 console.log('karen capture: ALL PASS')
+
+// manual
+assert.deepEqual(interpret('open the manual', ctx).action, { type: 'help-window' })
+assert.deepEqual(interpret('what can you do', ctx).action, { type: 'help-window' })
+assert.equal(interpret('help', ctx).action, undefined, 'plain help stays a quick list')
+console.log('karen manual: ALL PASS')
