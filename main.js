@@ -166,7 +166,9 @@ function syncLoginItem(enable) {
   }
   const key = String.raw`HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
   const args = enable ? ['add', key, '/v', 'SpideySense', '/t', 'REG_SZ', '/d', '"' + process.execPath + '"', '/f'] : ['delete', key, '/v', 'SpideySense', '/f']
-  execFile('reg.exe', args, { windowsHide: true }, () => {})
+  execFile('reg.exe', args, { windowsHide: true }, (err) => {
+    if (err) fs.appendFileSync(path.join(app.getPath('userData'), 'startup.log'), new Date().toISOString() + ' ' + err.message + '\n')
+  })
 }
 
 function iconPath() {
@@ -370,6 +372,7 @@ if (!app.requestSingleInstanceLock()) {
     loadSettings()
     createWindow()
     buildTray()
+    syncLoginItem(settings.startup)
     setInterval(sample, SAMPLE_MS)
     topTimer = setInterval(() => {
       if (win?.isVisible() && settings.alwaysOnTop) {
