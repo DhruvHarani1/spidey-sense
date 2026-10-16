@@ -3,6 +3,7 @@ const { app, BrowserWindow, Menu, Notification, Tray, ipcMain, nativeImage, net,
 const fs = require('node:fs')
 const os = require('node:os')
 const path = require('node:path')
+const { execFile } = require('node:child_process')
 
 const WIN_W = 300
 const WIN_H = 490
@@ -17,6 +18,7 @@ const DEFAULTS = {
   notifications: true,
   netProbe: true,
   startup: false,
+  ramMode: 'auto', // auto = alert on spikes above this PC's usual level | 90 | 95 | off
   position: null
 }
 
@@ -55,7 +57,7 @@ function update(patch) {
   buildTray()
 }
 
-const publicSettings = () => ({ opacity: settings.opacity, sound: settings.sound, notifications: settings.notifications, netProbe: settings.netProbe })
+const publicSettings = () => ({ opacity: settings.opacity, sound: settings.sound, notifications: settings.notifications, netProbe: settings.netProbe, ramMode: settings.ramMode })
 
 // ---------------------------------------------------------------- window
 /** @type {BrowserWindow | null} */
@@ -160,6 +162,15 @@ function buildTray() {
           click: () => update({ opacity: o })
         }))
       },
+      {
+        label: 'RAM alerts',
+        submenu: [
+          ['auto', 'Auto (spikes above usual)'],
+          ['90', 'Above 90%'],
+          ['95', 'Above 95%'],
+          ['off', 'Never']
+        ].map(([v, label]) => ({ label, type: 'radio', checked: settings.ramMode === v, click: () => update({ ramMode: v }) }))
+      },
       { type: 'separator' },
       check('Spider-sense sound', 'sound'),
       check('Desktop notifications', 'notifications'),
@@ -239,8 +250,27 @@ async function probeNetwork() {
   }
 }
 
+let hog = null
+function refreshHog() {
+  execFile('tasklist', ['/fo', 'csv', '/nh'], { windowsHide: true, maxBuffer: 8e6 }, (err, out) => {
+    if (err) return
+    const by = new Map()
+    for (const line of out.split(/\r?\n/)) {
+      const c = line.match(/"([^"]*)"/g)
+      if (!c || c.length < 5) continue
+      const name = c[0].slice(1, -1).replace(/\.exe$/i, '')
+      const kb = parseInt(c[4].replace(/[^0-9]/g, ''), 10) || 0
+      by.set(name, (by.get(name) || 0) + kb)
+    }
+    let best = null
+    for (const [name, kb] of by) if (!best || kb > best.kb) best = { name, kb }
+    hog = best ? { name: best.name, mb: Math.round(best.kb / 1024) } : null
+  })
+}
+
 async function sample() {
   tick++
+  if (tick % 10 === 1) refreshHog()
   if (settings.netProbe) {
     if (tick % PROBE_EVERY === 1) void probeNetwork()
   } else {
@@ -255,7 +285,8 @@ async function sample() {
     latencyMs,
     online,
     uptimeS: os.uptime(),
-    probing: settings.netProbe
+    probing: settings.netProbe,
+    hog
   }
   win?.webContents.send('stats', stats)
 }

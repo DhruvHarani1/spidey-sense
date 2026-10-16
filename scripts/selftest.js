@@ -31,7 +31,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
     fs.writeFileSync(path.join(out, name + '.png'), Buffer.from(r.result.data, 'base64'))
   }
 
-  await sleep(1500)
+  await sleep(4000)
   check('test hook present', await ev('!!window.__spidey'))
     await shot('calm')
 
@@ -62,6 +62,17 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
   check('offline => tingle', (await ev('document.getElementById("panel").dataset.level')) === 'tingle')
   await ev('__spidey.force({raw:{cpu:10,ram:30,disk:40,online:true,latencyMs:30},danger:[10,30,40,0,6]})')
   await sleep(1500)
+
+  // RAM alert logic: steady 97% must stay quiet; a jump must alert
+  await ev('__spidey.settings.ramMode="auto"; __spidey.ramHistory.length=0; for(let i=0;i<60;i++) __spidey.ramHistory.push(97)')
+  check('steady 97% => no RAM alert', (await ev('__spidey.ramAlert(97)')) === 0)
+  await ev('__spidey.ramHistory.length=0; for(let i=0;i<60;i++) __spidey.ramHistory.push(60)')
+  check('jump 60->97 => RAM tingle', (await ev('__spidey.ramAlert(97)')) >= 90)
+  await ev('__spidey.settings.ramMode="95"')
+  check('mode 95 at 97 => alert', (await ev('__spidey.ramAlert(97)')) >= 75)
+  await ev('__spidey.settings.ramMode="off"')
+  check('mode off => 0', (await ev('__spidey.ramAlert(99)')) === 0)
+  await ev('__spidey.settings.ramMode="auto"')
 
   // timer
   if ((await ev('__spidey.timer.mode')) !== 'focus') await ev('document.getElementById("tmode").click()')

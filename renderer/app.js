@@ -22,9 +22,11 @@
   canvas.height = H * dpr
   ctx.scale(dpr, dpr)
 
-  const settings = { sound: true, opacity: 1 }
+  const settings = { sound: true, opacity: 1, ramMode: 'auto' }
+  const ramHistory = []
   const state = {
-    target: [0, 0, 0, 0, 0], // 0-100 "danger" per axis
+    target: [0, 0, 0, 0, 0], // 0-100 value drawn per axis
+    alert: [0, 0, 0, 0, 0], // what actually drives alert levels (RAM is baseline-aware)
     shown: [0, 0, 0, 0, 0],
     raw: null,
     level: 'calm',
@@ -44,15 +46,15 @@
   function culprit(raw) {
     // the axis with the highest danger
     let best = 0
-    state.target.forEach((v, i) => {
-      if (v > state.target[best]) best = i
+    state.alert.forEach((v, i) => {
+      if (v > state.alert[best]) best = i
     })
     const r = raw
     switch (AXES[best]) {
       case 'cpu':
         return `CPU REDLINING AT ${Math.round(r.cpu)}%!`
       case 'ram':
-        return `MEMORY AT ${Math.round(r.ram)}% — SOMETHING’S HOARDING!`
+        return r.hog ? `MEMORY SPIKE (${Math.round(r.ram)}%) — ${r.hog.name.toUpperCase()} HOARDING ${r.hog.mb} MB!` : `MEMORY SPIKE AT ${Math.round(r.ram)}%!`
       case 'disk':
         return `DISK ${Math.round(r.disk)}% FULL — TIME TO CLEAN UP!`
       case 'bat':
@@ -72,11 +74,34 @@
     return [raw.cpu, raw.ram, raw.disk, batDanger, net]
   }
 
+  function median(xs) {
+    const s = [...xs].sort((p, q) => p - q)
+    return s[Math.floor(s.length / 2)]
+  }
+  /** RAM on most PCs sits near full (cache). Alert on a jump above the usual level, or a user threshold. */
+  function ramAlert(ram) {
+    ramHistory.push(ram)
+    if (ramHistory.length > 600) ramHistory.shift()
+    const mode = settings.ramMode
+    if (mode === 'off') return 0
+    if (mode === 'auto') {
+      if (ramHistory.length < 30) return 0
+      const spike = ram - median(ramHistory)
+      return spike >= 6 ? 92 : spike >= 3 ? 78 : 0
+    }
+    const t = Number(mode) || 90
+    return ram >= t + (100 - t) / 2 ? 92 : ram >= t ? 78 : 0
+  }
+
   function onStats(raw) {
     if (override) raw = { ...raw, ...override.raw }
     state.raw = raw
     state.target = dangerFrom(raw)
     if (override && override.danger) override.danger.forEach((v, i) => v != null && (state.target[i] = v))
+    state.alert = state.target.slice()
+    // a filling disk changes slowly; only worry when it is really close to full
+    if (!(override && override.danger && override.danger[2] != null)) state.alert[2] = raw.disk >= 95 ? 92 : raw.disk >= 90 ? 78 : 0
+    state.alert[1] = override && override.alertRam != null ? override.alertRam : ramAlert(raw.ram)
 
     // readout chips
     const bat = state.battery
@@ -89,7 +114,7 @@
     ]
     readout.querySelectorAll('li').forEach((li, i) => {
       li.querySelector('span').textContent = text[i]
-      li.dataset.hot = state.target[i] >= TINGLE_AT ? '2' : state.target[i] >= ALERT_AT ? '1' : '0'
+      li.dataset.hot = state.alert[i] >= TINGLE_AT ? '2' : state.alert[i] >= ALERT_AT ? '1' : '0'
     })
 
     updateLevel()
@@ -97,7 +122,7 @@
   }
 
   function rawLevel() {
-    const max = Math.max(...state.target)
+    const max = Math.max(...state.alert)
     return max >= TINGLE_AT ? 'tingle' : max >= ALERT_AT ? 'alert' : 'calm'
   }
   const RANK = { calm: 0, alert: 1, tingle: 2 }
@@ -172,7 +197,7 @@
   function onTingle() {
     chirp()
     if (state.timerAlert > Date.now()) return
-    const kind = AXES[state.target.indexOf(Math.max(...state.target))]
+    const kind = AXES[state.alert.indexOf(Math.max(...state.alert))]
     window.spidey.notify(kind, 'Spider-sense tingling!', culprit(state.raw || { cpu: 0, ram: 0, disk: 0, online: true }).replace(/!$/, '.'))
   }
 
@@ -251,7 +276,7 @@
         moving = true
       } else state.shown[i] = state.target[i]
     }
-    const hot = state.target.map((v) => (v >= ALERT_AT ? 1 : 0))
+    const hot = state.alert.map((v) => (v >= ALERT_AT ? 1 : 0))
     window.Spider.drawWeb(ctx, W, H, { values: state.shown, labels: LABELS, level: state.level, t: (now - t0) / 1000, hot })
     if (moving || state.level !== 'calm') raf = requestAnimationFrame(frame)
   }
@@ -262,6 +287,7 @@
   window.spidey.onSettings(applySettings)
   function applySettings(s) {
     settings.sound = !!s.sound
+    settings.ramMode = s.ramMode || 'auto'
   }
   if (navigator.getBattery) {
     navigator.getBattery().then((b) => {
@@ -280,6 +306,9 @@
     window.__spidey = {
       state,
       timer,
+      ramAlert,
+      ramHistory,
+      settings,
       /** force readings: { raw: {cpu, ram, ...}, danger: [..] } or null to release */
       force(o) {
         override = o
