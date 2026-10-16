@@ -57,7 +57,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
   // alert
   await ev('__spidey.force({raw:{cpu:10,ram:30,disk:40,online:true,latencyMs:30},danger:[10,30,40,0,6]})')
-  await sleep(600)
+  for (let i = 0; i < 25 && (await ev('document.getElementById("panel").dataset.level')) !== 'calm'; i++) await sleep(500)
   check('calm with forced low', (await ev('document.getElementById("panel").dataset.level')) === 'calm')
   await ev('__spidey.force({raw:{cpu:80,ram:30,disk:40,online:true},danger:[80,30,40,0,6]})')
   await sleep(1800)
@@ -187,6 +187,16 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
   await shot('daily-web')
   await ev('document.getElementById("bclose").click()')
   check('Daily Web closes', (await ev('document.getElementById("bugle").hidden')) === true)
+
+  // E.D.I.T.H.
+  await ev('Karen.handle("am i safe")')
+  await sleep(6000)
+  check('E.D.I.T.H. overlay opens', (await ev('document.getElementById("edith").hidden')) === false)
+  check('E.D.I.T.H. lists checks', (await ev('document.querySelectorAll("#echecks li").length')) >= 5)
+  check('E.D.I.T.H. shows a score', /^\d+$/.test(await ev('document.getElementById("escore").textContent')))
+  check('Karen summarises the scan', /THREAT LEVEL (GREEN|AMBER|RED)/.test(await ev('document.getElementById("caption").textContent')))
+  await shot('edith')
+  await ev('document.getElementById("eclose").click()')
 
   // timer
   if ((await ev('__spidey.timer.mode')) !== 'focus') await ev('document.getElementById("tmode").click()')

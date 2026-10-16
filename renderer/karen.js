@@ -97,6 +97,7 @@
     if (/\b(more )?transparent\b/.test(t)) return { action: { type: 'opacity', value: 0.7 }, say: 'MORE SEE-THROUGH NOW.' }
 
     if (/\b(daily web|newspaper|front page|how was my day|recap my day|day recap|end of day)\b/.test(t)) return { action: { type: 'bugle' } }
+    if (/\b(edith|e\.d\.i\.t\.h|threat (assessment|level|scan)|security (check|scan|status)|(scan|check) (my )?(pc|computer|laptop|security)|am i safe|is my (pc|computer|laptop) safe)\b/.test(t)) return { action: { type: 'edith' } }
 
     // ---- readings
     if (!st) return { unknown: true }
@@ -186,6 +187,11 @@
       case 'bugle':
         window.dispatchEvent(new CustomEvent('spidey:bugle'))
         break
+      case 'edith': {
+        say('E.D.I.T.H. SCANNING…')
+        say(window.Edith.summary(await window.Edith.open()))
+        break
+      }
       case 'cancel-kill':
         pendingKill = null
         break

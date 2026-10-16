@@ -684,3 +684,71 @@ body[data-idle='1'] .badge__body::after {
   border-radius: 3px;
   background: #efe6cf;
 }
+
+/* ---------- E.D.I.T.H. ---------- */
+#edith {
+  bottom: 70px;
+}
+.eflag {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border: 2.5px solid #000;
+  border-radius: 8px;
+  background: #0f6b3a;
+}
+.eflag[data-level='amber'] {
+  background: #9a6a00;
+}
+.eflag[data-level='red'] {
+  background: #a50f1a;
+}
+.eflag strong {
+  font-size: 26px;
+  font-style: italic;
+  text-shadow: 2px 2px 0 #000;
+}
+.eflag span {
+  font-size: 10px;
+  letter-spacing: 0.05em;
+}
+#echecks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+#echecks li {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 1px 6px;
+  padding: 4px 6px;
+  font-size: 9px;
+  line-height: 1.25;
+  background: rgba(29, 63, 216, 0.25);
+  border: 2px solid #000;
+  border-radius: 5px;
+}
+#echecks li i {
+  grid-row: 1 / 3;
+  font-style: normal;
+  font-size: 13px;
+  align-self: center;
+}
+#echecks li b {
+  color: var(--yellow);
+  font-size: 8px;
+}
+#echecks li span {
+  color: #c9d2ff;
+}
+#echecks li[data-s='warn'] {
+  border-color: #ffb300;
+}
+#echecks li[data-s='bad'] {
+  border-color: var(--red-hot);
+}

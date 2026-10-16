@@ -42,6 +42,10 @@ Click the ✉ in the banner: every Windows notification from every app (WhatsApp
 
 A comic newspaper built from your own day: focus time, tingles by cause, the memory hog, notifications received, guardian alerts, with a headline like `CHROME HOARDS MEMORY — CITY ON EDGE!`. Ask Karen ("daily web", "how was my day"), use the tray, or click the 9 pm nudge. **Save** or **Copy** it as a PNG. Everything is computed locally from counters kept for the last 14 days.
 
+## E.D.I.T.H. (threat assessment)
+
+Ask Karen "am I safe?" (or tray → E.D.I.T.H.) for a read-only security check: antivirus, firewall, UAC, Remote Desktop, open listening ports (and which apps own them), startup items running from Temp/Downloads, pending restarts. You get a score and a green/amber/red level. It only reads (`reg`, `sc`, `netstat`, `tasklist`), needs no admin and changes nothing.
+
 ## Reminders
 
 Type into the panel's THWIP box (or press **Ctrl+Alt+S** anywhere to open it focused): `in 20m stretch`, `in 2h call mum`, `at 15:30 standup`, `at 7pm dinner`. When due, the widget tingles, chirps and notifies. Up to 6 pending, stored locally.

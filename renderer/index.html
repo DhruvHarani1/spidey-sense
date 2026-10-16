@@ -39,6 +39,12 @@
           <canvas id="bpaper" width="1080" height="1500"></canvas>
         </aside>
 
+        <aside class="slog" id="edith" hidden aria-label="E.D.I.T.H. threat assessment">
+          <header><b>E.D.I.T.H.</b><button id="erescan">RESCAN</button><button id="eclose" aria-label="Close">✕</button></header>
+          <div class="eflag" id="eflag" data-level="green"><strong id="escore">–</strong><span id="elevel">SCANNING…</span></div>
+          <ul id="echecks"></ul>
+        </aside>
+
         <canvas id="web" width="260" height="248" aria-label="System load drawn as a spider web"></canvas>
 
         <ul class="readout" id="readout" aria-label="Current readings">
@@ -73,5 +79,6 @@
     <script src="inbox.js"></script>
     <script src="bugle.js"></script>
     <script src="bugle-ui.js"></script>
+    <script src="edith-ui.js"></script>
   </body>
 </html>

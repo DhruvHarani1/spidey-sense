@@ -30,6 +30,11 @@ assert.deepEqual(say('remind me at 3pm to submit report').action, { type: 'remin
 assert.match(say('remind me sometime').say, /WHEN\?/)
 assert.equal(normaliseReminder('Remind me to stretch at 15:30'), 'at 15:30 stretch')
 
+assert.deepEqual(say('am i safe').action, { type: 'edith' })
+assert.deepEqual(say('run a threat assessment').action, { type: 'edith' })
+assert.deepEqual(say('security check').action, { type: 'edith' })
+assert.deepEqual(say('show me the daily web').action, { type: 'bugle' })
+
 // timer + ui + settings
 assert.deepEqual(say('start focus').action, { type: 'timer', op: 'focus' })
 assert.deepEqual(say('take a break').action, { type: 'timer', op: 'break' })

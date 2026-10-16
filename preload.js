@@ -39,6 +39,12 @@ contextBridge.exposeInMainWorld('spidey', {
     ipcRenderer.on('open-bugle', l)
     return () => ipcRenderer.removeListener('open-bugle', l)
   },
+  edithScan: () => ipcRenderer.invoke('edith:scan'),
+  onOpenEdith: (cb) => {
+    const l = () => cb()
+    ipcRenderer.on('open-edith', l)
+    return () => ipcRenderer.removeListener('open-edith', l)
+  },
   setView: (v) => ipcRenderer.send('view:set', v),
   drag: {
     start: () => ipcRenderer.send('drag:start'),

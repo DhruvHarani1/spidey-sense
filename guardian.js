@@ -77,6 +77,22 @@ function run(cmd, args) {
   })
 }
 
+async function currentStartup() {
+  const items = []
+  for (const key of RUN_KEYS) items.push(...parseRegRun(key, await run('reg.exe', ['query', key])))
+  for (const dir of [
+    path.join(process.env.APPDATA || '', 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup'),
+    path.join(process.env.ProgramData || '', 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'StartUp')
+  ]) {
+    try {
+      for (const f of fs.readdirSync(dir)) if (f.toLowerCase() !== 'desktop.ini') items.push(`folder|${f}|${dir}`)
+    } catch {
+      /* missing folder */
+    }
+  }
+  return items
+}
+
 function start({ dataDir, emit, selfNames = [] }) {
   const file = path.join(dataDir, 'guardian.json')
   let st = { born: Date.now(), names: [], startup: [], hosts: '', drives: [] }
@@ -138,22 +154,6 @@ function start({ dataDir, emit, selfNames = [] }) {
     save()
   }
 
-  async function currentStartup() {
-    const items = []
-    for (const key of RUN_KEYS) items.push(...parseRegRun(key, await run('reg.exe', ['query', key])))
-    for (const dir of [
-      path.join(process.env.APPDATA || '', 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup'),
-      path.join(process.env.ProgramData || '', 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'StartUp')
-    ]) {
-      try {
-        for (const f of fs.readdirSync(dir)) if (f.toLowerCase() !== 'desktop.ini') items.push(`folder|${f}|${dir}`)
-      } catch {
-        /* missing folder */
-      }
-    }
-    return items
-  }
-
   async function checkFiles() {
     const items = await currentStartup()
     if (startup.size === 0 && st.startup.length === 0) {
@@ -213,4 +213,4 @@ function start({ dataDir, emit, selfNames = [] }) {
   return () => timers.forEach((t) => (clearTimeout(t), clearInterval(t)))
 }
 
-module.exports = { start, parseNetstat, parseTasklist, parseRegRun, isPrivateIp, newItems }
+module.exports = { start, currentStartup, parseNetstat, parseTasklist, parseRegRun, isPrivateIp, newItems }

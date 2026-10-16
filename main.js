@@ -7,6 +7,7 @@ const { execFile } = require('node:child_process')
 const guardian = require('./guardian')
 const karenLlm = require('./karen-llm')
 const notifications = require('./notifications')
+const edith = require('./edith')
 
 const SIZES = { badge: { w: 96, h: 124 }, panel: { w: 300, h: 580 } }
 const size = () => SIZES[settings.view] || SIZES.badge
@@ -229,6 +230,7 @@ function buildTray() {
       check('Karen speaks her replies', 'karenVoice'),
       { label: "Today's Daily Web (front page)", click: () => openBugle() },
       check('Daily Web ready nudge (9 pm)', 'bugleDaily'),
+      { label: 'E.D.I.T.H. threat assessment', click: () => openEdith() },
       check('Notification inbox', 'inbox'),
       check('Guardian (danger sense)', 'guardian'),
       check('Desktop notifications', 'notifications'),
@@ -397,6 +399,19 @@ ipcMain.handle('karen:ask', async (e, text, ctx) => {
   if (e.sender !== win?.webContents || typeof text !== 'string') return null
   return karenLlm.ask(text, ctx, settings.llmModel)
 })
+function openEdith() {
+  if (!win) return
+  win.show()
+  setView('panel')
+  win.webContents.send('open-edith')
+}
+
+ipcMain.handle('edith:scan', async (e) => {
+  if (e.sender !== win?.webContents) return null
+  const [disk, startupItems] = await Promise.all([diskPercent(), guardian.currentStartup()])
+  return edith.scan({ uptimeS: os.uptime(), diskPct: disk, startupItems })
+})
+
 function openBugle() {
   if (!win) return
   win.show()
