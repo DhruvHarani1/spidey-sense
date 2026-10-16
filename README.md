@@ -56,6 +56,10 @@ Ask Karen "am I safe?" (or tray → E.D.I.T.H.) for a read-only security check: 
 
 Healthy habits earn XP: focus session +40, guardian alert +10, Daily Web +15 and E.D.I.T.H. scan +10 (once a day each), eye break / reminder +5. Levels unlock colour schemes — Classic, Midnight, Gold Armor, Neon Noir, Pop Art, Prism. Click ★ in the banner, or ask Karen ("my level", "wear the neon suit"). Alert colours (yellow/red) never change with a suit.
 
+## Web-Capture (comic screenshots)
+
+Press **Ctrl+Alt+C** (or ask Karen "take a screenshot", or tray → Web-Capture). The screen freezes; drag a box. Your capture is turned into a comic panel — posterised colour, ink outlines, halftone shading — with an editable caption (default `THWIP!`). **Copy** puts it on the clipboard, **Save** writes a PNG. Nothing is uploaded; the widget hides itself so it is not in the shot.
+
 ## Reminders
 
 Type into the panel's THWIP box (or press **Ctrl+Alt+S** anywhere to open it focused): `in 20m stretch`, `in 2h call mum`, `at 15:30 standup`, `at 7pm dinner`. When due, the widget tingles, chirps and notifies. Up to 6 pending, stored locally.

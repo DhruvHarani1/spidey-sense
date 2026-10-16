@@ -98,6 +98,7 @@
 
     if (/\b(install|apply)( the)? update\b|\brestart (and|to) update\b|\bupdate now\b/.test(t)) return { action: { type: 'update-install' } }
     if (/\b(check (for )?updates?|any updates?|is there an update|new version|update (the )?(app|widget|spidey( sense)?)|am i up to date|what version)\b/.test(t)) return { action: { type: 'update-check' } }
+    if (/\b(web[- ]?capture|screen ?shot|capture( the)?( my)? screen|comic (panel|shot|screenshot)|snap (the|my) screen)\b/.test(t)) return { action: { type: 'capture' }, say: 'SMILE! DRAG A BOX AROUND WHAT YOU WANT.' }
     if (/\b(daily web|newspaper|front page|how was my day|recap my day|day recap|end of day)\b/.test(t)) return { action: { type: 'bugle' } }
     if (/\b(edith|e\.d\.i\.t\.h|threat (assessment|level|scan)|security (check|scan|status)|(scan|check) (my )?(pc|computer|laptop|security)|am i safe|is my (pc|computer|laptop) safe)\b/.test(t)) return { action: { type: 'edith' } }
     {
@@ -217,6 +218,9 @@
       }
       case 'bugle':
         window.dispatchEvent(new CustomEvent('spidey:bugle'))
+        break
+      case 'capture':
+        window.spidey.startCapture()
         break
       case 'update-check': {
         say('CHECKING GITHUB FOR A NEWER SUIT…')

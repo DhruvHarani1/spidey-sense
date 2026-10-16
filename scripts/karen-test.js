@@ -92,3 +92,9 @@ assert.deepEqual(interpret('am i up to date?', ctx).action, { type: 'update-chec
 assert.deepEqual(interpret('install update', ctx).action, { type: 'update-install' })
 assert.deepEqual(interpret('restart to update', ctx).action, { type: 'update-install' })
 console.log('karen updater: ALL PASS')
+
+// web-capture intent
+assert.deepEqual(interpret('take a screenshot', ctx).action, { type: 'capture' })
+assert.deepEqual(interpret('web capture', ctx).action, { type: 'capture' })
+assert.deepEqual(interpret('make a comic panel', ctx).action, { type: 'capture' })
+console.log('karen capture: ALL PASS')

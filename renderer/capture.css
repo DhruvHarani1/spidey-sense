@@ -1,0 +1,12 @@
+html, body { margin: 0; height: 100%; overflow: hidden; background: #000; font-family: 'Arial Black', Impact, sans-serif; color: #f4f1e6; user-select: none; }
+#stage { position: fixed; inset: 0; width: 100%; height: 100%; cursor: crosshair; }
+#hint { position: fixed; top: 18px; left: 50%; transform: translateX(-50%) rotate(-1deg); padding: 8px 16px; font-size: 14px; font-style: italic; color: #111; background: #ffd83a; border: 3px solid #000; box-shadow: 4px 4px 0 #000; pointer-events: none; }
+#result { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: rgba(5, 6, 13, 0.94); }
+#result[hidden] { display: none; }
+#panel { max-width: 92vw; max-height: 76vh; border: 4px solid #000; box-shadow: 8px 8px 0 #d4202a; }
+.bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.bar input { width: 220px; padding: 8px 10px; font: inherit; font-size: 14px; color: #111; background: #ffd83a; border: 3px solid #000; border-radius: 4px; text-transform: uppercase; user-select: text; }
+.bar button { padding: 8px 16px; font: inherit; font-size: 13px; color: #fff; background: #1d3fd8; border: 3px solid #000; border-radius: 6px; box-shadow: 3px 3px 0 #000; cursor: pointer; }
+.bar button:hover { filter: brightness(1.15); }
+.bar button:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 #000; }
+#msg { min-width: 90px; font-size: 12px; color: #ffd83a; }

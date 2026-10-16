@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'none'" />
+    <title>Web-Capture</title>
+    <link rel="stylesheet" href="capture.css" />
+  </head>
+  <body>
+    <canvas id="stage"></canvas>
+    <div id="hint">DRAG TO CAPTURE A COMIC PANEL · ESC TO CANCEL</div>
+    <section id="result" hidden>
+      <canvas id="panel"></canvas>
+      <div class="bar">
+        <input id="caption" type="text" maxlength="40" value="THWIP!" aria-label="Caption" spellcheck="false" />
+        <button id="copy">COPY</button>
+        <button id="save">SAVE</button>
+        <button id="again">AGAIN</button>
+        <button id="close">CLOSE</button>
+        <span id="msg" role="status"></span>
+      </div>
+    </section>
+    <script src="comic.js"></script>
+    <script src="capture.js"></script>
+  </body>
+</html>

@@ -27,8 +27,17 @@
     if (r && r.ok) window.Core.say('FRONT PAGE SAVED. STOP THE PRESSES!')
   })
   $('bcopy').addEventListener('click', async () => {
-    const r = await window.spidey.bugleCopy(paper.toDataURL('image/png'))
-    window.Core.say(r && r.ok ? 'COPIED. GO PASTE THE NEWS.' : 'COULDN’T COPY THAT ONE.')
+    const ok = await new Promise((resolve) => {
+      paper.toBlob(async (blob) => {
+        try {
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+          resolve(true)
+        } catch {
+          resolve(false)
+        }
+      }, 'image/png')
+    })
+    window.Core.say(ok ? 'COPIED. GO PASTE THE NEWS.' : 'COULDN’T COPY THAT ONE.')
   })
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') close()

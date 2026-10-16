@@ -1,5 +1,5 @@
 'use strict'
-const { app, BrowserWindow, clipboard, dialog, globalShortcut, Menu, powerMonitor, Notification, Tray, ipcMain, nativeImage, net, screen } = require('electron')
+const { app, BrowserWindow, desktopCapturer, dialog, globalShortcut, Menu, powerMonitor, Notification, Tray, ipcMain, nativeImage, net, screen } = require('electron')
 const fs = require('node:fs')
 const os = require('node:os')
 const path = require('node:path')
@@ -237,6 +237,7 @@ function buildTray() {
       { label: "Today's Daily Web (front page)", click: () => openBugle() },
       check('Daily Web ready nudge (9 pm)', 'bugleDaily'),
       { label: 'E.D.I.T.H. threat assessment', click: () => openEdith() },
+      { label: 'Web-Capture: comic screenshot (Ctrl+Alt+C)', click: () => void startCapture() },
       { label: 'Suit locker (XP)', click: () => openLocker() },
       check('Notification inbox', 'inbox'),
       check('Guardian (danger sense)', 'guardian'),
@@ -417,6 +418,76 @@ ipcMain.handle('karen:ask', async (e, text, ctx) => {
   if (e.sender !== win?.webContents || typeof text !== 'string') return null
   return karenLlm.ask(text, ctx, settings.llmModel)
 })
+/** @type {BrowserWindow | null} */
+let capWin = null
+
+/** Freeze the screen, then open a full-screen window where the user drags a region to turn into a comic panel. */
+async function startCapture() {
+  if (capWin) return
+  const disp = screen.getPrimaryDisplay()
+  const hid = !!win && win.isVisible()
+  if (hid) {
+    win.hide() // keep the widget out of the screenshot
+    await new Promise((r) => setTimeout(r, 250))
+  }
+  let url = ''
+  try {
+    const sources = await desktopCapturer.getSources({
+      types: ['screen'],
+      thumbnailSize: { width: Math.round(disp.size.width * disp.scaleFactor), height: Math.round(disp.size.height * disp.scaleFactor) }
+    })
+    const src = sources.find((s) => s.display_id === String(disp.id)) || sources[0]
+    if (src) url = src.thumbnail.toDataURL()
+  } catch (e) {
+    console.warn('capture failed', e.message)
+  } finally {
+    if (hid) win.showInactive()
+  }
+  if (!url) return
+  capWin = new BrowserWindow({
+    ...disp.bounds,
+    show: false,
+    frame: false,
+    backgroundColor: '#000000',
+    resizable: false,
+    movable: false,
+    skipTaskbar: true,
+    hasShadow: false,
+    fullscreenable: false,
+    title: 'Web-Capture',
+    webPreferences: { preload: path.join(__dirname, 'preload-capture.js'), contextIsolation: true, nodeIntegration: false, sandbox: true }
+  })
+  capWin.setAlwaysOnTop(true, 'screen-saver')
+  capWin.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+  capWin.webContents.on('will-navigate', (e) => e.preventDefault())
+  capWin.webContents.on('did-finish-load', () => capWin?.webContents.send('capture:image', url))
+  capWin.once('ready-to-show', () => {
+    capWin?.show()
+    capWin?.focus()
+  })
+  capWin.on('closed', () => {
+    capWin = null
+  })
+  capWin.loadFile(path.join(__dirname, 'renderer', 'capture.html'))
+}
+
+ipcMain.on('capture:start', (e) => {
+  if (e.sender === win?.webContents) void startCapture()
+})
+ipcMain.on('capture:close', (e) => {
+  if (e.sender === capWin?.webContents) capWin.close()
+})
+ipcMain.handle('capture:save', async (e, dataUrl, suggested) => {
+  if (e.sender !== capWin?.webContents) return false
+  const img = pngFrom(dataUrl)
+  if (!img) return false
+  const name = String(suggested || 'Comic-Panel.png').replace(/[^\w.-]/g, '_').slice(0, 60)
+  const r = await dialog.showSaveDialog(capWin, { defaultPath: path.join(app.getPath('pictures'), name), filters: [{ name: 'PNG image', extensions: ['png'] }] })
+  if (r.canceled || !r.filePath) return false
+  fs.writeFileSync(r.filePath, img.toPNG())
+  return true
+})
+
 function openLocker() {
   if (!win) return
   win.show()
@@ -458,13 +529,6 @@ ipcMain.handle('bugle:save', async (e, dataUrl, suggested) => {
   const r = await dialog.showSaveDialog(win, { defaultPath: path.join(app.getPath('pictures'), name), filters: [{ name: 'PNG image', extensions: ['png'] }] })
   if (r.canceled || !r.filePath) return { ok: false }
   fs.writeFileSync(r.filePath, img.toPNG())
-  return { ok: true }
-})
-ipcMain.handle('bugle:copy', (e, dataUrl) => {
-  if (e.sender !== win?.webContents) return { ok: false }
-  const img = pngFrom(dataUrl)
-  if (!img) return { ok: false }
-  clipboard.writeImage(img)
   return { ok: true }
 })
 
@@ -550,6 +614,7 @@ if (!app.requestSingleInstanceLock()) {
       }
     })
     globalShortcut.register('Control+Alt+K', summon) // Karen
+    globalShortcut.register('Control+Alt+C', () => void startCapture()) // Web-Capture
     globalShortcut.register('Control+Alt+S', summon) // kept from the reminders hotkey
     setInterval(sample, SAMPLE_MS)
     topTimer = setInterval(() => {
