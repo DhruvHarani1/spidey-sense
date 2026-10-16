@@ -33,6 +33,24 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
   await sleep(4000)
   check('test hook present', await ev('!!window.__spidey'))
+
+  // badge <-> panel
+  const view = () => ev('document.body.dataset.view')
+  const click = async (x, y) => {
+    for (const type of ['mouseMoved', 'mousePressed', 'mouseReleased'])
+      await send('Input.dispatchMouseEvent', { type, x, y, button: 'left', buttons: type === 'mousePressed' ? 1 : 0, clickCount: 1 })
+  }
+  if ((await view()) === 'panel') {
+    await ev('document.getElementById("collapse").click()')
+    await sleep(600)
+  }
+  check('collapse -> badge view', (await view()) === 'badge')
+  check('badge window is small', (await ev('innerWidth')) < 120)
+  await shot('badge')
+  await click(48, 80)
+  await sleep(800)
+  check('click badge -> panel', (await view()) === 'panel')
+  check('panel window is large', (await ev('innerWidth')) >= 290)
     await shot('calm')
 
   // alert

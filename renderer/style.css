@@ -174,7 +174,7 @@ button {
   }
 }
 
-canvas {
+#web {
   display: block;
   width: 260px;
   height: 248px;
@@ -302,6 +302,96 @@ button:focus-visible {
   .hang,
   .panel[data-level='tingle'],
   .led {
+    animation: none !important;
+  }
+}
+
+/* ---------- collapse button ---------- */
+.fold {
+  padding: 0 4px;
+  font-size: 11px;
+  line-height: 14px;
+  background: var(--ink);
+  border: 2px solid #000;
+  border-radius: 4px;
+}
+.fold:hover {
+  background: #1b2a78;
+}
+
+/* ---------- small swinging badge ---------- */
+body[data-view='badge'] .hang,
+body[data-view='panel'] .badge {
+  display: none;
+}
+.badge {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 0;
+  animation: bswing 3.4s ease-in-out infinite;
+  cursor: pointer;
+  touch-action: none;
+}
+@keyframes bswing {
+  0%,
+  100% {
+    transform: rotate(-7deg);
+  }
+  50% {
+    transform: rotate(7deg);
+  }
+}
+.badge__thread {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 2px;
+  height: 56px;
+  margin-left: -1px;
+  background: linear-gradient(#ffffff00, #e8ecff 45%, #ffffffcc);
+}
+.badge__body {
+  position: absolute;
+  left: 50%;
+  top: 52px;
+  width: 56px;
+  height: 56px;
+  margin-left: -28px;
+  border-radius: 50%;
+  border: 3px solid #000;
+  background: radial-gradient(circle at 35% 30%, #ff5a5a, #a50f1a);
+  box-shadow:
+    3px 3px 0 #000,
+    0 0 0 3px transparent;
+  transition: box-shadow 0.2s;
+}
+.badge__body canvas {
+  position: absolute;
+  inset: -3px;
+  width: 56px;
+  height: 56px;
+  margin: 0;
+}
+.badge:hover .badge__body {
+  filter: brightness(1.12);
+}
+.badge__body[data-level='alert'] {
+  box-shadow:
+    3px 3px 0 #000,
+    0 0 0 3px var(--yellow);
+}
+.badge__body[data-level='tingle'] {
+  box-shadow:
+    3px 3px 0 #000,
+    0 0 0 3px var(--red-hot),
+    0 0 18px 4px rgba(255, 59, 59, 0.7);
+  animation: shake 0.16s linear infinite;
+}
+.badge:has(.badge__body[data-level='tingle']) {
+  animation-duration: 1.1s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .badge {
     animation: none !important;
   }
 }

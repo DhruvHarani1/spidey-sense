@@ -13,5 +13,11 @@ contextBridge.exposeInMainWorld('spidey', {
     ipcRenderer.on('settings', l)
     return () => ipcRenderer.removeListener('settings', l)
   },
+  setView: (v) => ipcRenderer.send('view:set', v),
+  drag: {
+    start: () => ipcRenderer.send('drag:start'),
+    move: (dx, dy) => ipcRenderer.send('drag:move', { dx, dy }),
+    end: () => ipcRenderer.send('drag:end')
+  },
   notify: (kind, title, body) => ipcRenderer.send('notify', { kind, title, body })
 })

@@ -9,13 +9,18 @@
     <title>Spidey Sense</title>
     <link rel="stylesheet" href="style.css" />
   </head>
-  <body>
+  <body data-view="badge">
+    <div class="badge" id="badge" role="button" tabindex="0" aria-label="Open Spidey Sense" title="Click to open">
+      <div class="badge__thread"></div>
+      <div class="badge__body" id="bbody" data-level="calm"><canvas id="bcanvas" width="56" height="56"></canvas></div>
+    </div>
     <div class="hang" id="hang">
       <div class="thread"><i></i></div>
       <main class="panel" id="panel" data-level="calm">
         <header class="banner">
           <span class="banner__a">SPIDEY</span><span class="banner__b">SENSE</span>
           <i class="led" id="led" title="Spider-sense status"></i>
+          <button class="fold" id="collapse" title="Collapse to badge" aria-label="Collapse to badge">▲</button>
         </header>
 
         <canvas id="web" width="260" height="248" aria-label="System load drawn as a spider web"></canvas>

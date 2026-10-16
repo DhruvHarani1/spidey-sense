@@ -146,6 +146,7 @@
     state.level = level
     state.streak = { dir: 0, n: 0 }
     panel.dataset.level = level
+    $('bbody').dataset.level = level
     if (level === 'tingle' && prev !== 'tingle') onTingle()
     refreshCaption(true)
     schedule()
@@ -281,6 +282,44 @@
     if (moving || state.level !== 'calm') raf = requestAnimationFrame(frame)
   }
 
+  // ------------------------------------------------------------ badge: click opens, drag moves
+  {
+    const badge = $('badge')
+    const bctx = $('bcanvas').getContext('2d')
+    bctx.scale(1, 1)
+    window.Spider.drawSpider(bctx, 28, 28.5, 19)
+    let down = null
+    badge.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return
+      badge.setPointerCapture(e.pointerId)
+      down = { x: e.screenX, y: e.screenY, moved: false }
+    })
+    badge.addEventListener('pointermove', (e) => {
+      if (!down) return
+      const dx = e.screenX - down.x
+      const dy = e.screenY - down.y
+      if (!down.moved && Math.hypot(dx, dy) < 5) return
+      if (!down.moved) window.spidey.drag.start()
+      down.moved = true
+      window.spidey.drag.move(dx, dy)
+    })
+    const finish = () => {
+      if (!down) return
+      if (down.moved) window.spidey.drag.end()
+      else window.spidey.setView('panel')
+      down = null
+    }
+    badge.addEventListener('pointerup', finish)
+    badge.addEventListener('pointercancel', () => {
+      if (down && down.moved) window.spidey.drag.end()
+      down = null
+    })
+    badge.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') window.spidey.setView('panel')
+    })
+    $('collapse').addEventListener('click', () => window.spidey.setView('badge'))
+  }
+
   // ------------------------------------------------------------ wiring
   window.spidey.onStats(onStats)
   window.spidey.getSettings().then(applySettings)
@@ -288,6 +327,8 @@
   function applySettings(s) {
     settings.sound = !!s.sound
     settings.ramMode = s.ramMode || 'auto'
+    document.body.dataset.view = s.view === 'panel' ? 'panel' : 'badge'
+    schedule()
   }
   if (navigator.getBattery) {
     navigator.getBattery().then((b) => {
