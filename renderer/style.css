@@ -465,3 +465,20 @@ body[data-view='panel'] .badge {
   border: none;
   color: #ff8a8a;
 }
+
+/* ---------- badge naps when you are away ---------- */
+body[data-idle='1'] .badge {
+  animation-duration: 8s;
+  opacity: 0.78;
+}
+body[data-idle='1'] .badge__body::after {
+  content: 'z z';
+  position: absolute;
+  right: -14px;
+  top: -14px;
+  font-size: 11px;
+  font-style: italic;
+  color: var(--paper);
+  text-shadow: 1px 1px 0 #000;
+  letter-spacing: 1px;
+}

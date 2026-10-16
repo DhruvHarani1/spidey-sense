@@ -1,5 +1,5 @@
 'use strict'
-const { app, BrowserWindow, globalShortcut, Menu, Notification, Tray, ipcMain, nativeImage, net, screen } = require('electron')
+const { app, BrowserWindow, globalShortcut, Menu, powerMonitor, Notification, Tray, ipcMain, nativeImage, net, screen } = require('electron')
 const fs = require('node:fs')
 const os = require('node:os')
 const path = require('node:path')
@@ -18,6 +18,7 @@ const DEFAULTS = {
   notifications: true,
   netProbe: true,
   startup: false,
+  eyeBreak: true, // 20-20-20 nudge after 20 min of continuous use
   view: 'badge', // badge = small swinging spider | panel = full widget
   ramMode: 'auto', // auto = alert on spikes above this PC's usual level | 90 | 95 | off
   position: null
@@ -58,7 +59,7 @@ function update(patch) {
   buildTray()
 }
 
-const publicSettings = () => ({ opacity: settings.opacity, sound: settings.sound, notifications: settings.notifications, netProbe: settings.netProbe, ramMode: settings.ramMode, view: settings.view })
+const publicSettings = () => ({ opacity: settings.opacity, sound: settings.sound, notifications: settings.notifications, netProbe: settings.netProbe, ramMode: settings.ramMode, eyeBreak: settings.eyeBreak, view: settings.view })
 
 // ---------------------------------------------------------------- window
 /** @type {BrowserWindow | null} */
@@ -212,6 +213,7 @@ function buildTray() {
       },
       { type: 'separator' },
       check('Spider-sense sound', 'sound'),
+      check('Eye-rest nudge (20-20-20)', 'eyeBreak'),
       check('Desktop notifications', 'notifications'),
       check('Network check (pings gstatic.com)', 'netProbe'),
       check('Launch at startup', 'startup'),
@@ -325,7 +327,8 @@ async function sample() {
     online,
     uptimeS: os.uptime(),
     probing: settings.netProbe,
-    hog
+    hog,
+    idleS: powerMonitor.getSystemIdleTime()
   }
   win?.webContents.send('stats', stats)
 }

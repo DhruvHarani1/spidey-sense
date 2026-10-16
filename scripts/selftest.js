@@ -105,6 +105,16 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
   await shot('reminder')
   check('reminder consumed', (await ev('__reminders.items.length')) === 0)
 
+  // idle nap + eye-rest nudge
+  await ev('__spidey.trackActivity(200)')
+  check('idle 200s => nap', (await ev('document.body.dataset.idle')) === '1')
+  await ev('__spidey.trackActivity(0)')
+  check('active => awake', (await ev('document.body.dataset.idle')) === '0')
+  await ev('__spidey.activity.activeS = 1199; __spidey.trackActivity(0)')
+  await sleep(300)
+  check('20 min active => 20-20-20 nudge', /20-20-20/.test(await ev('document.getElementById("caption").textContent')))
+  await sleep(10500)
+
   // timer
   if ((await ev('__spidey.timer.mode')) !== 'focus') await ev('document.getElementById("tmode").click()')
   await ev('document.getElementById("tgo").click()')
@@ -115,6 +125,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
   await ev('__spidey.finishTimer()')
   await sleep(900)
   check('timer finish -> break + tingle', (await ev('__spidey.timer.mode')) === 'break')
+  check('focus streak shown', /★1/.test(await ev('document.getElementById("tmode").textContent')) || /★/.test(await ev('document.getElementById("tmode").textContent')))
+  await ev('__spidey.timer.mode="focus"; __spidey.timer.running=true')
+  check('focus timer => system alerts quiet', await ev('__spidey.focusQuiet()'))
+  await ev('__spidey.timer.running=false')
   await shot('timer-done')
 
   ws.close()

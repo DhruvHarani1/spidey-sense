@@ -22,7 +22,9 @@
   canvas.height = H * dpr
   ctx.scale(dpr, dpr)
 
-  const settings = { sound: true, opacity: 1, ramMode: 'auto' }
+  const settings = { sound: true, opacity: 1, ramMode: 'auto', eyeBreak: true }
+  const activity = { activeS: 0 }
+  const EYE_AFTER_S = 20 * 60
   const ramHistory = []
   const state = {
     target: [0, 0, 0, 0, 0], // 0-100 value drawn per axis
@@ -94,9 +96,22 @@
     return ram >= t + (100 - t) / 2 ? 92 : ram >= t ? 78 : 0
   }
 
+  /** idle => badge naps; 20 min of continuous use => look-away nudge; a 2 min pause counts as a real break */
+  function trackActivity(idleS) {
+    if (!Number.isFinite(idleS)) return
+    document.body.dataset.idle = idleS >= 180 ? '1' : '0'
+    if (idleS < 60) activity.activeS++
+    else if (idleS >= 120) activity.activeS = 0
+    if (settings.eyeBreak && activity.activeS >= EYE_AFTER_S) {
+      activity.activeS = 0
+      fireNote('20-20-20! LOOK 20 FT AWAY FOR 20 SECONDS.', 'eye')
+    }
+  }
+
   function onStats(raw) {
     if (override) raw = { ...raw, ...override.raw }
     state.raw = raw
+    trackActivity(raw.idleS)
     state.target = dangerFrom(raw)
     if (override && override.danger) override.danger.forEach((v, i) => v != null && (state.target[i] = v))
     state.alert = state.target.slice()
@@ -197,7 +212,11 @@
     }
   }
 
+  /** during a running focus timer, system alerts stay visual only (reminders and the timer itself still speak up) */
+  const focusQuiet = () => timer.running && timer.mode === 'focus'
+
   function onTingle() {
+    if (focusQuiet()) return
     chirp()
     if (state.timerAlert > Date.now()) return
     const kind = AXES[state.alert.indexOf(Math.max(...state.alert))]
@@ -207,6 +226,14 @@
   // ------------------------------------------------------------ web timer
   const timer = { mode: 'focus', left: 25 * 60, running: false, last: 0 }
   const MODES = { focus: 25 * 60, break: 5 * 60 }
+  const todayKey = () => new Date().toDateString()
+  let streak = { day: todayKey(), n: 0 }
+  try {
+    const s = JSON.parse(localStorage.getItem('spidey.streak') || 'null')
+    if (s && s.day === todayKey() && Number.isInteger(s.n)) streak = s
+  } catch {
+    /* ignore */
+  }
   const clock = $('tclock')
   const go = $('tgo')
   const modeBtn = $('tmode')
@@ -216,7 +243,8 @@
     const s = timer.left % 60
     clock.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
     go.textContent = timer.running ? '❚❚' : '▶'
-    modeBtn.textContent = timer.mode === 'focus' ? 'FOCUS' : 'BREAK'
+    if (streak.day !== todayKey()) streak = { day: todayKey(), n: 0 }
+    modeBtn.textContent = (timer.mode === 'focus' ? 'FOCUS' : 'BREAK') + (streak.n ? ' ★' + streak.n : '')
     modeBtn.dataset.mode = timer.mode
   }
   function timerTick() {
@@ -249,6 +277,15 @@
     state.note = null
     timer.running = false
     const finished = timer.mode
+    if (finished === 'focus') {
+      if (streak.day !== todayKey()) streak = { day: todayKey(), n: 0 }
+      streak.n++
+      try {
+        localStorage.setItem('spidey.streak', JSON.stringify(streak))
+      } catch {
+        /* ignore */
+      }
+    }
     timer.mode = finished === 'focus' ? 'break' : 'focus'
     timer.left = MODES[timer.mode]
     state.timerAlert = Date.now() + 8000
@@ -346,6 +383,7 @@
   function applySettings(s) {
     settings.sound = !!s.sound
     settings.ramMode = s.ramMode || 'auto'
+    settings.eyeBreak = s.eyeBreak !== false
     document.body.dataset.view = s.view === 'panel' ? 'panel' : 'badge'
     schedule()
   }
@@ -366,6 +404,9 @@
     window.__spidey = {
       state,
       timer,
+      activity,
+      trackActivity,
+      focusQuiet: () => focusQuiet(),
       ramAlert,
       ramHistory,
       settings,
