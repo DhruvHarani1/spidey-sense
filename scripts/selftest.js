@@ -115,6 +115,18 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
   check('20 min active => 20-20-20 nudge', /20-20-20/.test(await ev('document.getElementById("caption").textContent')))
   await sleep(10500)
 
+  // guardian feed
+  await ev('__guardian.onEvent({kind:"startup",text:"new auto-start entry added: Foo",at:Date.now()})')
+  await sleep(300)
+  check('guardian event -> tingle caption', /SPIDEY-SENSE: NEW AUTO-START ENTRY ADDED: FOO/.test(await ev('document.getElementById("caption").textContent')))
+  check('guardian log has entry', (await ev('__guardian.log.length')) >= 1)
+  await ev('document.getElementById("led").click()')
+  check('log opens on status light click', (await ev('document.getElementById("slog").hidden')) === false)
+  await shot('guardian-log')
+  await ev('document.getElementById("sclose").click()')
+  check('log closes', (await ev('document.getElementById("slog").hidden')) === true)
+  await sleep(10500)
+
   // timer
   if ((await ev('__spidey.timer.mode')) !== 'focus') await ev('document.getElementById("tmode").click()')
   await ev('document.getElementById("tgo").click()')

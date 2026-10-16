@@ -4,6 +4,7 @@ const fs = require('node:fs')
 const os = require('node:os')
 const path = require('node:path')
 const { execFile } = require('node:child_process')
+const guardian = require('./guardian')
 
 const SIZES = { badge: { w: 96, h: 124 }, panel: { w: 300, h: 580 } }
 const size = () => SIZES[settings.view] || SIZES.badge
@@ -18,6 +19,7 @@ const DEFAULTS = {
   notifications: true,
   netProbe: true,
   startup: false,
+  guardian: true, // danger sense: first-time internet contact, new auto-start, hosts change, new drive
   eyeBreak: true, // 20-20-20 nudge after 20 min of continuous use
   view: 'badge', // badge = small swinging spider | panel = full widget
   ramMode: 'auto', // auto = alert on spikes above this PC's usual level | 90 | 95 | off
@@ -66,6 +68,7 @@ const publicSettings = () => ({ opacity: settings.opacity, sound: settings.sound
 let win = null
 let tray = null
 let topTimer = null
+let stopGuardian = null
 let quitting = false
 
 function clampToDisplay(x, y) {
@@ -214,6 +217,7 @@ function buildTray() {
       { type: 'separator' },
       check('Spider-sense sound', 'sound'),
       check('Eye-rest nudge (20-20-20)', 'eyeBreak'),
+      check('Guardian (danger sense)', 'guardian'),
       check('Desktop notifications', 'notifications'),
       check('Network check (pings gstatic.com)', 'netProbe'),
       check('Launch at startup', 'startup'),
@@ -379,6 +383,13 @@ if (!app.requestSingleInstanceLock()) {
     createWindow()
     buildTray()
     syncLoginItem(settings.startup)
+    stopGuardian = guardian.start({
+      dataDir: app.getPath('userData'),
+      selfNames: ['Spidey Sense', 'electron'],
+      emit: (ev) => {
+        if (settings.guardian) win?.webContents.send('guardian', ev)
+      }
+    })
     globalShortcut.register('Control+Alt+S', () => {
       if (!win) return
       win.show()
@@ -396,6 +407,7 @@ if (!app.requestSingleInstanceLock()) {
   })
   app.on('before-quit', () => {
     globalShortcut.unregisterAll()
+    stopGuardian?.()
     quitting = true
     clearInterval(topTimer)
   })

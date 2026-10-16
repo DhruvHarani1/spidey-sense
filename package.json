@@ -10,7 +10,8 @@
     "start": "electron .",
     "icons": "electron scripts/make-icons.js",
     "test": "node scripts/selftest.js",
-    "dist": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dist-local.ps1"
+    "dist": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dist-local.ps1",
+    "test:unit": "node scripts/guardian-test.js"
   },
   "devDependencies": {
     "electron": "^44.7.2",

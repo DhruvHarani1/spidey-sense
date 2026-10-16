@@ -12,7 +12,7 @@
   <body data-view="badge">
     <div class="badge" id="badge" role="button" tabindex="0" aria-label="Open Spidey Sense" title="Click to open">
       <div class="badge__thread"></div>
-      <div class="badge__body" id="bbody" data-level="calm"><canvas id="bcanvas" width="56" height="56"></canvas></div>
+      <div class="badge__body" id="bbody" data-level="calm"><canvas id="bcanvas" width="56" height="56"></canvas><i class="badge__alert" id="balert" hidden>0</i></div>
     </div>
     <div class="hang" id="hang">
       <div class="thread"><i></i></div>
@@ -22,6 +22,11 @@
           <i class="led" id="led" title="Spider-sense status"></i>
           <button class="fold" id="collapse" title="Collapse to badge" aria-label="Collapse to badge">▲</button>
         </header>
+
+        <aside class="slog" id="slog" hidden aria-label="Spider-sense log">
+          <header><b>SENSE LOG</b><button id="sclear">CLEAR</button><button id="sclose" aria-label="Close log">✕</button></header>
+          <ul id="sitems"></ul>
+        </aside>
 
         <canvas id="web" width="260" height="248" aria-label="System load drawn as a spider web"></canvas>
 
@@ -51,5 +56,6 @@
     <script src="spider.js"></script>
     <script src="app.js"></script>
     <script src="reminders.js"></script>
+    <script src="guardian.js"></script>
   </body>
 </html>
