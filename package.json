@@ -1,7 +1,7 @@
 {
   "name": "spidey-sense",
   "productName": "Spidey Sense",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "A Spider-Man themed always-on-screen system monitor: a hanging spider-web radar that tingles when your PC is in trouble.",
   "main": "main.js",
   "private": true,
