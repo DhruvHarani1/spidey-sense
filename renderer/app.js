@@ -320,7 +320,7 @@
     document.body.dataset.unread = total ? '1' : '0'
   }
 
-  window.Core = { fireNote, say, timerOp, snapshot, setUnread, repaint: () => schedule(), test }
+  window.Core = { fireNote, say, timerOp, snapshot, setUnread, repaint: () => schedule(), getSettings: () => settings, test }
 
   function timerDone() {
     state.note = null
@@ -437,6 +437,10 @@
     settings.ramMode = s.ramMode || 'auto'
     settings.eyeBreak = s.eyeBreak !== false
     settings.karenVoice = !!s.karenVoice
+    settings.readNotifications = !!s.readNotifications
+    settings.readMode = s.readMode === 'private' ? 'private' : 'full'
+    settings.callMe = typeof s.callMe === 'string' ? s.callMe : ''
+    settings.readMuted = Array.isArray(s.readMuted) ? s.readMuted : []
     document.body.dataset.view = s.view === 'panel' ? 'panel' : 'badge'
     schedule()
   }

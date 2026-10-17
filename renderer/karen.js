@@ -87,6 +87,32 @@
 
     // ---- UI + settings
     if (/\b(collapse|minimi[sz]e|shrink)\b|^(hide|close)( the)?( panel| widget| this)?$/.test(t)) return { action: { type: 'collapse' } }
+    // ---- notification reading
+    {
+      const GENERIC_WORDS = /^(notifications?|messages?|alerts?|them|it|anything|everything|my notifications?|all)$/
+      if (/\b(stop|quit|no more|turn off|disable|don'?t|do not)\s+(reading|announcing|read|announce)( out)?( my| the| all| new)*\s+(notifications?|messages?|alerts)\b|\bnotification reading (off|disabled)\b|\b(turn off|disable|stop)\s+(the )?notification (reading|reader)\b/.test(t)) return { action: { type: 'reader', on: false } }
+      if (/\b(read|announce|speak)( out)?( to me)?( my| all| the| every| new| incoming)*\s+(notifications?|messages?|alerts)( out loud| aloud| to me)?$/.test(t) || /\b(turn on|enable|start)\s+(the )?notification (reading|reader)\b|\bnotification reading (on|enabled)\b/.test(t)) return { action: { type: 'reader', on: true } }
+      if (/\b(read|announce)( them| notifications?| messages?)? (privately|in private)\b|\b(private|privacy) (mode|reading)\b|\bonly (tell|say|read) (me )?(who|the sender)/.test(t)) return { action: { type: 'reader-mode', mode: 'private' } }
+      if (/\b(read|announce) (everything|the full (message|text)|messages? in full)\b|\bfull (mode|reading)\b|\bpublic mode\b|\bnormal reading\b/.test(t)) return { action: { type: 'reader-mode', mode: 'full' } }
+      let m2 = /^(?:please )?(?:don'?t|do not|stop|never) (?:read|reading|announce|announcing)(?: anything)?(?: from| for)?(?: the)? ([\w .'-]{2,30}?)(?: notifications?| messages?| alerts?)?$/.exec(t) || /^(?:ignore|skip) ([\w .'-]{2,30}?)(?: notifications?| messages?| alerts?)?$/.exec(t)
+      if (m2 && !GENERIC_WORDS.test(m2[1].trim())) return { action: { type: 'reader-mute', app: m2[1].trim(), on: true } }
+      m2 = /^(?:please )?(?:read|announce)(?: from| for)? ([\w .'-]{2,30}?)(?: notifications?| messages?)? again$/.exec(t) || /^(?:start|resume) reading(?: from| for)?(?: the)? ([\w .'-]{2,30}?)(?: notifications?| messages?)?$/.exec(t)
+      if (m2 && !GENERIC_WORDS.test(m2[1].trim())) return { action: { type: 'reader-mute', app: m2[1].trim(), on: false } }
+      if (/\b(stop|don'?t|do not) (calling|call) me (by name|anything|sir)\b|\bforget my name\b/.test(t)) return { action: { type: 'call-me', name: '' } }
+      m2 = /\b(?:call me|address me as|you can call me|my name is)\s+([\p{L}][\p{L}\p{N} .'-]{0,38})$/u.exec(text.trim().replace(/[.!?]+$/, ''))
+      if (m2) return { action: { type: 'call-me', name: m2[1].trim() } }
+      if (/\b(what did i miss|anything new|any (new )?(notifications?|messages?)|read (my )?(unread|missed|new) (notifications?|messages?)?|do i have (any )?(notifications?|messages?))\b/.test(t)) return { action: { type: 'missed' } }
+      if (/\b(repeat( that)?|say that again|read (it|that) again|what was that|read (the )?(last|latest) (one|notification|message))\b/.test(t)) return { action: { type: 'repeat' } }
+      if (/^(skip|next|shh+|enough|that'?s enough|okay stop|ok stop)$/.test(t)) return { action: { type: 'speech-stop' } }
+      if (/\b(are you|is karen|is it) reading (my )?(notifications?|messages?)\b|\bnotification reading (status|settings)\b/.test(t)) return { action: { type: 'reader-status' } }
+    }
+    // ---- which voice (Windows ships Zira, female, and David, male)
+    if (/\b(list|show|which|what) (the |my |your )?voices?\b|\bavailable voices\b/.test(t)) return { action: { type: 'voice-list' } }
+    {
+      const named = /\b(zira|david|male|female|automatic|default)\b(?:'s)?(?: voice)?/.exec(t)
+      if (named && /\b(use|switch|change|set|try|go|speak|talk|sound|voice)\b/.test(t) && !/\b(male|female|default|automatic)\b.*\b(reminder|timer)\b/.test(t)) return { action: { type: 'voice-pick', pick: named[1] === 'default' ? 'auto' : named[1] === 'automatic' ? 'auto' : named[1] } }
+    }
+    if (/\b(change|switch|swap|toggle|flip) (the |your |karen'?s )?voice\b|\b(other|different|another) voice\b|\bnext voice\b/.test(t)) return { action: { type: 'voice-pick', pick: 'next' } }
     // ---- Karen's voice (spoken replies)
     if (/\b(stop (talking|speaking)|(turn off|disable|stop) (the |your )?(voice|speech)|voice off|don'?t (talk|speak)|be silent)\b/.test(t)) return { action: { type: 'voice', on: false } }
     if (/\b(speak( to me| up| out loud)?|talk( to me)?|read (it |them |your replies )?(out|aloud)|say it (out loud|aloud)|(turn on|enable|start) (the |your )?(voice|speech)|voice on)\b/.test(t) && !/\b(speaker|speaking of)\b/.test(t)) return { action: { type: 'voice', on: true } }
@@ -235,6 +261,64 @@
           window.spidey.speak('') // cut off anything still being spoken (IPC keeps the order)
         }
         break
+      case 'reader': {
+        window.spidey.patchSettings({ readNotifications: action.on })
+        const s = window.Core.getSettings()
+        if (action.on) {
+          window.Core.say(
+            s.callMe
+              ? 'NOTIFICATION READING IS ON. I’LL READ EVERY NEW NOTIFICATION ALOUD.'
+              : 'NOTIFICATION READING IS ON. TELL ME WHAT TO CALL YOU, E.G. "CALL ME DHRUV SIR". SAY "READ NOTIFICATIONS PRIVATELY" TO HEAR ONLY WHO, NOT WHAT.',
+            14000,
+            true
+          )
+        } else {
+          say('NOTIFICATION READING IS OFF.')
+          window.spidey.speak('')
+        }
+        break
+      }
+      case 'reader-mode':
+        window.spidey.patchSettings({ readMode: action.mode })
+        window.Core.say(action.mode === 'private' ? 'PRIVATE MODE: I’LL SAY WHO MESSAGED YOU, NEVER WHAT THEY SAID.' : 'FULL MODE: I’LL READ WHO AND WHAT.', 9000, true)
+        break
+      case 'reader-mute': {
+        const cur = (window.Core.getSettings().readMuted || []).slice()
+        const key = action.app.toLowerCase()
+        const next = action.on ? [...new Set([...cur, key])] : cur.filter((x) => x !== key && !key.includes(x) && !x.includes(key))
+        window.spidey.patchSettings({ readMuted: next })
+        say(action.on ? `I WON’T READ ${action.app.toUpperCase()} NOTIFICATIONS ANY MORE.` : `OKAY, ${action.app.toUpperCase()} IS BACK ON MY LIST.`)
+        break
+      }
+      case 'call-me':
+        window.spidey.patchSettings({ callMe: action.name })
+        if (action.name) window.Core.say(`OKAY. FROM NOW ON I’LL CALL YOU ${action.name.toUpperCase()}.`, 9000, true)
+        else say('OKAY. I WON’T USE YOUR NAME.')
+        break
+      case 'missed':
+        window.Reader.missed()
+        break
+      case 'repeat':
+        window.Reader.repeat()
+        break
+      case 'speech-stop':
+        window.spidey.speak('')
+        break
+      case 'reader-status': {
+        const s = window.Core.getSettings()
+        say(s.readNotifications ? `READING NOTIFICATIONS ALOUD (${s.readMode.toUpperCase()} MODE${s.callMe ? `, CALLING YOU ${s.callMe.toUpperCase()}` : ''}). MUTED: ${(s.readMuted || []).join(', ').toUpperCase() || 'NONE'}.` : 'NOT READING NOTIFICATIONS. SAY "READ MY NOTIFICATIONS" TO TURN IT ON.')
+        break
+      }
+      case 'voice-pick': {
+        const r = await window.spidey.pickVoice(action.pick)
+        say(r ? `VOICE: ${String(r.short).toUpperCase()}${r.gender ? ` (${r.gender.toUpperCase()})` : ''}.` : 'I DON’T HAVE THAT VOICE. SAY "LIST VOICES".')
+        break
+      }
+      case 'voice-list': {
+        const list = await window.spidey.listVoices()
+        say(list.length ? `VOICES: ${list.map((v) => `${v.short.toUpperCase()} (${v.gender})${v.active ? ' ✓' : ''}`).join(' · ')}. SAY "USE DAVID" OR "CHANGE VOICE".` : 'NO WINDOWS VOICES FOUND.')
+        break
+      }
       case 'speak-test':
         window.Core.say('HELLO! KAREN HERE. IF YOU CAN HEAR THIS, MY VOICE WORKS. SAY "SPEAK TO ME" TO KEEP IT ON.', 12000, true)
         break

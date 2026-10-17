@@ -112,3 +112,32 @@ for (const q of ['say hello', 'test your voice', 'can you hear me', 'let me hear
 assert.deepEqual(interpret('mute', ctx).action, { type: 'sound', on: false }, 'mute still means the chirp')
 assert.deepEqual(interpret('be quiet', ctx).action, { type: 'sound', on: false })
 console.log('karen voice: ALL PASS')
+
+// choosing the voice
+for (const [q, pick] of [['use david', 'david'], ['switch to zira', 'zira'], ['use the female voice', 'female'], ['change to male voice', 'male'], ['use the default voice', 'auto'], ['zira voice', 'zira'], ['speak in david', 'david']]) assert.deepEqual(interpret(q, ctx).action, { type: 'voice-pick', pick }, q)
+for (const q of ['change voice', 'switch the voice', 'try another voice', 'different voice', 'next voice']) assert.deepEqual(interpret(q, ctx).action, { type: 'voice-pick', pick: 'next' }, q)
+for (const q of ['list voices', 'what voices do you have', 'show the voices']) assert.deepEqual(interpret(q, ctx).action, { type: 'voice-list' }, q)
+assert.deepEqual(interpret('speak to me', ctx).action, { type: 'voice', on: true }, 'speak to me still turns the voice on')
+console.log('karen voice picking: ALL PASS')
+
+
+// notification reading
+for (const q of ['read my notifications', 'read notifications aloud', 'announce my messages', 'read all notifications out loud', 'turn on notification reading', 'start notification reading']) assert.deepEqual(interpret(q, ctx).action, { type: 'reader', on: true }, q)
+for (const q of ['stop reading notifications', 'stop reading my notifications', "don't read my messages", 'turn off notification reading', 'no more reading notifications']) assert.deepEqual(interpret(q, ctx).action, { type: 'reader', on: false }, q)
+for (const q of ['read notifications privately', 'private mode', 'only tell me who']) assert.deepEqual(interpret(q, ctx).action, { type: 'reader-mode', mode: 'private' }, q)
+for (const q of ['read everything', 'full mode', 'public mode']) assert.deepEqual(interpret(q, ctx).action, { type: 'reader-mode', mode: 'full' }, q)
+assert.deepEqual(interpret("don't read youtube", ctx).action, { type: 'reader-mute', app: 'youtube', on: true })
+assert.deepEqual(interpret('stop reading whatsapp notifications', ctx).action, { type: 'reader-mute', app: 'whatsapp', on: true })
+assert.deepEqual(interpret('ignore teams', ctx).action, { type: 'reader-mute', app: 'teams', on: true })
+assert.deepEqual(interpret('read whatsapp again', ctx).action, { type: 'reader-mute', app: 'whatsapp', on: false })
+assert.deepEqual(interpret('start reading mail', ctx).action, { type: 'reader-mute', app: 'mail', on: false })
+assert.deepEqual(interpret('call me Dhruv sir', ctx).action, { type: 'call-me', name: 'Dhruv sir' }, 'the name keeps its capital letters')
+assert.deepEqual(interpret('you can call me Boss.', ctx).action, { type: 'call-me', name: 'Boss' })
+assert.deepEqual(interpret("don't call me by name", ctx).action, { type: 'call-me', name: '' })
+for (const q of ['what did i miss', 'any new messages', 'read my unread notifications', 'do i have any notifications']) assert.deepEqual(interpret(q, ctx).action, { type: 'missed' }, q)
+for (const q of ['repeat that', 'say that again', 'what was that', 'read it again']) assert.deepEqual(interpret(q, ctx).action, { type: 'repeat' }, q)
+for (const q of ['skip', 'next', 'enough', 'shh']) assert.deepEqual(interpret(q, ctx).action, { type: 'speech-stop' }, q)
+assert.deepEqual(interpret('are you reading my notifications', ctx).action, { type: 'reader-status' })
+assert.deepEqual(interpret('speak to me', ctx).action, { type: 'voice', on: true }, 'speak to me is still the reply voice')
+assert.deepEqual(interpret('mute', ctx).action, { type: 'sound', on: false }, 'mute is still the chirp')
+console.log('karen reader: ALL PASS')

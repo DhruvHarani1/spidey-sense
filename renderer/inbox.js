@@ -84,6 +84,7 @@
     if (!Array.isArray(batch)) return
     const known = new Set(items.map((i) => `${i.appId}#${i.id}`))
     let added = 0
+    const fresh = []
     for (const b of batch) {
       if (!b || typeof b.title !== 'string' || known.has(`${b.appId}#${b.id}`)) continue
       items.unshift({
@@ -96,9 +97,11 @@
         isNew: panel.hidden && Date.now() - (Number(b.at) || Date.now()) < 600000
       })
       added++
+      fresh.push(items[0])
       if (Date.now() - (Number(b.at) || Date.now()) < 600000) window.Day.add('notifs')
     }
     if (!added) return
+    if (window.Reader) window.Reader.onNew(fresh)
     items = items.slice(0, MAX)
     save()
     if (!panel.hidden) render()
@@ -117,6 +120,7 @@
     if (e.key === 'Escape') toggle(false)
   })
 
+  window.Inbox = { items: () => items, unread: () => items.filter((x) => x.isNew) }
   window.spidey.onInbox(onItems)
   paint()
   if (window.Core.test) window.__inbox = { onItems, toggle, get items() { return items } }

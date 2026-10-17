@@ -26,6 +26,11 @@ const DEFAULTS = {
   netProbe: true,
   startup: true, // launch at login (per-user); the tray toggle turns it off
   startupDefaulted: false,
+  readNotifications: false, // Karen reads new notifications aloud
+  readMode: 'full', // 'full' = who and what | 'private' = who only
+  callMe: '', // how Karen addresses you, e.g. "Dhruv sir"
+  readMuted: ['lyra', 'settings', 'system', 'lenovo', 'intel'], // apps she never reads
+  voiceName: '', // '' = automatic; otherwise the exact installed Windows voice name
   karenVoice: false, // Karen reads her replies aloud
   llmModel: '', // preferred Ollama model (blank = auto)
   bugleDaily: true, // 21:00 nudge that the day's front page is ready
@@ -79,7 +84,7 @@ function update(patch) {
   buildTray()
 }
 
-const publicSettings = () => ({ opacity: settings.opacity, sound: settings.sound, notifications: settings.notifications, netProbe: settings.netProbe, ramMode: settings.ramMode, eyeBreak: settings.eyeBreak, karenVoice: settings.karenVoice, view: settings.view })
+const publicSettings = () => ({ opacity: settings.opacity, sound: settings.sound, notifications: settings.notifications, netProbe: settings.netProbe, ramMode: settings.ramMode, eyeBreak: settings.eyeBreak, karenVoice: settings.karenVoice, voiceName: settings.voiceName, readNotifications: settings.readNotifications, readMode: settings.readMode, callMe: settings.callMe, readMuted: settings.readMuted, view: settings.view })
 
 // ---------------------------------------------------------------- window
 /** @type {BrowserWindow | null} */
@@ -245,6 +250,15 @@ function menuTemplate() {
       check('Spider-sense sound', 'sound'),
       check('Eye-rest nudge (20-20-20)', 'eyeBreak'),
       check('Karen speaks her replies', 'karenVoice'),
+      check('Read notifications aloud', 'readNotifications'),
+      { label: 'Notification reading: private (who, not what)', type: 'checkbox', checked: settings.readMode === 'private', click: (i) => update({ readMode: i.checked ? 'private' : 'full' }) },
+      {
+        label: "Karen's voice",
+        submenu: [
+          { label: 'Automatic', type: 'radio', checked: !settings.voiceName, click: () => pickVoice('auto') },
+          ...speechVoices.map((v) => ({ label: `${v.short} (${v.gender})`, type: 'radio', checked: settings.voiceName === v.name, click: () => pickVoice(v.name) }))
+        ]
+      },
       { label: "Today's Daily Web (front page)", click: () => openBugle() },
       check('Daily Web ready nudge (9 pm)', 'bugleDaily'),
       { label: 'E.D.I.T.H. threat assessment', click: () => openEdith() },
@@ -414,6 +428,12 @@ ipcMain.on('settings:patch', (e, patch) => {
     if (typeof patch[k] !== type) continue
     clean[k] = k === 'opacity' ? Math.min(1, Math.max(0.3, patch[k])) : patch[k]
   }
+  if (typeof patch.readNotifications === 'boolean') clean.readNotifications = patch.readNotifications
+  if (patch.readMode === 'full' || patch.readMode === 'private') clean.readMode = patch.readMode
+  if (typeof patch.callMe === 'string') clean.callMe = patch.callMe.replace(/[^\p{L}\p{N} .'-]/gu, '').trim().slice(0, 40)
+  if (Array.isArray(patch.readMuted)) {
+    clean.readMuted = [...new Set(patch.readMuted.filter((x) => typeof x === 'string').map((x) => x.toLowerCase().replace(/[^\p{L}\p{N} .'-]/gu, '').trim().slice(0, 40)).filter(Boolean))].slice(0, 40)
+  }
   if (Object.keys(clean).length) update(clean)
 })
 
@@ -511,6 +531,27 @@ ipcMain.handle('capture:save', async (e, dataUrl, suggested) => {
 let helpWin = null
 
 /** The offline manual (generated from help-data.js) in its own window. */
+let speechVoices = []
+
+/** switch Karen's voice (name, 'zira', 'male', 'next', 'auto' …) and say one line in it so you can hear the change */
+async function pickVoice(pick) {
+  if (!speechVoices.length) speechVoices = await speech.listVoices()
+  const v = speech.resolveVoice(pick, settings.voiceName)
+  if (!v) return null
+  update({ voiceName: v.name })
+  speech.setVoice(v.name)
+  const label = v.name ? v.short : 'my default voice'
+  void speech.speak(`Hello, this is ${label}. How do I sound?`)
+  return { name: v.name, short: v.short || 'automatic', gender: v.gender || '' }
+}
+
+ipcMain.handle('voice:pick', (e, pick) => (e.sender === win?.webContents ? pickVoice(String(pick || 'next')) : null))
+ipcMain.handle('voice:list', async (e) => {
+  if (e.sender !== win?.webContents) return []
+  if (!speechVoices.length) speechVoices = await speech.listVoices()
+  return speechVoices.map((v) => ({ name: v.name, short: v.short, gender: v.gender, active: v.name === settings.voiceName }))
+})
+
 function openHelp() {
   if (helpWin) {
     helpWin.show()
@@ -599,8 +640,15 @@ ipcMain.handle('update:check', async (e) => (e.sender === win?.webContents ? { .
 ipcMain.on('update:install', (e) => {
   if (e.sender === win?.webContents) updater.install()
 })
-ipcMain.on('speak', (e, text) => {
-  if (e.sender === win?.webContents) void speech.speak(typeof text === 'string' ? text : '')
+speech.setOnStart((tag) => win?.webContents.send('speech:start', tag))
+ipcMain.on('speak', (e, text, opts) => {
+  if (e.sender !== win?.webContents) return
+  const o = opts && typeof opts === 'object' ? opts : {}
+  void speech.speak(typeof text === 'string' ? text : '', {
+    queue: o.queue === true,
+    urgent: o.urgent === true,
+    tag: typeof o.tag === 'string' ? o.tag.slice(0, 140) : undefined
+  })
 })
 ipcMain.handle('settings:get', () => publicSettings())
 ipcMain.on('notify', (e, payload) => {
@@ -672,6 +720,11 @@ if (!app.requestSingleInstanceLock()) {
       }
     })
     updater.start()
+    speech.setVoice(settings.voiceName)
+    void speech.listVoices().then((v) => {
+      speechVoices = v
+      buildTray()
+    })
     if (!settings.trayHinted && Notification.isSupported()) {
       settings.trayHinted = true
       saveSettings()

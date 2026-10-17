@@ -68,6 +68,10 @@ Healthy habits earn XP: focus session +40, guardian alert +10, Daily Web +15 and
 
 Press **Ctrl+Alt+C** (or ask Karen "take a screenshot", or tray → Web-Capture). The screen freezes; drag a box. Your capture is turned into a comic panel — posterised colour, ink outlines, halftone shading — with an editable caption (default `THWIP!`). **Copy** puts it on the clipboard, **Save** writes a PNG. Nothing is uploaded; the widget hides itself so it is not in the shot.
 
+## Karen reads your notifications aloud
+
+Say **"read my notifications"** (and **"call me Dhruv sir"** once). From then on every new notification is spoken, wording fitted to the kind: *"Dhruv sir, you received a message from Mum on WhatsApp. The message is: dinner at eight."* — messages, group chats, photos/voice notes, email, calls (announced immediately), calendar, Windows notices, websites. Emoji and links are tidied for the voice, long messages are trimmed, non-English scripts are left on screen. Notifications queue (never overlap); bursts become a summary; while you are away or in a focus session she collects them and gives one digest when you are back ("what did I miss" reads them). **Private mode** says only who, never what; apps can be muted ("don't read youtube"). **"change voice"** switches between the Windows voices (Zira / David). Full details: the manual (`spidey feature reader`).
+
 ## Reminders
 
 Type into the panel's THWIP box (or press **Ctrl+Alt+S** anywhere to open it focused): `in 20m stretch`, `in 2h call mum`, `at 15:30 standup`, `at 7pm dinner`. When due, the widget tingles, chirps and notifies. Up to 6 pending, stored locally.

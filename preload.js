@@ -60,7 +60,14 @@ contextBridge.exposeInMainWorld('spidey', {
   startCapture: () => ipcRenderer.send('capture:start'),
   openHelp: () => ipcRenderer.send('help:open'),
   showMenu: () => ipcRenderer.send('menu:show'),
-  speak: (text) => ipcRenderer.send('speak', text),
+  speak: (text, opts) => ipcRenderer.send('speak', text, opts),
+  onSpeechStart: (cb) => {
+    const l = (_e, tag) => cb(tag)
+    ipcRenderer.on('speech:start', l)
+    return () => ipcRenderer.removeListener('speech:start', l)
+  },
+  pickVoice: (pick) => ipcRenderer.invoke('voice:pick', pick),
+  listVoices: () => ipcRenderer.invoke('voice:list'),
   setView: (v) => ipcRenderer.send('view:set', v),
   drag: {
     start: () => ipcRenderer.send('drag:start'),

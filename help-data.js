@@ -62,6 +62,29 @@ const DATA = {
       ]
     },
     {
+      group: 'Notifications read aloud',
+      items: [
+        { say: 'read my notifications', does: 'Karen reads every new notification out loud: "Dhruv sir, you received a message from Mum on WhatsApp. The message is: dinner at eight." Messages, email, calls, calendar and system notices each get natural wording. Off by default.', try: 'read my notifications', aka: ['announce my messages', 'turn on notification reading'] },
+        { say: 'stop reading notifications', does: 'Turns it off and cuts off anything she is saying.', try: 'stop reading notifications', aka: ["don't read my messages", 'turn off notification reading'] },
+        { say: 'call me Dhruv sir', does: 'How she addresses you ("Dhruv sir, you received…"). Use any name or title. Without one she skips the address.', try: 'call me Dhruv sir', aka: ['you can call me Boss'] },
+        { say: 'read notifications privately', does: 'Private mode: she says who messaged you and on which app, never what they said. Good in a café or a meeting. "read everything" switches back.', try: 'read notifications privately', aka: ['private mode', 'only tell me who'] },
+        { say: "don't read youtube", does: 'Never read that app’s notifications (works for any app name: whatsapp, mail, teams…).', try: "don't read youtube", aka: ['stop reading whatsapp notifications', 'ignore teams'] },
+        { say: 'read whatsapp again', does: 'Puts an app back on her list.', try: 'read whatsapp again', aka: ['start reading mail'] },
+        { say: 'what did I miss', does: 'Reads your unread notifications, newest first (up to 5), one short line each.', try: 'what did i miss', aka: ['any new messages', 'do i have any notifications'] },
+        { say: 'repeat that', does: 'Says the last notification again.', try: 'repeat that', aka: ['say that again', 'what was that'] },
+        { say: 'skip', does: 'Stops what she is saying right now (the next queued notification still plays; "stop reading notifications" silences everything).', try: 'skip', aka: ['enough', 'next'] },
+        { say: 'are you reading my notifications', does: 'Tells you the current reading settings: on/off, mode, your name, muted apps.', try: 'are you reading my notifications' }
+      ]
+    },
+    {
+      group: 'Karen’s voice',
+      items: [
+        { say: 'change voice', does: 'Switches between the Windows voices installed on your PC (normally Zira, female, and David, male) and says a line in the new one.', try: 'change voice', aka: ['try another voice', 'next voice'] },
+        { say: 'use david', does: 'Picks a voice by name (zira, david) or by gender ("use the female voice").', try: 'use david', aka: ['switch to zira', 'use the female voice'] },
+        { say: 'list voices', does: 'Shows which voices are installed and which one is active (✓).', try: 'list voices', aka: ['what voices do you have'] }
+      ]
+    },
+    {
       group: 'The widget itself',
       items: [
         { say: 'open the manual', does: 'Opens this manual in its own window (also: "docs", "all commands", "what can you do").', try: 'open the manual', aka: ['docs', 'what can you do'] },
@@ -171,6 +194,22 @@ const DATA = {
       reads: 'Windows keeps a database of recent notifications for your account (wpndatabase.db). Spidey Sense reads a private, read-only copy of it every few seconds. Nothing is sent anywhere. Tray → "Notification inbox" turns it off.'
     },
     {
+      id: 'reader',
+      name: 'Notification reader — Karen reads them aloud',
+      icon: '🔊',
+      summary: 'Every new notification, spoken: "Dhruv sir, you received a message from Mum on WhatsApp. The message is: …"',
+      how: [
+        'Turn it on with "read my notifications" (or tray → Read notifications aloud). Tell her your name once: "call me Dhruv sir". It is off until you switch it on.',
+        'Wording fits the kind of notification. Messages (WhatsApp, Telegram, Teams, Discord, Slack, SMS via Phone Link…): "you received a message from X on WhatsApp. The message is: …". In group chats she says who wrote it and in which group. Photos, voice notes and videos are described ("they sent a photo"). Email: "you have a new email from X. The subject is: …". Calls: "Mum is calling you on WhatsApp" — calls cut in immediately and are never held back. Calendar, Windows notices and websites (YouTube etc.) are announced with the app name first.',
+        'She tidies the text for a speech voice: emoji and markdown vanish, links become "a link", "heeeeey!!!!!" is shortened, very long messages are cut ("… and more"). Text in a script an English voice would garble (Hindi, Arabic, Chinese…) is not spoken: "the message is not in English, so I left it on screen".',
+        'Nothing overlaps: notifications queue and are read one after another. If more than three arrive at once you get a summary instead ("you received 5 notifications: 3 from WhatsApp, 2 from Mail").',
+        'Away or focusing? While you are away from the PC (3 minutes idle) or a focus timer is running, she stays quiet and collects them; the moment you are back, or the session ends, you get one digest ("Welcome back… you received 4 notifications: 3 from WhatsApp…"). Then say "what did I miss" to hear them.',
+        'Private mode ("read notifications privately") speaks only who and where, never the content. Apps you never want read can be muted by name ("don\'t read youtube"). By default now-playing pings and vendor chatter (Lyra, Settings, System, Lenovo, Intel) are muted. The same notification is read once per minute at most, and anything older than 3 minutes (e.g. from before the app started) is skipped.',
+        'The voice is the Windows voice you picked ("change voice"): Zira or David.'
+      ],
+      reads: 'It uses the notifications the inbox already collects (a read-only copy of the Windows notification database) and the speech engine built into Windows. The text is passed to the speech engine through stdin, never run as a command, and nothing leaves your PC.'
+    },
+    {
       id: 'guardian',
       name: 'Guardian — danger sense',
       icon: '🛡',
@@ -254,6 +293,9 @@ const DATA = {
     'Spider-sense sound',
     'Eye-rest nudge (20-20-20)',
     'Karen speaks her replies',
+    'Read notifications aloud',
+    'Notification reading: private (who, not what)',
+    'Karen’s voice (Automatic / Zira / David)',
     'Web-Capture: comic screenshot',
     'Suit locker (XP)',
     'E.D.I.T.H. threat assessment',
@@ -287,6 +329,8 @@ const DATA = {
   troubleshooting: [
     { q: 'Where is the tray menu? I can’t find the tray icon.', a: 'Right-click the little spider badge (or anywhere on the open panel): it shows the exact same menu. The tray icon is the red spider next to the clock, but Windows 11 hides new icons under the ^ arrow: click the ^ and drag the spider onto the taskbar so it stays visible.' },
     { q: 'I can’t hear Karen.', a: 'Say "say hello" to test your speakers, then "speak to me" to switch spoken replies on (tray: "Karen speaks her replies"). She uses the Windows voices Zira / David, so check your volume and the Windows output device. Say "stop talking" to turn her off.' },
+    { q: 'Karen does not read my WhatsApp messages.', a: 'Check: (1) "are you reading my notifications" — it must say on; (2) the app is not muted ("read whatsapp again"); (3) you are not away or in a focus session (she saves those for a digest); (4) Windows is actually showing WhatsApp notifications (Settings → System → Notifications) — only notifications Windows records can be read; (5) the message is not in a non-English script, which she leaves on screen.' },
+    { q: 'She reads notifications too loudly / in public.', a: 'Say "read notifications privately" so she only says who, or "stop reading notifications". Turn the Windows volume down — she speaks through the normal output device.' },
     { q: 'The widget disappeared.', a: 'Right-click the tray spider → "Show the web". If it is off-screen: tray → "Reset position".' },
     { q: 'Ctrl+Alt+K / Ctrl+Alt+C does nothing.', a: 'Another program owns that shortcut. Close it, or use the tray menu / Karen instead — everything the hotkeys do is also in the tray.' },
     { q: 'My RAM is always at 97 % — will it tingle forever?', a: 'No. RAM alerts use "Auto" mode: they fire on jumps above this PC’s normal level. Choose a fixed threshold or "never" in tray → RAM alerts.' },
