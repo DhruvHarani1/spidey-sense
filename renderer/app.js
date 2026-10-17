@@ -285,13 +285,12 @@
       setLevel(rawLevel())
     }, 10200)
   }
-  /** Karen speaks: caption for a few seconds, and out loud when "Karen speaks" is on */
-  function say(text, ms = 12000, forceSpeak = false, silent = false) {
+  /** Karen speaks: a caption for a few seconds */
+  function say(text, ms = 12000) {
     state.say = text
     state.sayUntil = Date.now() + ms
     refreshCaption(true)
     setTimeout(() => refreshCaption(true), ms + 100)
-    if (!silent && (settings.karenVoice || forceSpeak)) window.spidey.speak(text)
   }
 
   function timerOp(op) {
@@ -309,11 +308,11 @@
     return { stats: state.raw, battery: state.battery, timer: { mode: timer.mode, left: timer.left, running: timer.running }, level: state.level }
   }
 
-  /** one badge count for everything that wants your attention (guardian alerts + inbox) */
-  const unread = { guardian: 0, inbox: 0 }
+  /** the badge count: Guardian alerts that you have not looked at yet */
+  const unread = { guardian: 0 }
   function setUnread(kind, n) {
     unread[kind] = n
-    const total = unread.guardian + unread.inbox
+    const total = unread.guardian
     const b = $('balert')
     b.hidden = total === 0
     b.textContent = total > 99 ? '99+' : String(total)
@@ -436,15 +435,6 @@
     settings.sound = !!s.sound
     settings.ramMode = s.ramMode || 'auto'
     settings.eyeBreak = s.eyeBreak !== false
-    settings.karenVoice = !!s.karenVoice
-    settings.voiceConverse = !!s.voiceConverse
-    settings.wakeWord = !!s.wakeWord
-    document.body.dataset.wake = s.wakeWord ? '1' : '0'
-    settings.sttMode = s.sttMode === 'offline' ? 'offline' : 'auto'
-    settings.readNotifications = !!s.readNotifications
-    settings.readMode = s.readMode === 'private' ? 'private' : 'full'
-    settings.callMe = typeof s.callMe === 'string' ? s.callMe : ''
-    settings.readMuted = Array.isArray(s.readMuted) ? s.readMuted : []
     document.body.dataset.view = s.view === 'panel' ? 'panel' : 'badge'
     schedule()
   }

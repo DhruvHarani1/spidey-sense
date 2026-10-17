@@ -48,20 +48,9 @@ const probes = {
   'RAM alerts': 'RAM alerts',
   'Spider-sense sound': 'Spider-sense sound',
   'Eye-rest nudge': 'Eye-rest nudge',
-  'Karen speaks': 'Karen speaks',
-  'Talk to Karen': 'Talk to Karen (Ctrl+Alt+Space)',
-  'conversation mode': 'conversation mode',
-  'Wake word': 'Wake word: say',
-  'Speech recognition': 'Speech recognition',
-  'AI brain': 'AI brain: free API keys',
-  'Read notifications aloud': 'Read notifications aloud',
-  'Notification reading': 'Notification reading: private',
-  'voice': "Karen's voice",
-  'Web-Capture': 'Web-Capture',
   'Suit locker': 'Suit locker',
   'E.D.I.T.H.': 'E.D.I.T.H.',
   'Daily Web': 'Daily Web',
-  'Notification inbox': 'Notification inbox',
   'Guardian': 'Guardian',
   'Desktop notifications': 'Desktop notifications',
   'Network check': 'Network check',
@@ -73,6 +62,13 @@ for (const [needle, expect] of Object.entries(probes)) {
   assert.ok(D.tray.some((t) => t.includes(needle)), `tray doc is missing "${needle}"`)
   assert.ok(main.includes(expect), `main.js has no tray entry "${expect}"`)
 }
+
+// 3b) things that moved to Jarvis / Spidey Lab must not be documented or wired any more
+for (const gone of ['Ctrl+Alt+Space', 'Ctrl+Alt+C', 'Hey Karen', 'API key', 'Ollama', 'microphone', 'Web-Capture']) {
+  const all = JSON.stringify(D.hotkeys) + JSON.stringify(D.tray) + JSON.stringify(D.features) + JSON.stringify(D.karen)
+  assert.ok(!all.includes(gone) || gone === 'microphone', `docs still mention ${gone}`)
+}
+for (const gone of ['Control+Alt+Space', 'Control+Alt+C', 'speech', 'wake', 'brain', 'startCapture']) assert.ok(!main.includes(gone), `main.js still mentions ${gone}`)
 
 // 4) the XP table in the docs matches the code
 const xp = Suits.XP
@@ -100,8 +96,10 @@ r = run('search', 'zzzqqq')
 assert.match(r.stdout, /No matches/i)
 r = run('hotkeys')
 assert.match(r.stdout, /Ctrl\+Alt\+K/)
+r = run('feature', 'edith')
+assert.match(r.stdout, /E.D.I.T.H/)
 r = run('feature', 'capture')
-assert.match(r.stdout, /Web-Capture/)
+assert.notEqual(r.status, 0, 'capture moved out of Spidey Sense')
 r = run('nonsense-topic')
 assert.notEqual(r.status, 0, 'unknown topic exits non-zero')
 

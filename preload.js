@@ -25,13 +25,6 @@ contextBridge.exposeInMainWorld('spidey', {
   },
   patchSettings: (patch) => ipcRenderer.send('settings:patch', patch),
   killProcess: (name) => ipcRenderer.invoke('proc:kill', name),
-  karenAsk: (text, ctx) => ipcRenderer.invoke('karen:ask', text, ctx),
-  karenLlm: () => ipcRenderer.invoke('karen:llm'),
-  onInbox: (cb) => {
-    const l = (_e, items) => cb(items)
-    ipcRenderer.on('inbox', l)
-    return () => ipcRenderer.removeListener('inbox', l)
-  },
   bugleSave: (dataUrl, name) => ipcRenderer.invoke('bugle:save', dataUrl, name),
   onOpenBugle: (cb) => {
     const l = () => cb()
@@ -57,44 +50,8 @@ contextBridge.exposeInMainWorld('spidey', {
     ipcRenderer.on('update:state', l)
     return () => ipcRenderer.removeListener('update:state', l)
   },
-  startCapture: () => ipcRenderer.send('capture:start'),
   openHelp: () => ipcRenderer.send('help:open'),
   showMenu: () => ipcRenderer.send('menu:show'),
-  speak: (text, opts) => ipcRenderer.send('speak', text, opts),
-  onSpeechStart: (cb) => {
-    const l = (_e, tag) => cb(tag)
-    ipcRenderer.on('speech:start', l)
-    return () => ipcRenderer.removeListener('speech:start', l)
-  },
-  pickVoice: (pick) => ipcRenderer.invoke('voice:pick', pick),
-  listVoices: () => ipcRenderer.invoke('voice:list'),
-  brainReady: () => ipcRenderer.invoke('brain:ready'),
-  brainChat: (text, ctx, opts) => ipcRenderer.invoke('brain:chat', text, ctx, opts),
-  brainReset: () => ipcRenderer.send('brain:reset'),
-  openBrain: () => ipcRenderer.send('brain:open'),
-  transcribe: (audio) => ipcRenderer.invoke('stt:transcribe', audio),
-  voiceInfo: () => ipcRenderer.invoke('voice:info'),
-  voiceListening: (on) => ipcRenderer.send('voice:listening', !!on),
-  onVoiceToggle: (cb) => {
-    const l = () => cb()
-    ipcRenderer.on('voice:toggle', l)
-    return () => ipcRenderer.removeListener('voice:toggle', l)
-  },
-  onSpeechIdle: (cb) => {
-    const l = () => cb()
-    ipcRenderer.on('speech:idle', l)
-    return () => ipcRenderer.removeListener('speech:idle', l)
-  },
-  onBrainDelta: (cb) => {
-    const l = (_e, t) => cb(t)
-    ipcRenderer.on('brain:delta', l)
-    return () => ipcRenderer.removeListener('brain:delta', l)
-  },
-  onWakeState: (cb) => {
-    const l = (_e, s) => cb(s)
-    ipcRenderer.on('wake:state', l)
-    return () => ipcRenderer.removeListener('wake:state', l)
-  },
   setView: (v) => ipcRenderer.send('view:set', v),
   drag: {
     start: () => ipcRenderer.send('drag:start'),

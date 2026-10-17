@@ -49,7 +49,6 @@
 
   function open() {
     $('slog').hidden = true
-    $('inbox').hidden = true
     $('bugle').hidden = true
     box.hidden = false
     if (document.body.dataset.view !== 'panel') window.spidey.setView('panel')

@@ -76,7 +76,6 @@
     if (tingles) lines.push(`TINGLES: ${tingles} (${byKind.slice(0, 3).map(([k, n]) => `${k.toUpperCase()} ${n}`).join(' · ')})`)
     if (peak(day, 'ram')) lines.push(`PEAK RAM: ${Math.round(peak(day, 'ram'))}%${hog ? ` — ${hog.name.toUpperCase()} ${(hog.mb / 1024).toFixed(1)} GB` : ''}`)
     if (peak(day, 'cpu')) lines.push(`PEAK CPU: ${Math.round(peak(day, 'cpu'))}%`)
-    if (num(day, 'notifs')) lines.push(`NOTIFICATIONS RECEIVED: ${num(day, 'notifs')}`)
     if (guardian) lines.push(`GUARDIAN ALERTS: ${guardian}`)
     if (num(day, 'note:eye')) lines.push(`EYE-REST NUDGES: ${num(day, 'note:eye')}`)
     if (num(day, 'note:remind')) lines.push(`REMINDERS FIRED: ${num(day, 'note:remind')}`)

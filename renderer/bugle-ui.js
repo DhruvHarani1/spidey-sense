@@ -11,7 +11,6 @@
     window.Suits.award('bugle')
     window.Bugle.render(paper, composed, day)
     $('slog').hidden = true
-    $('inbox').hidden = true
     box.hidden = false
     if (document.body.dataset.view !== 'panel') window.spidey.setView('panel')
     return composed

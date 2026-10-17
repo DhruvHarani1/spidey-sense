@@ -21,18 +21,12 @@
           <span class="banner__a">SPIDEY</span><span class="banner__b">SENSE</span>
           <i class="led" id="led" title="Spider-sense status"></i>
           <button class="fold" id="lockerbtn" title="Suit locker (XP and suits)" aria-label="Suit locker">★</button>
-          <button class="fold mail" id="inboxbtn" title="Notification inbox" aria-label="Notification inbox">✉<b id="icount" hidden>0</b></button>
           <button class="fold" id="collapse" title="Collapse to badge" aria-label="Collapse to badge">▲</button>
         </header>
 
         <aside class="slog" id="slog" hidden aria-label="Spider-sense log">
           <header><b>SENSE LOG</b><button id="sclear">CLEAR</button><button id="sclose" aria-label="Close log">✕</button></header>
           <ul id="sitems"></ul>
-        </aside>
-
-        <aside class="slog" id="inbox" hidden aria-label="Notification inbox">
-          <header><b>INBOX</b><button id="iclear">CLEAR</button><button id="iclose" aria-label="Close inbox">✕</button></header>
-          <ul id="iitems"></ul>
         </aside>
 
         <aside class="slog" id="bugle" hidden aria-label="The Daily Web">
@@ -65,7 +59,7 @@
         <p class="caption" id="caption" role="status" aria-live="polite">ALL QUIET… FOR NOW.</p>
 
         <section class="remind" aria-label="Reminders">
-          <div class="rinrow"><input id="rin" type="text" maxlength="60" placeholder="ASK KAREN… cpu? · in 20m stretch" aria-label="Ask Karen or add a reminder" autocomplete="off" spellcheck="false" /><button id="micbtn" class="mic" title="Talk to Karen (Ctrl+Alt+Space)" aria-label="Talk to Karen" data-on="0">🎤</button></div>
+          <div class="rinrow"><input id="rin" type="text" maxlength="60" placeholder="ASK KAREN… cpu? · in 20m stretch" aria-label="Ask Karen or add a reminder" autocomplete="off" spellcheck="false" /></div>
           <ul id="rlist"></ul>
         </section>
 
@@ -83,11 +77,7 @@
     <script src="app.js"></script>
     <script src="reminders.js"></script>
     <script src="karen.js"></script>
-    <script src="voice-core.js"></script>
-    <script src="voice.js"></script>
     <script src="guardian.js"></script>
-    <script src="inbox.js"></script>
-    <script src="reader.js"></script>
     <script src="bugle.js"></script>
     <script src="bugle-ui.js"></script>
     <script src="edith-ui.js"></script>

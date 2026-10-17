@@ -37,7 +37,7 @@
   }
 
   function open() {
-    for (const id of ['slog', 'inbox', 'bugle', 'edith']) $(id).hidden = true
+    for (const id of ['slog', 'bugle', 'edith']) $(id).hidden = true
     if (document.body.dataset.view !== 'panel') window.spidey.setView('panel')
     box.hidden = false
     render()

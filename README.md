@@ -6,7 +6,9 @@ Always-on-top comic-book desktop widget. Your PC's vitals drawn as a spider web;
 - **Spider-sense**: calm → alert (yellow) → tingle (red shake, chirp, notification). RAM alerts fire on a spike above this PC's usual level (tray → RAM alerts: Auto / 90 / 95 / Never) and name the biggest memory hog; disk alerts only above 90%. Hysteresis avoids flicker; notifications cooldown 120 s per kind.
 - **Web timer**: 25 min focus / 5 min break, tingles when time is up.
 - Starts as a small swinging spider badge; click it to open the full widget, ▲ in the banner collapses it again. Drag either to move. Tray menu: always on top, opacity, sound, notifications, network check, launch at startup, reset position, quit.
-- No accounts, no API keys. Network check = one HEAD request to `gstatic.com/generate_204` every 8 s (can be turned off).
+- No accounts, no API keys, no microphone. Network check = one HEAD request to `gstatic.com/generate_204` every 8 s (can be turned off).
+
+> **0.3.0 is the focus release.** Voice, the wake word, the AI brain, notification reading and the inbox moved to a separate app, **Jarvis**; Web-Capture is parked in *Spidey Lab*. Spidey Sense is now only the danger-sense widget. See `FOCUS-PLAN.md` for the why. The last all-in-one version is tag `v0.2.7-final-with-jarvis-features`.
 
 ## Install
 
@@ -42,23 +44,11 @@ Everything the gadget can do is documented in one place, three ways — all gene
 - **In a terminal:** the installer puts `spidey.cmd` next to the app. `spidey help`, `spidey commands`, `spidey features`, `spidey feature guardian`, `spidey hotkeys`, `spidey tray`, `spidey privacy`, `spidey troubleshoot`, `spidey search ram`, `spidey docs`. To type just `spidey` anywhere, add the install folder to your PATH. From a checkout: `npm run help` or `node bin/spidey.js commands`.
 - **On the web:** `docs/index.html` (regenerate with `npm run docs`; it is also what the app shows).
 
-## Talk to Karen (voice)
-
-Press **Ctrl+Alt+Space** (or click 🎤, or say "listen"), speak, and she answers out loud — sentence by sentence while the AI is still writing. A blue ring on the badge shows the microphone is open (only then). Speech is recognised by **Groq Whisper** if you have a Groq key, otherwise by Windows offline (tuned to Karen's commands); *"use windows speech recognition"* keeps all audio on your PC. *"Conversation mode"* makes her listen again after each answer, like Jarvis. Spoken numbers work ("in twenty minutes"). See the manual (`spidey feature voice`).
-
-## AI brain: talk to Karen naturally
-
-Say **"api keys"** (or tray → *AI brain: free API keys…*) and paste one or more free keys — **NVIDIA** (build.nvidia.com), **Groq**, **Google Gemini**, **OpenRouter**, or any OpenAI-compatible URL. Karen tries them top to bottom; a key that hits its limit or fails is rested and the next one answers; after three failed tries she switches to a local **Ollama** model, and finally to her built-in rules. Anything that is not a known command is then answered naturally, with your name, the PC's live status and the last 12 turns of the conversation, and she can run the same commands you could type (reminders, timer, voice, notification reading…) — never close programs. Keys are encrypted with Windows DPAPI and never shown again; online providers only get what you type plus one short status line, never your notifications. See the manual (`spidey feature brain`).
-
 ## Karen (the suit AI)
 
 Press **Ctrl+Alt+K** anywhere (or click the box in the panel) and ask in plain words: `status`, `cpu?`, `what is eating my ram`, `remind me to stretch in 20 minutes`, `at 3pm call mum`, `start focus`, `take a break`, `mute`, `opacity 70`, `collapse`, `kill chrome` (always asks first; system processes are protected).
 
-Karen has two layers: a fast offline rule engine, and — for anything else — an optional **local open-source model through [Ollama](https://ollama.com)** (e.g. `ollama pull qwen2.5:1.5b`). Nothing leaves your PC. The model can only trigger a short whitelist of safe actions. Tray → "Karen speaks her replies" reads answers aloud with Windows voices.
-
-## Notification inbox
-
-Click the ✉ in the banner: every Windows notification from every app (WhatsApp, Mail, Edge/YouTube, Lyra, system…) is listed there, and the unread count shows on the badge. It reads the notification database Windows already keeps for your account (read-only, local, nothing is sent anywhere) and keeps the last 100 in the widget. Tray → "Notification inbox" turns it off.
+Karen is a fast offline rule engine, not a chatbot: no AI, no network, no microphone. For talking, voice and AI chat use Jarvis.
 
 ## The Daily Web (end-of-day front page)
 
@@ -71,14 +61,6 @@ Ask Karen "am I safe?" (or tray → E.D.I.T.H.) for a read-only security check: 
 ## Suit Locker (XP and suits)
 
 Healthy habits earn XP: focus session +40, guardian alert +10, Daily Web +15 and E.D.I.T.H. scan +10 (once a day each), eye break / reminder +5. Levels unlock colour schemes — Classic, Midnight, Gold Armor, Neon Noir, Pop Art, Prism. Click ★ in the banner, or ask Karen ("my level", "wear the neon suit"). Alert colours (yellow/red) never change with a suit.
-
-## Web-Capture (comic screenshots)
-
-Press **Ctrl+Alt+C** (or ask Karen "take a screenshot", or tray → Web-Capture). The screen freezes; drag a box. Your capture is turned into a comic panel — posterised colour, ink outlines, halftone shading — with an editable caption (default `THWIP!`). **Copy** puts it on the clipboard, **Save** writes a PNG. Nothing is uploaded; the widget hides itself so it is not in the shot.
-
-## Karen reads your notifications aloud
-
-Say **"read my notifications"** (and **"call me Dhruv sir"** once). From then on every new notification is spoken, wording fitted to the kind: *"Dhruv sir, you received a message from Mum on WhatsApp. The message is: dinner at eight."* — messages, group chats, photos/voice notes, email, calls (announced immediately), calendar, Windows notices, websites. Emoji and links are tidied for the voice, long messages are trimmed, non-English scripts are left on screen. Notifications queue (never overlap); bursts become a summary; while you are away or in a focus session she collects them and gives one digest when you are back ("what did I miss" reads them). **Private mode** says only who, never what; apps can be muted ("don't read youtube"). **"change voice"** switches between the Windows voices (Zira / David). Full details: the manual (`spidey feature reader`).
 
 ## Reminders
 

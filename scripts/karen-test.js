@@ -1,8 +1,7 @@
 'use strict'
-// Unit tests for Karen's rule engine and the LLM-reply sanitiser. Run: npm run test:unit
+// Unit tests for Karen's rule engine. Run: npm run test:unit
 const assert = require('node:assert/strict')
 const { interpret, normaliseReminder } = require('../renderer/karen.js')
-const { sanitize, pickModel, brief } = require('../karen-llm.js')
 
 const stats = { cpu: 12.4, ram: 97.2, disk: 82, latencyMs: 38, online: true, uptimeS: 90061, hog: { name: 'chrome', mb: 1703 } }
 const battery = { level: 0.8, charging: true, present: true }
@@ -56,20 +55,10 @@ assert.deepEqual(say('no', { ...ctx, pendingKill: 'chrome' }).action, { type: 'c
 assert.equal(say('yes').action, undefined, '"yes" alone does nothing')
 assert.match(say('kill ..\\..\\evil').say, /ODD/)
 
-// unknown goes to the LLM
+// anything else is "not sure I follow" (chat lives in Jarvis)
 assert.equal(say('write me a poem about tacos').unknown, true)
 assert.equal(say('cpu', { ...ctx, stats: undefined }).unknown, true)
 
-// LLM sanitiser: only whitelisted, clamped actions get through
-assert.deepEqual(sanitize('{"say":"On it.","action":{"type":"remind","minutes":99999,"text":"x"}}'), { say: 'On it.', action: { type: 'remind', raw: 'in 1440m x' } })
-assert.deepEqual(sanitize('noise {"say":"hi","action":{"type":"timer","op":"focus"}} trailing').action, { type: 'timer', op: 'focus' })
-assert.equal(sanitize('{"say":"x","action":{"type":"kill","name":"explorer"}}').action, null, 'model cannot kill processes')
-assert.equal(sanitize('{"say":"x","action":{"type":"timer","op":"rm -rf"}}').action, null)
-assert.equal(sanitize('plain words, not json').say, 'plain words, not json')
-assert.equal(pickModel(['mistral:7b', 'qwen2.5:1.5b', 'llama3.2:3b'], ''), 'qwen2.5:1.5b')
-assert.equal(pickModel(['mistral:7b'], ''), 'mistral:7b')
-assert.equal(pickModel([], ''), '')
-assert.match(brief({ stats, battery }), /cpu 12%, ram 97%, disk 82%.*chrome 1703MB.*ping 38ms.*battery 80% charging/)
 
 console.log('karen: ALL PASS')
 
@@ -93,11 +82,6 @@ assert.deepEqual(interpret('install update', ctx).action, { type: 'update-instal
 assert.deepEqual(interpret('restart to update', ctx).action, { type: 'update-install' })
 console.log('karen updater: ALL PASS')
 
-// web-capture intent
-assert.deepEqual(interpret('take a screenshot', ctx).action, { type: 'capture' })
-assert.deepEqual(interpret('web capture', ctx).action, { type: 'capture' })
-assert.deepEqual(interpret('make a comic panel', ctx).action, { type: 'capture' })
-console.log('karen capture: ALL PASS')
 
 // manual
 assert.deepEqual(interpret('open the manual', ctx).action, { type: 'help-window' })
@@ -105,75 +89,16 @@ assert.deepEqual(interpret('what can you do', ctx).action, { type: 'help-window'
 assert.equal(interpret('help', ctx).action, undefined, 'plain help stays a quick list')
 console.log('karen manual: ALL PASS')
 
-// voice
-for (const q of ['speak to me', 'talk to me', 'read it aloud', 'turn on the voice', 'enable voice']) assert.deepEqual(interpret(q, ctx).action, { type: 'voice', on: true }, q)
-for (const q of ['stop talking', 'stop speaking', 'turn off the voice', 'voice off', 'be silent']) assert.deepEqual(interpret(q, ctx).action, { type: 'voice', on: false }, q)
-for (const q of ['say hello', 'test your voice', 'can you hear me', 'let me hear you']) assert.deepEqual(interpret(q, ctx).action, { type: 'speak-test' }, q)
-assert.deepEqual(interpret('mute', ctx).action, { type: 'sound', on: false }, 'mute still means the chirp')
-assert.deepEqual(interpret('be quiet', ctx).action, { type: 'sound', on: false })
-console.log('karen voice: ALL PASS')
-
-// choosing the voice
-for (const [q, pick] of [['use david', 'david'], ['switch to zira', 'zira'], ['use the female voice', 'female'], ['change to male voice', 'male'], ['use the default voice', 'auto'], ['zira voice', 'zira'], ['speak in david', 'david']]) assert.deepEqual(interpret(q, ctx).action, { type: 'voice-pick', pick }, q)
-for (const q of ['change voice', 'switch the voice', 'try another voice', 'different voice', 'next voice']) assert.deepEqual(interpret(q, ctx).action, { type: 'voice-pick', pick: 'next' }, q)
-for (const q of ['list voices', 'what voices do you have', 'show the voices']) assert.deepEqual(interpret(q, ctx).action, { type: 'voice-list' }, q)
-assert.deepEqual(interpret('speak to me', ctx).action, { type: 'voice', on: true }, 'speak to me still turns the voice on')
-console.log('karen voice picking: ALL PASS')
-
-
-// notification reading
-for (const q of ['read my notifications', 'read notifications aloud', 'announce my messages', 'read all notifications out loud', 'turn on notification reading', 'start notification reading']) assert.deepEqual(interpret(q, ctx).action, { type: 'reader', on: true }, q)
-for (const q of ['stop reading notifications', 'stop reading my notifications', "don't read my messages", 'turn off notification reading', 'no more reading notifications']) assert.deepEqual(interpret(q, ctx).action, { type: 'reader', on: false }, q)
-for (const q of ['read notifications privately', 'private mode', 'only tell me who']) assert.deepEqual(interpret(q, ctx).action, { type: 'reader-mode', mode: 'private' }, q)
-for (const q of ['read everything', 'full mode', 'public mode']) assert.deepEqual(interpret(q, ctx).action, { type: 'reader-mode', mode: 'full' }, q)
-assert.deepEqual(interpret("don't read youtube", ctx).action, { type: 'reader-mute', app: 'youtube', on: true })
-assert.deepEqual(interpret('stop reading whatsapp notifications', ctx).action, { type: 'reader-mute', app: 'whatsapp', on: true })
-assert.deepEqual(interpret('ignore teams', ctx).action, { type: 'reader-mute', app: 'teams', on: true })
-assert.deepEqual(interpret('read whatsapp again', ctx).action, { type: 'reader-mute', app: 'whatsapp', on: false })
-assert.deepEqual(interpret('start reading mail', ctx).action, { type: 'reader-mute', app: 'mail', on: false })
-assert.deepEqual(interpret('call me Dhruv sir', ctx).action, { type: 'call-me', name: 'Dhruv sir' }, 'the name keeps its capital letters')
-assert.deepEqual(interpret('you can call me Boss.', ctx).action, { type: 'call-me', name: 'Boss' })
-assert.deepEqual(interpret("don't call me by name", ctx).action, { type: 'call-me', name: '' })
-for (const q of ['what did i miss', 'any new messages', 'read my unread notifications', 'do i have any notifications']) assert.deepEqual(interpret(q, ctx).action, { type: 'missed' }, q)
-for (const q of ['repeat that', 'say that again', 'what was that', 'read it again']) assert.deepEqual(interpret(q, ctx).action, { type: 'repeat' }, q)
-for (const q of ['skip', 'next', 'enough', 'shh']) assert.deepEqual(interpret(q, ctx).action, { type: 'speech-stop' }, q)
-assert.deepEqual(interpret('are you reading my notifications', ctx).action, { type: 'reader-status' })
-assert.deepEqual(interpret('speak to me', ctx).action, { type: 'voice', on: true }, 'speak to me is still the reply voice')
-assert.deepEqual(interpret('mute', ctx).action, { type: 'sound', on: false }, 'mute is still the chirp')
-console.log('karen reader: ALL PASS')
-
-
-// brain
-for (const q of ['api keys', 'open the ai settings', 'set up the ai', 'add an api key', 'brain settings']) assert.deepEqual(interpret(q, ctx).action, { type: 'brain-open' }, q)
-for (const q of ['new chat', 'start over', 'forget this conversation']) assert.deepEqual(interpret(q, ctx).action, { type: 'brain-reset' }, q)
-assert.deepEqual(interpret('which ai are you using', ctx).action, { type: 'brain-status' })
-for (const q of ['hi', 'thanks', 'how are you', "what's up", 'good morning', 'who are you']) assert.equal(interpret(q, ctx).chat, true, q + ' is small talk the brain may answer')
-assert.equal(interpret('status', ctx).chat, undefined, 'real commands never go to the brain')
+// the voice / AI-brain / notification-reader / capture commands moved to Jarvis (and Spidey Lab): Karen no longer knows them
+for (const q of ['speak to me', 'stop talking', 'change voice', 'list voices', 'use david', 'listen', 'conversation mode', 'turn on the wake word', 'api keys', 'new chat', 'read my notifications', 'what did i miss', 'take a screenshot', 'web capture']) {
+  const r = interpret(q, ctx)
+  assert.equal(r.action, undefined, `"${q}" must not be an action any more, got ${JSON.stringify(r.action)}`)
+}
 assert.equal(interpret('tell me a story about spiders', ctx).unknown, true)
-console.log('karen brain: ALL PASS')
-
-
-// talking to her
-for (const q of ['listen', 'listen to me', "let's talk", 'start listening']) assert.deepEqual(interpret(q, ctx).action, { type: 'listen' }, q)
-assert.deepEqual(interpret('conversation mode', ctx).action, { type: 'converse', on: true })
-assert.deepEqual(interpret('turn conversation mode off', ctx).action, { type: 'converse', on: false })
-assert.deepEqual(interpret('turn on the wake word', ctx).action, { type: 'wake', on: true })
-assert.deepEqual(interpret('stop listening for hey spidey', ctx).action, { type: 'wake', on: false })
-assert.deepEqual(interpret('wake word off', ctx).action, { type: 'wake', on: false })
-assert.deepEqual(interpret('keep listening', ctx).action, { type: 'converse', on: true })
-assert.deepEqual(interpret('stop keep listening', ctx).action, { type: 'converse', on: false })
-assert.deepEqual(interpret('use windows speech recognition', ctx).action, { type: 'stt-mode', mode: 'offline' })
-assert.deepEqual(interpret("don't send my voice", ctx).action, { type: 'stt-mode', mode: 'offline' })
-assert.deepEqual(interpret('switch to groq whisper', ctx).action, { type: 'stt-mode', mode: 'auto' })
-
-// spoken numbers behave like typed digits
-assert.equal(require('../renderer/karen.js').numberWords('remind me in twenty minutes to stretch'), 'remind me in 20 minutes to stretch')
-assert.equal(require('../renderer/karen.js').numberWords('in an hour call mum'), 'in 1 hour call mum')
-assert.equal(require('../renderer/karen.js').numberWords('in half an hour'), 'in 30 minutes')
-assert.equal(require('../renderer/karen.js').numberWords('in twenty five minutes'), 'in 25 minutes')
-assert.equal(require('../renderer/karen.js').numberWords('at five pm call mum'), 'at 5 pm call mum')
-assert.equal(require('../renderer/karen.js').numberWords('opacity seventy'), 'opacity 70')
-assert.equal(require('../renderer/karen.js').numberWords('what is the one thing I need'), 'what is the one thing I need', 'only numbers that mean a quantity are converted')
-assert.deepEqual(interpret('remind me in twenty minutes to stretch', ctx).action, { type: 'remind', raw: 'in 20 minutes stretch' })
-assert.deepEqual(interpret('set opacity seventy', ctx).action, { type: 'opacity', value: 0.7 })
-console.log('karen voice input: ALL PASS')
+for (const q of ['hi', 'thanks', 'how are you', 'good morning', 'who are you']) {
+  const r = interpret(q, ctx)
+  assert.ok(r.say && !r.chat && !r.unknown, `"${q}" gets a canned answer, not a brain`)
+}
+assert.match(interpret('who are you', ctx).say, /JARVIS/)
+assert.equal(require('../renderer/karen.js').numberWords, undefined, 'spoken-number helpers left with the voice code')
+console.log('karen without voice: ALL PASS')
