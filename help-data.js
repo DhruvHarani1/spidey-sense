@@ -89,6 +89,7 @@ const DATA = {
       group: 'Talking to her out loud',
       items: [
         { say: 'listen', does: 'Opens the microphone, same as Ctrl+Alt+Space or the 🎤 button.', try: 'listen', aka: ['listen to me', "let's talk", 'start listening'] },
+        { say: 'turn on the wake word', does: 'Karen listens for "Hey Karen" / "Hey Spidey" so you need no hotkey. Offline; a blue ear shows on the badge while on. "turn off the wake word" to stop.', try: 'turn on the wake word', aka: ['wake word off', 'always listening'] },
         { say: 'conversation mode', does: 'After she answers a spoken question she listens again for your follow-up, so you can just keep talking. "conversation mode off" to stop.', try: 'conversation mode', aka: ['keep listening', 'hands free'] },
         { say: 'use windows speech recognition', does: 'Recognise your voice with Windows only: no audio ever leaves this PC. (Less accurate than Groq Whisper.)', try: 'use windows speech recognition', aka: ["don't send my voice"] },
         { say: 'switch to groq whisper', does: 'Back to automatic: Groq Whisper when you have a Groq key, otherwise Windows.', try: 'switch to groq whisper' }
@@ -222,9 +223,10 @@ const DATA = {
         'Your words are turned into text with Groq Whisper when you have a Groq key (accurate, fast, handles accents), otherwise with Windows’ built-in offline recogniser, which listens for exactly the commands Karen knows ("what is my CPU", "start focus", "remind me in twenty minutes to…") plus free dictation. Spoken numbers work: "in twenty minutes", "half an hour", "at five pm".',
         'Then it is a normal Karen turn: commands run, anything else goes to the AI brain. Because you spoke, every answer is spoken back (Windows voice; "change voice" picks Zira or David). Brain replies stream: the first sentence is spoken as soon as it is written, the rest follow, and the caption fills in as she talks. You can interrupt her any time by pressing the hotkey: she stops instantly and listens.',
         'Conversation mode ("conversation mode"): after a spoken answer she listens again for 5 seconds for your follow-up, so you can chat without touching anything. If you say nothing she quietly stops.',
+        'Wake word (opt-in, off by default): tray → Wake word, or say "turn on the wake word". Then say "Hey Karen" or "Hey Spidey" (also "Okay Karen/Spidey"), pause for the beep, and ask. A small blue ear shows on the badge while it is on. She ignores the wake word while she is talking so she never wakes herself.',
         'Windows needs to allow microphone access for desktop apps (Settings → Privacy & security → Microphone). The first time, Windows may show its own prompt.'
       ],
-      reads: 'Audio is recorded in memory only while the ring is on, converted to a small WAV and sent to Groq (if you use Groq Whisper) or handed to the Windows recogniser through a temporary file that is deleted immediately. Choose "Speech recognition → Windows only" in the tray (or say "use windows speech recognition") to guarantee that audio never leaves your PC. Recordings are never saved.'
+      reads: 'Audio is recorded in memory only while the ring is on, converted to a small WAV and sent to Groq (if you use Groq Whisper) or handed to the Windows recogniser through a temporary file that is deleted immediately. Choose "Speech recognition → Windows only" in the tray (or say "use windows speech recognition") to guarantee that audio never leaves your PC. Recordings are never saved. The wake word is different in one way: while it is on, a small Windows recogniser keeps the microphone open and checks only for the four wake phrases, on this PC. Nothing is recorded, stored or sent; the real question is captured only after the beep. It costs roughly 60–90 MB of RAM, and Windows shows its microphone-in-use icon while it is on.'
     },
     {
       id: 'brain',
@@ -341,6 +343,7 @@ const DATA = {
     'Eye-rest nudge (20-20-20)',
     'Talk to Karen (Ctrl+Alt+Space)',
     'Keep listening after she answers (conversation mode)',
+    'Wake word: say "Hey Karen" / "Hey Spidey" (always listening, offline)',
     'Speech recognition (Automatic / Windows only)',
     'Karen speaks her replies',
     'Read notifications aloud',
@@ -385,6 +388,7 @@ const DATA = {
     { q: 'She reads notifications too loudly / in public.', a: 'Say "read notifications privately" so she only says who, or "stop reading notifications". Turn the Windows volume down — she speaks through the normal output device.' },
     { q: 'Ctrl+Alt+Space does nothing / she says she can’t use the microphone.', a: 'Open Windows Settings → Privacy & security → Microphone and switch on "Let desktop apps access your microphone". Another program may also own the shortcut: use the 🎤 button or tray → Talk to Karen instead.' },
     { q: 'She mishears me.', a: 'Offline recognition is the weak spot: add a free Groq key ("api keys") and she switches to Whisper automatically, which is far more accurate. Speak after the beep, close to the microphone, and pause about a second when you are done.' },
+    { q: 'Hey Karen does not wake her / wakes her by mistake.', a: 'Say the phrase clearly, then pause for the beep before asking (words straight after the phrase are lost). Speaker volume from music or a video can confuse it: use the hotkey in noisy rooms. If it says it could not start, check Windows microphone privacy for desktop apps. Turn it off with tray → Wake word.' },
     { q: 'She stops listening before I finish / waits too long.', a: 'She decides you are done after about a second of quiet. In a very noisy room the quiet may never come: press Ctrl+Alt+Space again to finish, or use the hotkey right after you speak.' },
     { q: 'Karen says "not sure I follow" to everything.', a: 'She only chats when she has a brain. Say "api keys", paste a free key (NVIDIA / Groq / Gemini / OpenRouter), press Test. Or install Ollama + a small model for a private local brain.' },
     { q: 'A key shows COOLING or KEY REJECTED.', a: 'COOLING = the provider said "too many requests"; it is retried automatically after the wait shown. KEY REJECTED = the provider refused the key: copy it again from the provider’s dashboard and press "New key". Karen simply uses the next key in the meantime.' },

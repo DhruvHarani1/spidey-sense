@@ -115,6 +115,7 @@
     // ---- UI + settings
     if (/\b(collapse|minimi[sz]e|shrink)\b|^(hide|close)( the)?( panel| widget| this)?$/.test(t)) return { action: { type: 'collapse' } }
     // ---- talking to Karen (microphone)
+    if (/\b(wake ?word|hey (karen|spidey)|always listen(ing)?)\b/.test(t) && !/\b(what|how)\b/.test(t)) return { action: { type: 'wake', on: !/\b(off|stop|disable|don'?t|no longer|turn off)\b/.test(t) } }
     if (/^(listen|listen to me|start listening|i want to talk|i want to talk to you|let'?s talk|talk with me)$/.test(t)) return { action: { type: 'listen' } }
     if (/\b(conversation mode|keep listening|stay listening|hands[- ]?free)\b/.test(t)) return { action: { type: 'converse', on: !/\b(off|stop|disable|don'?t|no)\b/.test(t) } }
     if (/\b(use|switch to|go) (the )?(windows|offline|local)( speech| voice)?( recognition)?\b|\boffline (speech|voice) recognition\b|\bdon'?t send (my )?(voice|audio)\b/.test(t)) return { action: { type: 'stt-mode', mode: 'offline' } }
@@ -391,6 +392,16 @@
         say(window.Edith.summary(await window.Edith.open()))
         break
       }
+      case 'wake':
+        window.spidey.patchSettings({ wakeWord: action.on })
+        window.Core.say(
+          action.on
+            ? 'WAKE WORD ON. SAY "HEY KAREN" OR "HEY SPIDEY", WAIT FOR THE BEEP, THEN ASK. WINDOWS LISTENS ON THIS PC ONLY: NOTHING IS RECORDED OR SENT, AND A BLUE EAR SHOWS ON THE BADGE WHILE IT IS ON.'
+            : 'WAKE WORD OFF. I’M NOT LISTENING FOR MY NAME ANY MORE.',
+          14000,
+          action.on
+        )
+        break
       case 'listen':
         window.Voice.start()
         break

@@ -877,3 +877,16 @@ body[data-listening='1'] .led {
   box-shadow: 0 0 10px #19a8ff;
   animation: blink 0.8s steps(2) infinite;
 }
+
+/* the wake word keeps the microphone open: show it. A small ear on the badge, steady blue dot on the status light */
+body[data-wake='1'] .badge__body::before {
+  content: '👂';
+  position: absolute;
+  left: -12px;
+  top: -10px;
+  font-size: 15px;
+  filter: drop-shadow(0 0 3px #19a8ff);
+}
+body[data-wake='1'] .led {
+  box-shadow: 0 0 0 2px #19a8ff;
+}

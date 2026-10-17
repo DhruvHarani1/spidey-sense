@@ -121,11 +121,16 @@ let queue = [] // [{text, tag, resolve}]
 let busy = false
 let onStart = null
 let onIdle = null
+let onBusy = null
 let idleTimer = null
 
 /** main.js: be told when an item starts playing (so the caption can show what is being read) */
 function setOnStart(fn) {
   onStart = fn
+}
+/** main.js: be told when she starts / stops talking (the wake word pauses while she speaks) */
+function setOnBusy(fn) {
+  onBusy = fn
 }
 /** main.js: be told when everything queued has been spoken (conversation mode listens again here) */
 function setOnIdle(fn) {
@@ -279,8 +284,10 @@ async function run(item) {
 async function pump() {
   if (busy) return
   busy = true
+  if (onBusy) onBusy(true)
   while (queue.length) await run(queue.shift())
   busy = false
+  if (onBusy) onBusy(false)
   if (onIdle) onIdle()
 }
 
@@ -305,7 +312,7 @@ function speak(text, opts = {}) {
 }
 
 module.exports = {
-  speak, stop, warm, clean, setOnStart, setOnIdle, setVoice, getVoice, listVoices, resolveVoice, shortName,
+  speak, stop, warm, clean, setOnStart, setOnIdle, setOnBusy, setVoice, getVoice, listVoices, resolveVoice, shortName,
   _setSpawn, _setVoices: (v) => (voices = v), _kill: killEngine, _busy: () => busy,
   SCRIPT: ENGINE_SCRIPT, MAX_CHARS, MAX_QUEUE
 }

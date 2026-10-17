@@ -438,6 +438,8 @@
     settings.eyeBreak = s.eyeBreak !== false
     settings.karenVoice = !!s.karenVoice
     settings.voiceConverse = !!s.voiceConverse
+    settings.wakeWord = !!s.wakeWord
+    document.body.dataset.wake = s.wakeWord ? '1' : '0'
     settings.sttMode = s.sttMode === 'offline' ? 'offline' : 'auto'
     settings.readNotifications = !!s.readNotifications
     settings.readMode = s.readMode === 'private' ? 'private' : 'full'

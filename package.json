@@ -11,7 +11,7 @@
     "icons": "electron scripts/make-icons.js",
     "test": "node scripts/selftest.js",
     "dist": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dist-local.ps1",
-    "test:unit": "node scripts/guardian-test.js && node scripts/karen-test.js && node scripts/notifications-test.js && node scripts/bugle-test.js && node scripts/edith-test.js && node scripts/suits-test.js && node scripts/autostart-test.js && node scripts/updater-test.js && node scripts/comic-test.js && node scripts/help-test.js && node scripts/speech-test.js && node scripts/reader-test.js && node scripts/brain-prompt-test.js && node scripts/brain-test.js && node scripts/voice-core-test.js && node scripts/stt-test.js",
+    "test:unit": "node scripts/guardian-test.js && node scripts/karen-test.js && node scripts/notifications-test.js && node scripts/bugle-test.js && node scripts/edith-test.js && node scripts/suits-test.js && node scripts/autostart-test.js && node scripts/updater-test.js && node scripts/comic-test.js && node scripts/help-test.js && node scripts/speech-test.js && node scripts/reader-test.js && node scripts/brain-prompt-test.js && node scripts/brain-test.js && node scripts/voice-core-test.js && node scripts/stt-test.js && node scripts/wake-test.js",
     "docs": "node scripts/build-docs.js",
     "help": "node bin/spidey.js help"
   },
@@ -44,7 +44,8 @@
       "brain.js",
       "brain-prompt.js",
       "preload-brain.js",
-      "stt.js"
+      "stt.js",
+      "wake.js"
     ],
     "extraResources": [
       {

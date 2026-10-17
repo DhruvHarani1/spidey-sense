@@ -90,6 +90,11 @@ contextBridge.exposeInMainWorld('spidey', {
     ipcRenderer.on('brain:delta', l)
     return () => ipcRenderer.removeListener('brain:delta', l)
   },
+  onWakeState: (cb) => {
+    const l = (_e, s) => cb(s)
+    ipcRenderer.on('wake:state', l)
+    return () => ipcRenderer.removeListener('wake:state', l)
+  },
   setView: (v) => ipcRenderer.send('view:set', v),
   drag: {
     start: () => ipcRenderer.send('drag:start'),

@@ -7,6 +7,7 @@ const { execFile } = require('node:child_process')
 const autostart = require('./autostart')
 const speech = require('./speech')
 const stt = require('./stt')
+const wakeWord = require('./wake')
 const { createBrain, PRESETS: BRAIN_PRESETS } = require('./brain')
 const brainPrompt = require('./brain-prompt')
 const { updater } = require('./updater')
@@ -33,6 +34,7 @@ const DEFAULTS = {
   readMode: 'full', // 'full' = who and what | 'private' = who only
   callMe: '', // how Karen addresses you, e.g. "Dhruv sir"
   readMuted: ['lyra', 'settings', 'system', 'lenovo', 'intel'], // apps she never reads
+  wakeWord: false, // "Hey Karen" / "Hey Spidey": always listening for the wake phrase, fully offline
   voiceConverse: false, // after she answers a spoken question, listen again for a follow-up
   sttMode: 'auto', // speech recognition: 'auto' = Groq Whisper if you have a Groq key, else Windows | 'offline' = Windows only
   voiceName: '', // '' = automatic; otherwise the exact installed Windows voice name
@@ -89,7 +91,7 @@ function update(patch) {
   buildTray()
 }
 
-const publicSettings = () => ({ opacity: settings.opacity, sound: settings.sound, notifications: settings.notifications, netProbe: settings.netProbe, ramMode: settings.ramMode, eyeBreak: settings.eyeBreak, karenVoice: settings.karenVoice, voiceName: settings.voiceName, voiceConverse: settings.voiceConverse, sttMode: settings.sttMode, readNotifications: settings.readNotifications, readMode: settings.readMode, callMe: settings.callMe, readMuted: settings.readMuted, view: settings.view })
+const publicSettings = () => ({ opacity: settings.opacity, sound: settings.sound, notifications: settings.notifications, netProbe: settings.netProbe, ramMode: settings.ramMode, eyeBreak: settings.eyeBreak, karenVoice: settings.karenVoice, voiceName: settings.voiceName, voiceConverse: settings.voiceConverse, sttMode: settings.sttMode, wakeWord: settings.wakeWord, readNotifications: settings.readNotifications, readMode: settings.readMode, callMe: settings.callMe, readMuted: settings.readMuted, view: settings.view })
 
 // ---------------------------------------------------------------- window
 /** @type {BrowserWindow | null} */
@@ -184,6 +186,7 @@ function setView(view) {
 
 function applySettings() {
   if (!win) return
+  syncWake()
   win.setOpacity(settings.opacity)
   win.setAlwaysOnTop(settings.alwaysOnTop, 'screen-saver')
   syncLoginItem(settings.startup)
@@ -257,6 +260,7 @@ function menuTemplate() {
       check('Karen speaks her replies', 'karenVoice'),
       { label: 'Talk to Karen (Ctrl+Alt+Space)', click: () => win?.webContents.send('voice:toggle') },
       check('Keep listening after she answers (conversation mode)', 'voiceConverse'),
+      check('Wake word: say "Hey Karen" / "Hey Spidey" (always listening, offline)', 'wakeWord'),
       {
         label: 'Speech recognition',
         submenu: [
@@ -444,6 +448,7 @@ ipcMain.on('settings:patch', (e, patch) => {
     clean[k] = k === 'opacity' ? Math.min(1, Math.max(0.3, patch[k])) : patch[k]
   }
   if (typeof patch.voiceConverse === 'boolean') clean.voiceConverse = patch.voiceConverse
+  if (typeof patch.wakeWord === 'boolean') clean.wakeWord = patch.wakeWord
   if (patch.sttMode === 'auto' || patch.sttMode === 'offline') clean.sttMode = patch.sttMode
   if (typeof patch.readNotifications === 'boolean') clean.readNotifications = patch.readNotifications
   if (patch.readMode === 'full' || patch.readMode === 'private') clean.readMode = patch.readMode
@@ -639,12 +644,45 @@ ipcMain.handle('stt:transcribe', async (e, audio) => {
 ipcMain.handle('voice:info', (e) => (e.sender === win?.webContents ? { cloud: !!brain && brain.canTranscribe(), mode: settings.sttMode, converse: settings.voiceConverse } : null))
 ipcMain.on('voice:listening', (e, on) => {
   if (e.sender !== win?.webContents) return
+  micOpen = !!on
+  if (on) wake.pause()
+  else maybeResumeWake()
   if (on) {
     speech.stop() // so she does not hear herself
     speech.warm() // and her answer will start instantly
   }
 })
 speech.setOnIdle(() => win?.webContents.send('speech:idle'))
+
+// ---------------------------------------------------------------- wake word ("Hey Karen")
+let micOpen = false // the widget has the microphone open for a question
+let speaking = false
+let wakeResume = null
+const wake = wakeWord.create({
+  env: process.env.SPIDEY_TEST && process.env.SPIDEY_WAKE_WAV ? { SPIDEY_WAKE_WAV: process.env.SPIDEY_WAKE_WAV } : {},
+  onWake: () => {
+    wake.pause() // she must not hear her own beep and answer
+    win?.webContents.send('voice:toggle')
+    win?.webContents.send('wake:heard')
+  },
+  onState: (s, detail) => win?.webContents.send('wake:state', { state: s, detail: detail || '' })
+})
+function maybeResumeWake() {
+  clearTimeout(wakeResume)
+  wakeResume = setTimeout(() => {
+    if (settings.wakeWord && !micOpen && !speaking) wake.resume()
+  }, 1200)
+}
+speech.setOnBusy((busy) => {
+  speaking = busy
+  if (busy) wake.pause()
+  else maybeResumeWake()
+})
+function syncWake() {
+  if (settings.wakeWord) wake.start()
+  else wake.stop()
+}
+ipcMain.handle('wake:state', (e) => (e.sender === win?.webContents ? { state: wake.state } : null))
 
 ipcMain.on('brain:reset', (e) => {
   if (e.sender === win?.webContents) brainHistory = []
@@ -992,6 +1030,7 @@ if (!app.requestSingleInstanceLock()) {
     clearInterval(bugleTimer)
     updater.dispose()
     speech.stop()
+    wake.stop()
     quitting = true
     clearInterval(topTimer)
   })

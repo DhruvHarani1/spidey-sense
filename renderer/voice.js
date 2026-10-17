@@ -214,6 +214,11 @@
   }
 
   window.spidey.onVoiceToggle(toggle)
+  // the wake word could not start (no microphone, privacy setting…): say why, once
+  window.spidey.onWakeState((s) => {
+    document.body.dataset.wakeState = s.state
+    if (s.state === 'failed') window.Core.say('I COULDN’T START THE WAKE WORD: ' + String(s.detail || 'THE RECOGNISER STOPPED').toUpperCase() + '. CHECK THE MICROPHONE PRIVACY SETTING.', 12000, false)
+  })
   window.spidey.onSpeechIdle(() => {
     if (followUp && !session && !busy) {
       followUp = false

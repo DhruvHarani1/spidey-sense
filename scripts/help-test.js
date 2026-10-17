@@ -51,6 +51,7 @@ const probes = {
   'Karen speaks': 'Karen speaks',
   'Talk to Karen': 'Talk to Karen (Ctrl+Alt+Space)',
   'conversation mode': 'conversation mode',
+  'Wake word': 'Wake word: say',
   'Speech recognition': 'Speech recognition',
   'AI brain': 'AI brain: free API keys',
   'Read notifications aloud': 'Read notifications aloud',
