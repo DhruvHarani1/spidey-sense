@@ -1,6 +1,6 @@
 # Spidey Sense — Focus Plan
 
-Status: **APPROVED. Phase 0 and Phase 1 DONE (2026-10-18).** Phase 0: tag `v0.2.7-final-with-jarvis-features`. Phase 1: `P:\Jarvis` created (local git repo, 1 commit, not on GitHub yet) with the voice / wake word / AI brain / STT / inbox / reader code copied (not removed) from Spidey, a new minimal Electron shell, and its own tests (unit + wiring + real-app e2e) all passing. Spidey is untouched except one small wake-word fix. **Next: Phase 2 (cut Spidey down), which needs the go-ahead.**
+Status: **APPROVED. Phases 0, 1 and 2 DONE (2026-10-18).** Phase 0: tag `v0.2.7-final-with-jarvis-features`. Phase 1: `P:\Jarvis` (voice, wake word, AI brain, STT, inbox, reader; own shell, tests, e2e; local git, not on GitHub yet). Phase 2: Spidey Sense 0.3.0 is the focused widget (no voice, no microphone, no AI, no inbox, no capture); Web-Capture is parked in `P:\Spidey Lab`; 0.3.0 is committed and the installer is built, but **not published**. Next: your test of Jarvis and Spidey 0.3.0, then publishing 0.3.0 (and putting Jarvis on GitHub), then Phase 3 (Spidey upgrades).
 
 ## 1. The problem
 
