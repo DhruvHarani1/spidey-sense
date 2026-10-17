@@ -65,7 +65,7 @@
         <p class="caption" id="caption" role="status" aria-live="polite">ALL QUIET… FOR NOW.</p>
 
         <section class="remind" aria-label="Reminders">
-          <input id="rin" type="text" maxlength="60" placeholder="ASK KAREN… cpu? · in 20m stretch" aria-label="Ask Karen or add a reminder" autocomplete="off" spellcheck="false" />
+          <div class="rinrow"><input id="rin" type="text" maxlength="60" placeholder="ASK KAREN… cpu? · in 20m stretch" aria-label="Ask Karen or add a reminder" autocomplete="off" spellcheck="false" /><button id="micbtn" class="mic" title="Talk to Karen (Ctrl+Alt+Space)" aria-label="Talk to Karen" data-on="0">🎤</button></div>
           <ul id="rlist"></ul>
         </section>
 
@@ -83,6 +83,8 @@
     <script src="app.js"></script>
     <script src="reminders.js"></script>
     <script src="karen.js"></script>
+    <script src="voice-core.js"></script>
+    <script src="voice.js"></script>
     <script src="guardian.js"></script>
     <script src="inbox.js"></script>
     <script src="reader.js"></script>

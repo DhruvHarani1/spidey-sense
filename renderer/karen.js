@@ -19,6 +19,29 @@
   const HELP =
     'TRY: "status", "cpu?", "what is eating my ram", "in 20m stretch", "at 3pm call mum", "start focus", "break", "mute", "kill chrome", "collapse".'
 
+  const ONES = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19 }
+  const TENS = { twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90 }
+  const NUM = '(?:' + Object.keys(TENS).join('|') + ')(?:[ -](?:one|two|three|four|five|six|seven|eight|nine))?|' + Object.keys(ONES).join('|')
+  const toNumber = (w) => {
+    const m = /^(\w+)(?:[ -](\w+))?$/.exec(w.toLowerCase())
+    if (!m) return null
+    return m[1] in TENS ? TENS[m[1]] + (m[2] ? ONES[m[2]] || 0 : 0) : ONES[m[1]] ?? null
+  }
+  /**
+   * Spoken numbers become digits where it matters for commands ("in twenty minutes" -> "in 20 minutes", "half an hour" -> "30 minutes",
+   * "at five pm" -> "at 5 pm", "opacity seventy" -> "opacity 70"), so a voice command works like a typed one.
+   */
+  function numberWords(s) {
+    return String(s)
+      .replace(/\bhalf an hour\b/gi, '30 minutes')
+      .replace(/\b(?:an|a|one) hour\b/gi, '1 hour')
+      .replace(/\b(?:a|one) minute\b/gi, '1 minute')
+      .replace(/\b(?:a|one) second\b/gi, '1 second')
+      .replace(new RegExp('\\b(' + NUM + ')(?= (?:seconds?|secs?|minutes?|mins?|hours?|hrs?|percent)\\b)', 'gi'), (m) => String(toNumber(m)))
+      .replace(new RegExp('\\bat (' + NUM + ')(?= (?:am|pm|a\\.m\\.|p\\.m\\.|o\'clock)\\b)', 'gi'), (m, n) => 'at ' + toNumber(n))
+      .replace(new RegExp('\\b(opacity|volume|level) (' + NUM + ')\\b', 'gi'), (m, w, n) => w + ' ' + toNumber(n))
+  }
+
   /** Reminder phrases: "remind me to X in 10 minutes" / "remind me in 10m to X" → "in 10m X" */
   function normaliseReminder(text) {
     let s = text.trim().replace(/^(?:please\s+)?(?:remind me|set (?:a )?reminder|reminder)\s*(?:to\s+|about\s+)?/i, '')
@@ -36,7 +59,7 @@
    * @returns {{say?:string, action?:any, confirm?:any, unknown?:boolean}}
    */
   function interpret(raw, ctx = {}) {
-    const text = raw.trim()
+    const text = numberWords(raw.trim())
     const t = text.toLowerCase().replace(/[?!.]+$/g, '').trim()
     const st = ctx.stats
     const bat = ctx.battery
@@ -91,6 +114,11 @@
 
     // ---- UI + settings
     if (/\b(collapse|minimi[sz]e|shrink)\b|^(hide|close)( the)?( panel| widget| this)?$/.test(t)) return { action: { type: 'collapse' } }
+    // ---- talking to Karen (microphone)
+    if (/^(listen|listen to me|start listening|i want to talk|i want to talk to you|let'?s talk|talk with me)$/.test(t)) return { action: { type: 'listen' } }
+    if (/\b(conversation mode|keep listening|stay listening|hands[- ]?free)\b/.test(t)) return { action: { type: 'converse', on: !/\b(off|stop|disable|don'?t|no)\b/.test(t) } }
+    if (/\b(use|switch to|go) (the )?(windows|offline|local)( speech| voice)?( recognition)?\b|\boffline (speech|voice) recognition\b|\bdon'?t send (my )?(voice|audio)\b/.test(t)) return { action: { type: 'stt-mode', mode: 'offline' } }
+    if (/\b(use|switch to|go) (the )?(cloud|groq|whisper|automatic|auto|online)( speech| voice)?( recognition)?\b/.test(t)) return { action: { type: 'stt-mode', mode: 'auto' } }
     // ---- the AI brain
     if (/\b(api keys?|ai (settings|brain|keys?)|brain (settings|keys)|set ?up (the |my |an? )?(ai|brain|api)|add (an? )?(api )?key|open (the )?brain)\b/.test(t)) return { action: { type: 'brain-open' } }
     if (/\b(new chat|start (a )?new (chat|conversation)|forget (this|our|the) (chat|conversation)|start over|reset (the )?(chat|conversation))\b/.test(t)) return { action: { type: 'brain-reset' } }
@@ -169,7 +197,7 @@
     return { unknown: true }
   }
 
-  return { interpret, normaliseReminder, HELP }
+  return { interpret, normaliseReminder, numberWords, HELP }
 })
 
 // ------------------------------------------------------------------ UI glue (browser only)
@@ -179,6 +207,7 @@
   const input = document.getElementById('rin')
   const SAY_MS = 12000
   let pendingKill = null
+  let voiceTurn = false // this turn was SPOKEN to her, so every reply is spoken back
   let muteSay = false // while a brain-requested command runs, its canned caption stays quiet
   let busy = false
   const llm = { available: false, model: '' }
@@ -202,7 +231,7 @@
 
   function say(text) {
     if (muteSay) return
-    window.Core.say(text, SAY_MS)
+    window.Core.say(text, SAY_MS, voiceTurn)
   }
 
   function describeUpdate(s) {
@@ -362,6 +391,17 @@
         say(window.Edith.summary(await window.Edith.open()))
         break
       }
+      case 'listen':
+        window.Voice.start()
+        break
+      case 'converse':
+        window.spidey.patchSettings({ voiceConverse: action.on })
+        say(action.on ? 'CONVERSATION MODE ON. AFTER I ANSWER A SPOKEN QUESTION I’LL LISTEN FOR YOUR FOLLOW-UP.' : 'CONVERSATION MODE OFF.')
+        break
+      case 'stt-mode':
+        window.spidey.patchSettings({ sttMode: action.mode })
+        say(action.mode === 'offline' ? 'OKAY: I’LL USE WINDOWS TO RECOGNISE YOUR VOICE. AUDIO NEVER LEAVES THIS PC.' : 'OKAY: I’LL USE GROQ WHISPER WHEN YOU HAVE A KEY, WINDOWS OTHERWISE.')
+        break
       case 'brain-open':
         window.spidey.openBrain()
         say('OPENING MY BRAIN SETTINGS. PASTE A FREE API KEY THERE.')
@@ -400,7 +440,16 @@
     return true
   }
 
-  async function handle(text) {
+  async function handle(text, opts = {}) {
+    voiceTurn = !!opts.voice
+    try {
+      return await handleTurn(text)
+    } finally {
+      voiceTurn = false
+    }
+  }
+
+  async function handleTurn(text) {
     const c = ctx()
     const r = interpret(text, c)
     if (r.confirm && r.confirm.type === 'kill') pendingKill = r.confirm.name
@@ -412,10 +461,10 @@
       return
     }
     busy = true
-    window.Core.say('…', 30000, false)
+    window.Core.say('…', 30000, false, true)
     let ans
     try {
-      ans = await window.spidey.brainChat(text, brainCtx())
+      ans = await window.spidey.brainChat(text, brainCtx(), { speak: voiceTurn || !!window.Core.getSettings().karenVoice })
     } catch {
       ans = null
     }
@@ -425,9 +474,13 @@
       return
     }
     lastVia = ans.via || ''
-    if (ans.say) say(ans.say)
+    // the main process already spoke it as it streamed in: just show the final text
+    if (ans.say) window.Core.say(ans.say, SAY_MS, false, !!ans.spoken)
     if (ans.do) await runDo(ans.do, ans.allowed || [])
   }
+
+  // the reply appears word by word while it is being written
+  window.spidey.onBrainDelta((t) => window.Core.say(t, 20000, false, true))
 
   input.addEventListener('keydown', (e) => {
     e.stopPropagation()

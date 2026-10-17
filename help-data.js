@@ -21,6 +21,7 @@ const DATA = {
   hotkeys: [
     { keys: 'Ctrl+Alt+K', does: 'Open the widget and focus Karen’s command box (works from any app).' },
     { keys: 'Ctrl+Alt+S', does: 'Same as Ctrl+Alt+K (kept from the old reminders shortcut).' },
+    { keys: 'Ctrl+Alt+Space', does: 'Talk to Karen: opens the microphone, listens until you stop speaking, answers out loud. Press again to finish early; Esc cancels.' },
     { keys: 'Ctrl+Alt+C', does: 'Web-Capture: freeze the screen and turn a region into a comic panel.' },
     { keys: 'Esc', does: 'Close any open overlay (inbox, log, newspaper, locker…) or cancel a capture.' },
     { keys: 'Enter', does: 'Send what you typed to Karen.' }
@@ -82,6 +83,15 @@ const DATA = {
         { say: 'change voice', does: 'Switches between the Windows voices installed on your PC (normally Zira, female, and David, male) and says a line in the new one.', try: 'change voice', aka: ['try another voice', 'next voice'] },
         { say: 'use david', does: 'Picks a voice by name (zira, david) or by gender ("use the female voice").', try: 'use david', aka: ['switch to zira', 'use the female voice'] },
         { say: 'list voices', does: 'Shows which voices are installed and which one is active (✓).', try: 'list voices', aka: ['what voices do you have'] }
+      ]
+    },
+    {
+      group: 'Talking to her out loud',
+      items: [
+        { say: 'listen', does: 'Opens the microphone, same as Ctrl+Alt+Space or the 🎤 button.', try: 'listen', aka: ['listen to me', "let's talk", 'start listening'] },
+        { say: 'conversation mode', does: 'After she answers a spoken question she listens again for your follow-up, so you can just keep talking. "conversation mode off" to stop.', try: 'conversation mode', aka: ['keep listening', 'hands free'] },
+        { say: 'use windows speech recognition', does: 'Recognise your voice with Windows only: no audio ever leaves this PC. (Less accurate than Groq Whisper.)', try: 'use windows speech recognition', aka: ["don't send my voice"] },
+        { say: 'switch to groq whisper', does: 'Back to automatic: Groq Whisper when you have a Groq key, otherwise Windows.', try: 'switch to groq whisper' }
       ]
     },
     {
@@ -203,6 +213,20 @@ const DATA = {
       reads: 'Windows keeps a database of recent notifications for your account (wpndatabase.db). Spidey Sense reads a private, read-only copy of it every few seconds. Nothing is sent anywhere. Tray → "Notification inbox" turns it off.'
     },
     {
+      id: 'voice',
+      name: 'Talk to Karen — Jarvis-style voice conversation',
+      icon: '🎤',
+      summary: 'Press Ctrl+Alt+Space, speak, and she answers out loud, sentence by sentence while she is still thinking.',
+      how: [
+        'Press Ctrl+Alt+Space anywhere (or click 🎤 beside the command box, or say "listen"). A rising beep and a blue ring on the badge show the microphone is open. Speak normally; when you stop for about a second she knows you are done (press the hotkey again to finish early, Esc to cancel). The microphone is open ONLY while the blue ring is on; nothing is recorded in the background.',
+        'Your words are turned into text with Groq Whisper when you have a Groq key (accurate, fast, handles accents), otherwise with Windows’ built-in offline recogniser, which listens for exactly the commands Karen knows ("what is my CPU", "start focus", "remind me in twenty minutes to…") plus free dictation. Spoken numbers work: "in twenty minutes", "half an hour", "at five pm".',
+        'Then it is a normal Karen turn: commands run, anything else goes to the AI brain. Because you spoke, every answer is spoken back (Windows voice; "change voice" picks Zira or David). Brain replies stream: the first sentence is spoken as soon as it is written, the rest follow, and the caption fills in as she talks. You can interrupt her any time by pressing the hotkey: she stops instantly and listens.',
+        'Conversation mode ("conversation mode"): after a spoken answer she listens again for 5 seconds for your follow-up, so you can chat without touching anything. If you say nothing she quietly stops.',
+        'Windows needs to allow microphone access for desktop apps (Settings → Privacy & security → Microphone). The first time, Windows may show its own prompt.'
+      ],
+      reads: 'Audio is recorded in memory only while the ring is on, converted to a small WAV and sent to Groq (if you use Groq Whisper) or handed to the Windows recogniser through a temporary file that is deleted immediately. Choose "Speech recognition → Windows only" in the tray (or say "use windows speech recognition") to guarantee that audio never leaves your PC. Recordings are never saved.'
+    },
+    {
       id: 'brain',
       name: 'AI brain — talk to Karen naturally',
       icon: '🧠',
@@ -315,6 +339,9 @@ const DATA = {
     'RAM alerts (Auto / above 90 % / above 95 % / never)',
     'Spider-sense sound',
     'Eye-rest nudge (20-20-20)',
+    'Talk to Karen (Ctrl+Alt+Space)',
+    'Keep listening after she answers (conversation mode)',
+    'Speech recognition (Automatic / Windows only)',
     'Karen speaks her replies',
     'Read notifications aloud',
     'Notification reading: private (who, not what)',
@@ -347,6 +374,7 @@ const DATA = {
   privacy: [
     'No accounts, no analytics, no API keys. Nothing you do is uploaded.',
     'Network use, in full: a tiny HEAD request to gstatic.com every 8 seconds (can be turned off), a GitHub check for updates (30 s after start, then every 6 h), and — only if you install Ollama — local traffic to 127.0.0.1.',
+    'Voice: the microphone is open only while the blue ring is on. With a Groq key the recorded sentence is sent to Groq for transcription; with "Windows only" it never leaves your PC. Nothing is saved.',
     'Read-only access to Windows facilities: the notification database, `netstat`, `tasklist`, `reg query`, `sc query`, and a hash of the hosts file. It changes nothing on your system except its own startup entry and its own files.'
   ],
 
@@ -355,6 +383,9 @@ const DATA = {
     { q: 'I can’t hear Karen.', a: 'Say "say hello" to test your speakers, then "speak to me" to switch spoken replies on (tray: "Karen speaks her replies"). She uses the Windows voices Zira / David, so check your volume and the Windows output device. Say "stop talking" to turn her off.' },
     { q: 'Karen does not read my WhatsApp messages.', a: 'Check: (1) "are you reading my notifications" — it must say on; (2) the app is not muted ("read whatsapp again"); (3) you are not away or in a focus session (she saves those for a digest); (4) Windows is actually showing WhatsApp notifications (Settings → System → Notifications) — only notifications Windows records can be read; (5) the message is not in a non-English script, which she leaves on screen.' },
     { q: 'She reads notifications too loudly / in public.', a: 'Say "read notifications privately" so she only says who, or "stop reading notifications". Turn the Windows volume down — she speaks through the normal output device.' },
+    { q: 'Ctrl+Alt+Space does nothing / she says she can’t use the microphone.', a: 'Open Windows Settings → Privacy & security → Microphone and switch on "Let desktop apps access your microphone". Another program may also own the shortcut: use the 🎤 button or tray → Talk to Karen instead.' },
+    { q: 'She mishears me.', a: 'Offline recognition is the weak spot: add a free Groq key ("api keys") and she switches to Whisper automatically, which is far more accurate. Speak after the beep, close to the microphone, and pause about a second when you are done.' },
+    { q: 'She stops listening before I finish / waits too long.', a: 'She decides you are done after about a second of quiet. In a very noisy room the quiet may never come: press Ctrl+Alt+Space again to finish, or use the hotkey right after you speak.' },
     { q: 'Karen says "not sure I follow" to everything.', a: 'She only chats when she has a brain. Say "api keys", paste a free key (NVIDIA / Groq / Gemini / OpenRouter), press Test. Or install Ollama + a small model for a private local brain.' },
     { q: 'A key shows COOLING or KEY REJECTED.', a: 'COOLING = the provider said "too many requests"; it is retried automatically after the wait shown. KEY REJECTED = the provider refused the key: copy it again from the provider’s dashboard and press "New key". Karen simply uses the next key in the meantime.' },
     { q: 'Is it safe to put API keys in? Where do they go?', a: 'They are encrypted with Windows (DPAPI, tied to your Windows account) in brain.json, and only ever sent to the provider they belong to. The settings window can add or replace a key but can never display one again.' },

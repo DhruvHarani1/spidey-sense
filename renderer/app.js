@@ -286,12 +286,12 @@
     }, 10200)
   }
   /** Karen speaks: caption for a few seconds, and out loud when "Karen speaks" is on */
-  function say(text, ms = 12000, forceSpeak = false) {
+  function say(text, ms = 12000, forceSpeak = false, silent = false) {
     state.say = text
     state.sayUntil = Date.now() + ms
     refreshCaption(true)
     setTimeout(() => refreshCaption(true), ms + 100)
-    if (settings.karenVoice || forceSpeak) window.spidey.speak(text)
+    if (!silent && (settings.karenVoice || forceSpeak)) window.spidey.speak(text)
   }
 
   function timerOp(op) {
@@ -437,6 +437,8 @@
     settings.ramMode = s.ramMode || 'auto'
     settings.eyeBreak = s.eyeBreak !== false
     settings.karenVoice = !!s.karenVoice
+    settings.voiceConverse = !!s.voiceConverse
+    settings.sttMode = s.sttMode === 'offline' ? 'offline' : 'auto'
     settings.readNotifications = !!s.readNotifications
     settings.readMode = s.readMode === 'private' ? 'private' : 'full'
     settings.callMe = typeof s.callMe === 'string' ? s.callMe : ''

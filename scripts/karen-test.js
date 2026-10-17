@@ -151,3 +151,26 @@ for (const q of ['hi', 'thanks', 'how are you', "what's up", 'good morning', 'wh
 assert.equal(interpret('status', ctx).chat, undefined, 'real commands never go to the brain')
 assert.equal(interpret('tell me a story about spiders', ctx).unknown, true)
 console.log('karen brain: ALL PASS')
+
+
+// talking to her
+for (const q of ['listen', 'listen to me', "let's talk", 'start listening']) assert.deepEqual(interpret(q, ctx).action, { type: 'listen' }, q)
+assert.deepEqual(interpret('conversation mode', ctx).action, { type: 'converse', on: true })
+assert.deepEqual(interpret('turn conversation mode off', ctx).action, { type: 'converse', on: false })
+assert.deepEqual(interpret('keep listening', ctx).action, { type: 'converse', on: true })
+assert.deepEqual(interpret('stop keep listening', ctx).action, { type: 'converse', on: false })
+assert.deepEqual(interpret('use windows speech recognition', ctx).action, { type: 'stt-mode', mode: 'offline' })
+assert.deepEqual(interpret("don't send my voice", ctx).action, { type: 'stt-mode', mode: 'offline' })
+assert.deepEqual(interpret('switch to groq whisper', ctx).action, { type: 'stt-mode', mode: 'auto' })
+
+// spoken numbers behave like typed digits
+assert.equal(require('../renderer/karen.js').numberWords('remind me in twenty minutes to stretch'), 'remind me in 20 minutes to stretch')
+assert.equal(require('../renderer/karen.js').numberWords('in an hour call mum'), 'in 1 hour call mum')
+assert.equal(require('../renderer/karen.js').numberWords('in half an hour'), 'in 30 minutes')
+assert.equal(require('../renderer/karen.js').numberWords('in twenty five minutes'), 'in 25 minutes')
+assert.equal(require('../renderer/karen.js').numberWords('at five pm call mum'), 'at 5 pm call mum')
+assert.equal(require('../renderer/karen.js').numberWords('opacity seventy'), 'opacity 70')
+assert.equal(require('../renderer/karen.js').numberWords('what is the one thing I need'), 'what is the one thing I need', 'only numbers that mean a quantity are converted')
+assert.deepEqual(interpret('remind me in twenty minutes to stretch', ctx).action, { type: 'remind', raw: 'in 20 minutes stretch' })
+assert.deepEqual(interpret('set opacity seventy', ctx).action, { type: 'opacity', value: 0.7 })
+console.log('karen voice input: ALL PASS')

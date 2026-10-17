@@ -63,7 +63,7 @@ function systemPrompt(o = {}) {
     'Use the context line for real PC facts. Never invent numbers, files, messages or events. If you do not know, say so briefly.',
     'You can also act. If (and only if) the user clearly asks you to do something, put ONE short command in "do", worded like one of: ' + DO_EXAMPLES.map((x) => `"${x}"`).join(', ') + '. Otherwise leave "do" empty.',
     'You cannot close programs, change system settings, open files or run anything else. If asked, say you cannot do that.',
-    'Reply ONLY with JSON: {"say":"what you say out loud","do":""}'
+    'Reply with ONLY the words you say out loud. If you need to act, add one final separate line that starts with DO: followed by the command, for example DO: in 20m stretch. Never write anything after that line.'
   ].join(' ')
 }
 
@@ -102,15 +102,96 @@ function parseReply(raw) {
       /* not JSON after all */
     }
   }
+  // plain speech with an optional final "DO: command" line
+  let cmd = ''
+  const dm = /(?:^|\n)\s*DO:\s*(.*)$/i.exec(t)
+  if (dm) {
+    cmd = clamp(dm[1], 80)
+    t = t.slice(0, dm.index).trim()
+  }
   // plain prose: speak it (cut at a sentence end if it is long)
   let say = clamp(t.replace(/^["']|["']$/g, ''), 420)
   if (say.length > 380) {
     const cut = Math.max(say.lastIndexOf('. ', 380), say.lastIndexOf('! ', 380), say.lastIndexOf('? ', 380))
     if (cut > 120) say = say.slice(0, cut + 1)
   }
-  return { say, do: '' }
+  return { say, do: cmd }
+}
+
+const ABBREV = /(?:^|\s)(?:mr|mrs|ms|dr|prof|vs|etc|e\.g|i\.e|approx|no|st)$/i
+
+/**
+ * Feeds on the reply as it streams in and calls onSentence(text) as soon as a sentence is complete,
+ * so Karen can start talking before the model has finished writing.
+ *  - the trailing "DO: command" line is never spoken
+ *  - <think>…</think> blocks are skipped
+ *  - a reply that starts with "{" (JSON) is not streamed; it is parsed once at the end
+ */
+function createReplyStream({ onSentence, minFirst = 18, min = 30 } = {}) {
+  let raw = ''
+  let emitted = 0
+  let mode = null
+  let sentCount = 0
+
+  function speechPart() {
+    let t = raw.replace(/<think>[\s\S]*?<\/think>/gi, ' ')
+    const open = t.search(/<think>/i)
+    if (open >= 0) t = t.slice(0, open) // still inside a think block: wait
+    const m = /(?:^|\n)\s*DO:/i.exec(t)
+    if (m) t = t.slice(0, m.index)
+    return t
+  }
+
+  function drain(final) {
+    const t = speechPart()
+    let from = emitted
+    for (let i = from; i < t.length; i++) {
+      const c = t[i]
+      const next = t[i + 1]
+      const isEnd = c === '\n' || ('.!?…'.includes(c) && (next === undefined ? final : /\s/.test(next)))
+      if (!isEnd) continue
+      if (c === '.' && (/\d$/.test(t.slice(0, i)) && /^\d/.test(next || '') || ABBREV.test(t.slice(from, i)))) continue
+      const candidate = t.slice(from, i + 1).trim()
+      // short sentences are merged with the next one (choppy speech sounds robotic); only the very last one may be short
+      if (candidate.length < (sentCount === 0 ? minFirst : min) && !(final && i === t.length - 1)) continue
+      if (candidate) {
+        onSentence && onSentence(candidate.replace(/\s+/g, ' '))
+        sentCount++
+      }
+      from = i + 1
+      emitted = from
+    }
+    if (final) {
+      const rest = t.slice(emitted).trim()
+      if (rest) {
+        onSentence && onSentence(rest.replace(/\s+/g, ' '))
+        sentCount++
+      }
+      emitted = t.length
+    }
+  }
+
+  return {
+    feed(delta) {
+      raw += String(delta ?? '')
+      if (mode === null) {
+        const s = raw.trimStart()
+        if (s) mode = s[0] === '{' || s.startsWith('```') ? 'json' : 'plain'
+      }
+      if (mode === 'plain') drain(false)
+    },
+    /** @returns {{say:string, do:string, streamed:boolean}} */
+    end() {
+      if (mode === 'plain') drain(true)
+      const r = parseReply(raw)
+      return { ...r, streamed: mode === 'plain' && sentCount > 0 }
+    },
+    get raw() {
+      return raw
+    }
+  }
 }
 
 const isAllowedAction = (type) => ALLOWED_ACTIONS.has(String(type))
 
-module.exports = { systemPrompt, buildMessages, parseReply, contextLine, isAllowedAction, ALLOWED_ACTIONS, DO_EXAMPLES, clamp }
+module.exports = { systemPrompt, buildMessages, parseReply, createReplyStream, contextLine, isAllowedAction, ALLOWED_ACTIONS, DO_EXAMPLES, clamp }

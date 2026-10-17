@@ -1,11 +1,12 @@
 'use strict'
-const { app, BrowserWindow, desktopCapturer, safeStorage, shell, dialog, globalShortcut, Menu, powerMonitor, Notification, Tray, ipcMain, nativeImage, net, screen } = require('electron')
+const { app, BrowserWindow, desktopCapturer, safeStorage, session, shell, dialog, globalShortcut, Menu, powerMonitor, Notification, Tray, ipcMain, nativeImage, net, screen } = require('electron')
 const fs = require('node:fs')
 const os = require('node:os')
 const path = require('node:path')
 const { execFile } = require('node:child_process')
 const autostart = require('./autostart')
 const speech = require('./speech')
+const stt = require('./stt')
 const { createBrain, PRESETS: BRAIN_PRESETS } = require('./brain')
 const brainPrompt = require('./brain-prompt')
 const { updater } = require('./updater')
@@ -32,6 +33,8 @@ const DEFAULTS = {
   readMode: 'full', // 'full' = who and what | 'private' = who only
   callMe: '', // how Karen addresses you, e.g. "Dhruv sir"
   readMuted: ['lyra', 'settings', 'system', 'lenovo', 'intel'], // apps she never reads
+  voiceConverse: false, // after she answers a spoken question, listen again for a follow-up
+  sttMode: 'auto', // speech recognition: 'auto' = Groq Whisper if you have a Groq key, else Windows | 'offline' = Windows only
   voiceName: '', // '' = automatic; otherwise the exact installed Windows voice name
   karenVoice: false, // Karen reads her replies aloud
   llmModel: '', // preferred Ollama model (blank = auto)
@@ -86,7 +89,7 @@ function update(patch) {
   buildTray()
 }
 
-const publicSettings = () => ({ opacity: settings.opacity, sound: settings.sound, notifications: settings.notifications, netProbe: settings.netProbe, ramMode: settings.ramMode, eyeBreak: settings.eyeBreak, karenVoice: settings.karenVoice, voiceName: settings.voiceName, readNotifications: settings.readNotifications, readMode: settings.readMode, callMe: settings.callMe, readMuted: settings.readMuted, view: settings.view })
+const publicSettings = () => ({ opacity: settings.opacity, sound: settings.sound, notifications: settings.notifications, netProbe: settings.netProbe, ramMode: settings.ramMode, eyeBreak: settings.eyeBreak, karenVoice: settings.karenVoice, voiceName: settings.voiceName, voiceConverse: settings.voiceConverse, sttMode: settings.sttMode, readNotifications: settings.readNotifications, readMode: settings.readMode, callMe: settings.callMe, readMuted: settings.readMuted, view: settings.view })
 
 // ---------------------------------------------------------------- window
 /** @type {BrowserWindow | null} */
@@ -252,6 +255,15 @@ function menuTemplate() {
       check('Spider-sense sound', 'sound'),
       check('Eye-rest nudge (20-20-20)', 'eyeBreak'),
       check('Karen speaks her replies', 'karenVoice'),
+      { label: 'Talk to Karen (Ctrl+Alt+Space)', click: () => win?.webContents.send('voice:toggle') },
+      check('Keep listening after she answers (conversation mode)', 'voiceConverse'),
+      {
+        label: 'Speech recognition',
+        submenu: [
+          { label: 'Automatic (Groq Whisper if you have a key, else Windows)', type: 'radio', checked: settings.sttMode === 'auto', click: () => update({ sttMode: 'auto' }) },
+          { label: 'Windows only (offline, audio never leaves this PC)', type: 'radio', checked: settings.sttMode === 'offline', click: () => update({ sttMode: 'offline' }) }
+        ]
+      },
       check('Read notifications aloud', 'readNotifications'),
       { label: 'Notification reading: private (who, not what)', type: 'checkbox', checked: settings.readMode === 'private', click: (i) => update({ readMode: i.checked ? 'private' : 'full' }) },
       {
@@ -431,6 +443,8 @@ ipcMain.on('settings:patch', (e, patch) => {
     if (typeof patch[k] !== type) continue
     clean[k] = k === 'opacity' ? Math.min(1, Math.max(0.3, patch[k])) : patch[k]
   }
+  if (typeof patch.voiceConverse === 'boolean') clean.voiceConverse = patch.voiceConverse
+  if (patch.sttMode === 'auto' || patch.sttMode === 'offline') clean.sttMode = patch.sttMode
   if (typeof patch.readNotifications === 'boolean') clean.readNotifications = patch.readNotifications
   if (patch.readMode === 'full' || patch.readMode === 'private') clean.readMode = patch.readMode
   if (typeof patch.callMe === 'string') clean.callMe = patch.callMe.replace(/[^\p{L}\p{N} .'-]/gu, '').trim().slice(0, 40)
@@ -582,20 +596,55 @@ ipcMain.handle('brain:ready', async (e) => {
   return brainReady.v
 })
 
-ipcMain.handle('brain:chat', async (e, text, ctx) => {
+ipcMain.handle('brain:chat', async (e, text, ctx, opts) => {
   if (e.sender !== win?.webContents || !brain || typeof text !== 'string' || !text.trim()) return { ok: false, error: 'not available' }
+  const speak = !!(opts && opts.speak === true)
   const messages = brainPrompt.buildMessages(brainHistory, text, { name: settings.callMe, ctx: safeBrainCtx(ctx) })
-  const r = await brain.chat(messages)
+  if (speak) speech.stop() // she never talks over herself, or over you
+  let said = ''
+  const rs = brainPrompt.createReplyStream({
+    onSentence: (s) => {
+      said += (said ? ' ' : '') + s
+      if (speak) void speech.speak(s, { queue: true })
+      win?.webContents.send('brain:delta', said)
+    }
+  })
+  const r = await brain.chat(messages, (d) => rs.feed(d))
   if (!r.ok) {
     brainReady = { at: 0, v: false }
     return { ok: false, error: r.error, chain: r.chain }
   }
-  const p = brainPrompt.parseReply(r.text)
-  if (!p.say && !p.do) return { ok: false, error: 'it sent an empty answer' }
-  brainHistory.push({ role: 'user', content: text.slice(0, 600) }, { role: 'assistant', content: p.say || p.do })
+  const fin = rs.end()
+  if (!fin.say && !fin.do) return { ok: false, error: 'it sent an empty answer' }
+  // a reply that arrived as one JSON blob was not streamed: speak it now
+  if (speak && !fin.streamed && fin.say) void speech.speak(fin.say, { queue: true })
+  brainHistory.push({ role: 'user', content: text.slice(0, 600) }, { role: 'assistant', content: fin.say || fin.do })
   brainHistory = brainHistory.slice(-24)
-  return { ok: true, say: p.say, do: p.do, via: r.via, allowed: [...brainPrompt.ALLOWED_ACTIONS] }
+  return { ok: true, say: fin.say, do: fin.do, via: r.via, allowed: [...brainPrompt.ALLOWED_ACTIONS], spoken: speak }
 })
+
+// ---------------------------------------------------------------- talking to Karen: microphone audio in, text out
+let sttPhrases = null
+ipcMain.handle('stt:transcribe', async (e, audio) => {
+  if (e.sender !== win?.webContents) return { ok: false, text: '', error: 'not allowed' }
+  let buf
+  try {
+    buf = Buffer.from(audio instanceof ArrayBuffer ? new Uint8Array(audio) : audio)
+  } catch {
+    return { ok: false, text: '', error: 'bad audio' }
+  }
+  sttPhrases = sttPhrases || stt.buildPhrases(require('./help-data'))
+  return stt.transcribe(buf, { brain, mode: settings.sttMode, phrases: sttPhrases })
+})
+ipcMain.handle('voice:info', (e) => (e.sender === win?.webContents ? { cloud: !!brain && brain.canTranscribe(), mode: settings.sttMode, converse: settings.voiceConverse } : null))
+ipcMain.on('voice:listening', (e, on) => {
+  if (e.sender !== win?.webContents) return
+  if (on) {
+    speech.stop() // so she does not hear herself
+    speech.warm() // and her answer will start instantly
+  }
+})
+speech.setOnIdle(() => win?.webContents.send('speech:idle'))
 
 ipcMain.on('brain:reset', (e) => {
   if (e.sender === win?.webContents) brainHistory = []
@@ -833,6 +882,13 @@ ipcMain.on('notify', (e, payload) => {
 const notifiedAt = {}
 
 // ---------------------------------------------------------------- lifecycle
+// tests can replace the microphone with a fake device that plays a WAV file once (never in a normal run)
+if (process.env.SPIDEY_TEST) {
+  app.commandLine.appendSwitch('use-fake-ui-for-media-stream')
+  app.commandLine.appendSwitch('use-fake-device-for-media-stream')
+  if (process.env.SPIDEY_FAKE_MIC_WAV) app.commandLine.appendSwitch('use-file-for-fake-audio-capture', process.env.SPIDEY_FAKE_MIC_WAV + '%noloop')
+}
+
 // tests run against a throwaway profile so they never fight (or touch) an installed copy
 if (process.env.SPIDEY_TEST) {
   const dir = path.join(app.getPath('temp'), 'spidey-test-' + process.pid)
@@ -891,6 +947,11 @@ if (!app.requestSingleInstanceLock()) {
     updater.start()
     speech.setVoice(settings.voiceName)
     initBrain()
+    const ours = (url) => typeof url === 'string' && url.startsWith('file://')
+    const allowed = (permission, details) =>
+      (permission === 'media' && (!details || !details.mediaTypes || details.mediaTypes.every((t) => t === 'audio'))) || permission === 'clipboard-sanitized-write' || permission === 'clipboard-read'
+    session.defaultSession.setPermissionRequestHandler((wc, permission, cb, details) => cb(ours(wc.getURL()) && allowed(permission, details)))
+    session.defaultSession.setPermissionCheckHandler((wc, permission, origin, details) => (wc ? ours(wc.getURL()) : ours(origin)) && allowed(permission, details))
     void speech.listVoices().then((v) => {
       speechVoices = v
       buildTray()
@@ -913,6 +974,7 @@ if (!app.requestSingleInstanceLock()) {
       }
     })
     globalShortcut.register('Control+Alt+K', summon) // Karen
+    globalShortcut.register('Control+Alt+Space', () => win?.webContents.send('voice:toggle')) // talk to Karen
     globalShortcut.register('Control+Alt+C', () => void startCapture()) // Web-Capture
     globalShortcut.register('Control+Alt+S', summon) // kept from the reminders hotkey
     setInterval(sample, SAMPLE_MS)

@@ -69,9 +69,27 @@ contextBridge.exposeInMainWorld('spidey', {
   pickVoice: (pick) => ipcRenderer.invoke('voice:pick', pick),
   listVoices: () => ipcRenderer.invoke('voice:list'),
   brainReady: () => ipcRenderer.invoke('brain:ready'),
-  brainChat: (text, ctx) => ipcRenderer.invoke('brain:chat', text, ctx),
+  brainChat: (text, ctx, opts) => ipcRenderer.invoke('brain:chat', text, ctx, opts),
   brainReset: () => ipcRenderer.send('brain:reset'),
   openBrain: () => ipcRenderer.send('brain:open'),
+  transcribe: (audio) => ipcRenderer.invoke('stt:transcribe', audio),
+  voiceInfo: () => ipcRenderer.invoke('voice:info'),
+  voiceListening: (on) => ipcRenderer.send('voice:listening', !!on),
+  onVoiceToggle: (cb) => {
+    const l = () => cb()
+    ipcRenderer.on('voice:toggle', l)
+    return () => ipcRenderer.removeListener('voice:toggle', l)
+  },
+  onSpeechIdle: (cb) => {
+    const l = () => cb()
+    ipcRenderer.on('speech:idle', l)
+    return () => ipcRenderer.removeListener('speech:idle', l)
+  },
+  onBrainDelta: (cb) => {
+    const l = (_e, t) => cb(t)
+    ipcRenderer.on('brain:delta', l)
+    return () => ipcRenderer.removeListener('brain:delta', l)
+  },
   setView: (v) => ipcRenderer.send('view:set', v),
   drag: {
     start: () => ipcRenderer.send('drag:start'),

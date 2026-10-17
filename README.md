@@ -42,6 +42,10 @@ Everything the gadget can do is documented in one place, three ways — all gene
 - **In a terminal:** the installer puts `spidey.cmd` next to the app. `spidey help`, `spidey commands`, `spidey features`, `spidey feature guardian`, `spidey hotkeys`, `spidey tray`, `spidey privacy`, `spidey troubleshoot`, `spidey search ram`, `spidey docs`. To type just `spidey` anywhere, add the install folder to your PATH. From a checkout: `npm run help` or `node bin/spidey.js commands`.
 - **On the web:** `docs/index.html` (regenerate with `npm run docs`; it is also what the app shows).
 
+## Talk to Karen (voice)
+
+Press **Ctrl+Alt+Space** (or click 🎤, or say "listen"), speak, and she answers out loud — sentence by sentence while the AI is still writing. A blue ring on the badge shows the microphone is open (only then). Speech is recognised by **Groq Whisper** if you have a Groq key, otherwise by Windows offline (tuned to Karen's commands); *"use windows speech recognition"* keeps all audio on your PC. *"Conversation mode"* makes her listen again after each answer, like Jarvis. Spoken numbers work ("in twenty minutes"). See the manual (`spidey feature voice`).
+
 ## AI brain: talk to Karen naturally
 
 Say **"api keys"** (or tray → *AI brain: free API keys…*) and paste one or more free keys — **NVIDIA** (build.nvidia.com), **Groq**, **Google Gemini**, **OpenRouter**, or any OpenAI-compatible URL. Karen tries them top to bottom; a key that hits its limit or fails is rested and the next one answers; after three failed tries she switches to a local **Ollama** model, and finally to her built-in rules. Anything that is not a known command is then answered naturally, with your name, the PC's live status and the last 12 turns of the conversation, and she can run the same commands you could type (reminders, timer, voice, notification reading…) — never close programs. Keys are encrypted with Windows DPAPI and never shown again; online providers only get what you type plus one short status line, never your notifications. See the manual (`spidey feature brain`).
