@@ -670,7 +670,7 @@ const wake = wakeWord.create({
 function maybeResumeWake() {
   clearTimeout(wakeResume)
   wakeResume = setTimeout(() => {
-    if (settings.wakeWord && !micOpen && !speaking) wake.resume()
+    if (!micOpen && !speaking) wake.resume() // resuming a recogniser that is not paused (or not running) does nothing
   }, 1200)
 }
 speech.setOnBusy((busy) => {

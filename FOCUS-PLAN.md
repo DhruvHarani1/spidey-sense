@@ -1,6 +1,6 @@
 # Spidey Sense — Focus Plan
 
-Status: **DRAFT, nothing moved or deleted yet.** This file is the plan only. Approve (or edit) it first; then we execute in the phases at the bottom.
+Status: **APPROVED. Phase 0 and Phase 1 DONE (2026-10-18).** Phase 0: tag `v0.2.7-final-with-jarvis-features`. Phase 1: `P:Jarvis` created (local git repo, 1 commit, not on GitHub yet) with the voice / wake word / AI brain / STT / inbox / reader code copied (not removed) from Spidey, a new minimal Electron shell, and its own tests (unit + wiring + real-app e2e) all passing. Spidey is untouched except one small wake-word fix. **Next: Phase 2 (cut Spidey down), which needs the go-ahead.**
 
 ## 1. The problem
 
