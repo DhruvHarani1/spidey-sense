@@ -47,6 +47,28 @@
     }
   }
 
+  // ---------------------------------------------------------------- audio pipeline, loaded ahead of time (the microphone itself stays closed)
+  let actx = null
+  let actxReady = null
+  function audioCtx() {
+    if (!actx || actx.state === 'closed') {
+      actx = new AudioContext()
+      actxReady = actx.audioWorklet.addModule('pcm-worklet.js')
+      actxReady.catch(() => {
+        actx = null
+      })
+    }
+    return actx
+  }
+  setTimeout(() => {
+    try {
+      audioCtx()
+      actx.suspend().catch(() => {})
+    } catch {
+      /* will be created on first use */
+    }
+  }, 3000)
+
   // ---------------------------------------------------------------- listening
   const diag = []
   async function start(opts = {}) {
@@ -56,8 +78,10 @@
     followUp = false
     window.spidey.voiceListening(true) // main silences Karen and warms her voice
     let stream
+    const ctx = audioCtx() // already loaded in the background, or loading now in parallel with the microphone
+    const ready = actxReady
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } })
+      ;[stream] = await Promise.all([navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } }), ready])
     } catch (err) {
       setState('idle')
       window.Core.say(
@@ -69,8 +93,7 @@
       )
       return false
     }
-    const ctx = new AudioContext()
-    await ctx.audioWorklet.addModule('pcm-worklet.js')
+    await ctx.resume()
     const src = ctx.createMediaStreamSource(stream)
     const node = new AudioWorkletNode(ctx, 'pcm-tap')
     src.connect(node)
@@ -105,7 +128,7 @@
       /* closed */
     }
     s.stream.getTracks().forEach((t) => t.stop())
-    s.ctx.close().catch(() => {})
+    s.ctx.suspend().catch(() => {}) // kept for next time
     document.body.style.removeProperty('--lvl')
   }
 
