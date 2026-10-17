@@ -49,8 +49,12 @@
     }
 
     if (/^(help|\?|commands)$/.test(t)) return { say: HELP }
-    if (/^(hi|hello|hey|yo|sup)( karen)?$/.test(t)) return { say: 'HEY. FRIENDLY NEIGHBOURHOOD KAREN HERE.' }
-    if (/^(thanks|thank you|thx|nice|good job)/.test(t)) return { say: 'ANYTIME. WITH GREAT POWER…' }
+    if (/^(hi|hello|hey|yo|sup)( karen| spidey)?$/.test(t)) return { say: 'HEY. FRIENDLY NEIGHBOURHOOD KAREN HERE.', chat: true }
+    if (/^(thanks|thank you|thx|nice|good job)/.test(t)) return { say: 'ANYTIME. WITH GREAT POWER…', chat: true }
+    if (/^(how are you|how'?s it going|how are things|what'?s up|whats up|how do you do)\b/.test(t)) return { say: 'ALL SYSTEMS TINGLE-FREE. HOW ARE YOU?', chat: true }
+    if (/^good (morning|afternoon|evening|night)\b/.test(t)) return { say: 'AND A GOOD ONE TO YOU. THE WEB IS HOLDING STRONG.', chat: true }
+    if (/^(who are you|what are you|what'?s your name|what is your name)\b/.test(t)) return { say: 'I’M KAREN, THE AI IN YOUR SPIDEY SENSE WIDGET.', chat: true }
+    if (/^(are you there|you there|karen)$/.test(t)) return { say: 'RIGHT HERE.', chat: true }
     if (/\b(what('?s| is)? the )?(time|date|day)\b/.test(t) && /^(what|time|date|day|tell)/.test(t)) {
       const d = ctx.now || new Date()
       return { say: `${d.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}, ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.` }
@@ -87,6 +91,10 @@
 
     // ---- UI + settings
     if (/\b(collapse|minimi[sz]e|shrink)\b|^(hide|close)( the)?( panel| widget| this)?$/.test(t)) return { action: { type: 'collapse' } }
+    // ---- the AI brain
+    if (/\b(api keys?|ai (settings|brain|keys?)|brain (settings|keys)|set ?up (the |my |an? )?(ai|brain|api)|add (an? )?(api )?key|open (the )?brain)\b/.test(t)) return { action: { type: 'brain-open' } }
+    if (/\b(new chat|start (a )?new (chat|conversation)|forget (this|our|the) (chat|conversation)|start over|reset (the )?(chat|conversation))\b/.test(t)) return { action: { type: 'brain-reset' } }
+    if (/\b(which|what) (ai|brain|model)\b.*\b(using|use|answering)\b|\bwho are you using\b|\bbrain status\b/.test(t)) return { action: { type: 'brain-status' } }
     // ---- notification reading
     {
       const GENERIC_WORDS = /^(notifications?|messages?|alerts?|them|it|anything|everything|my notifications?|all)$/
@@ -171,6 +179,7 @@
   const input = document.getElementById('rin')
   const SAY_MS = 12000
   let pendingKill = null
+  let muteSay = false // while a brain-requested command runs, its canned caption stays quiet
   let busy = false
   const llm = { available: false, model: '' }
 
@@ -192,6 +201,7 @@
   }
 
   function say(text) {
+    if (muteSay) return
     window.Core.say(text, SAY_MS)
   }
 
@@ -352,30 +362,71 @@
         say(window.Edith.summary(await window.Edith.open()))
         break
       }
+      case 'brain-open':
+        window.spidey.openBrain()
+        say('OPENING MY BRAIN SETTINGS. PASTE A FREE API KEY THERE.')
+        break
+      case 'brain-reset':
+        window.spidey.brainReset()
+        say('FRESH START. I’VE FORGOTTEN OUR CHAT.')
+        break
+      case 'brain-status': {
+        const s = lastVia ? `LAST ANSWER FROM: ${lastVia.toUpperCase()}.` : 'I HAVEN’T USED MY BRAIN YET THIS SESSION.'
+        say(s)
+        break
+      }
       case 'cancel-kill':
         pendingKill = null
         break
     }
   }
 
+  let lastVia = ''
+  const brainCtx = () => {
+    const snap = window.Core.snapshot()
+    return { stats: snap.stats, battery: snap.battery, timer: snap.timer, unread: window.Inbox ? window.Inbox.unread().length : 0, level: window.Suits ? window.Suits.state().level : undefined }
+  }
+
+  /** run a command the brain asked for, through the same rule engine a typed command uses (and only allowed kinds) */
+  async function runDo(cmd, allowed) {
+    const r = interpret(cmd, { ...ctx(), pendingKill: null })
+    if (r.confirm || r.unknown || !r.action || !allowed.includes(r.action.type)) return false
+    muteSay = true // the brain already said something natural; don't talk over it with the canned line
+    try {
+      await run(r.action)
+    } finally {
+      muteSay = false
+    }
+    return true
+  }
+
   async function handle(text) {
     const c = ctx()
     const r = interpret(text, c)
     if (r.confirm && r.confirm.type === 'kill') pendingKill = r.confirm.name
-    if (r.say) say(r.say)
-    if (r.action) await run(r.action)
-    if (!r.unknown) return
-    if (!llm.available) {
-      say('NOT SURE I FOLLOW — SAY "HELP". (INSTALL OLLAMA FOR FREE-FORM CHAT.)')
+    const brainOk = (r.unknown || r.chat) && !r.action ? await window.spidey.brainReady().catch(() => false) : false
+    if (!(brainOk && (r.unknown || r.chat))) {
+      if (r.say) say(r.say)
+      if (r.action) await run(r.action)
+      if (r.unknown) say('NOT SURE I FOLLOW — SAY "HELP". FOR FREE-FORM CHAT, SAY "API KEYS" TO GIVE ME A BRAIN (A FREE KEY TAKES A MINUTE).')
       return
     }
     busy = true
-    say('KAREN IS THINKING…')
-    const ans = await window.spidey.karenAsk(text, { stats: c.stats, battery: c.battery, timer: c.timer })
+    window.Core.say('…', 30000, false)
+    let ans
+    try {
+      ans = await window.spidey.brainChat(text, brainCtx())
+    } catch {
+      ans = null
+    }
     busy = false
-    if (ans && ans.say) say(ans.say)
-    else say('MY LOCAL BRAIN WENT QUIET. TRY AGAIN.')
-    if (ans && ans.action) await run(ans.action)
+    if (!ans || !ans.ok) {
+      say(r.say || ('MY BRAIN HICCUPPED' + (ans && ans.error ? ' (' + String(ans.error).toUpperCase() + ')' : '') + '. SAY "API KEYS" TO CHECK MY KEYS.'))
+      return
+    }
+    lastVia = ans.via || ''
+    if (ans.say) say(ans.say)
+    if (ans.do) await runDo(ans.do, ans.allowed || [])
   }
 
   input.addEventListener('keydown', (e) => {

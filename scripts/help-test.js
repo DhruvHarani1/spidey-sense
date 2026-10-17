@@ -49,6 +49,7 @@ const probes = {
   'Spider-sense sound': 'Spider-sense sound',
   'Eye-rest nudge': 'Eye-rest nudge',
   'Karen speaks': 'Karen speaks',
+  'AI brain': 'AI brain: free API keys',
   'Read notifications aloud': 'Read notifications aloud',
   'Notification reading': 'Notification reading: private',
   'voice': "Karen's voice",

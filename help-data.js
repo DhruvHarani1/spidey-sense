@@ -85,6 +85,15 @@ const DATA = {
       ]
     },
     {
+      group: 'Talking to Karen naturally (AI brain)',
+      items: [
+        { say: 'api keys', does: 'Opens the AI brain window: add free API keys (NVIDIA, Groq, Gemini, OpenRouter, any OpenAI-compatible URL), order them, test them.', try: 'api keys', aka: ['open the ai settings', 'set up the ai', 'add an api key'] },
+        { say: 'which ai are you using', does: 'Says which key / model answered last.', try: 'which ai are you using', aka: ['brain status'] },
+        { say: 'new chat', does: 'Makes Karen forget the conversation so far (she remembers the last 12 turns otherwise).', try: 'new chat', aka: ['forget this conversation', 'start over'] },
+        { say: 'how are you today?', does: 'With a brain set up, anything that is not a known command is answered naturally and can trigger actions ("could you nudge me in twenty minutes to stretch" sets a reminder). Without a brain you get a short built-in reply.', try: 'how are you' }
+      ]
+    },
+    {
       group: 'The widget itself',
       items: [
         { say: 'open the manual', does: 'Opens this manual in its own window (also: "docs", "all commands", "what can you do").', try: 'open the manual', aka: ['docs', 'what can you do'] },
@@ -194,6 +203,20 @@ const DATA = {
       reads: 'Windows keeps a database of recent notifications for your account (wpndatabase.db). Spidey Sense reads a private, read-only copy of it every few seconds. Nothing is sent anywhere. Tray → "Notification inbox" turns it off.'
     },
     {
+      id: 'brain',
+      name: 'AI brain — talk to Karen naturally',
+      icon: '🧠',
+      summary: 'Free online AI models with automatic failover, then a local model, then built-in rules.',
+      how: [
+        'Open it with "api keys" (or tray → AI brain: free API keys…). Paste one or more keys. Karen tries them top to bottom; if one hits its limit or fails she moves to the next. After three failed tries in one question she switches to the local model on your PC (Ollama), and if that is missing she falls back to her built-in rules. Reorder with ▲ ▼, switch a key off, test it, or replace it.',
+        'A key that hits a rate limit (HTTP 429) rests for the time the provider asks for (or 1 minute, doubling up to 15), a key that is rejected (401/403) is marked KEY REJECTED and left alone until you change it, and server errors rest briefly. Keys are only tried again when they have recovered, so a dead key never slows you down.',
+        'Providers: NVIDIA (build.nvidia.com — 100+ open models, free key, about 40 requests a minute), Groq (very fast), Google Gemini (AI Studio), OpenRouter (:free models), or any OpenAI-compatible URL (Mistral, Together, a server you host…). The model is picked automatically from what your key can use, or type one yourself. Free tiers change — check each provider’s dashboard for current limits and terms.',
+        'What it enables: just talk. "How are you?", "what should I do with this hour?", "could you nudge me in twenty minutes to stretch" — she answers in a few spoken-style sentences, uses your name, knows the time and your PC’s status, remembers the last 12 turns, and can run the same commands you could type (reminders, timer, notification reading, voice, screenshots…). She can NOT close programs, change settings outside the widget, or run anything else — the brain can only choose from a whitelist, and every action goes through the same rule engine as typed commands.',
+        'Say "karen speaks her replies" on (tray) and she talks back; with notification reading and voice switching you get a full voice assistant on the output side. (Speaking to her by microphone is the next step.)'
+      ],
+      reads: 'Online providers receive what you type to Karen plus ONE short status line (time, CPU/RAM/disk, ping, battery, timer, number of unread notifications, XP level). Never notification contents, file names or anything else on your PC. Keys are encrypted with Windows DPAPI and are never shown again, logged or sent anywhere except to their own provider. Some free tiers may use prompts to improve their models (Google says so for its free tier): do not tell Karen secrets, or keep the local model as your only brain.'
+    },
+    {
       id: 'reader',
       name: 'Notification reader — Karen reads them aloud',
       icon: '🔊',
@@ -301,6 +324,7 @@ const DATA = {
     'E.D.I.T.H. threat assessment',
     'Today’s Daily Web (front page)',
     'Daily Web ready nudge (9 pm)',
+    'AI brain: free API keys…',
     'Notification inbox',
     'Guardian (danger sense)',
     'Desktop notifications',
@@ -331,6 +355,9 @@ const DATA = {
     { q: 'I can’t hear Karen.', a: 'Say "say hello" to test your speakers, then "speak to me" to switch spoken replies on (tray: "Karen speaks her replies"). She uses the Windows voices Zira / David, so check your volume and the Windows output device. Say "stop talking" to turn her off.' },
     { q: 'Karen does not read my WhatsApp messages.', a: 'Check: (1) "are you reading my notifications" — it must say on; (2) the app is not muted ("read whatsapp again"); (3) you are not away or in a focus session (she saves those for a digest); (4) Windows is actually showing WhatsApp notifications (Settings → System → Notifications) — only notifications Windows records can be read; (5) the message is not in a non-English script, which she leaves on screen.' },
     { q: 'She reads notifications too loudly / in public.', a: 'Say "read notifications privately" so she only says who, or "stop reading notifications". Turn the Windows volume down — she speaks through the normal output device.' },
+    { q: 'Karen says "not sure I follow" to everything.', a: 'She only chats when she has a brain. Say "api keys", paste a free key (NVIDIA / Groq / Gemini / OpenRouter), press Test. Or install Ollama + a small model for a private local brain.' },
+    { q: 'A key shows COOLING or KEY REJECTED.', a: 'COOLING = the provider said "too many requests"; it is retried automatically after the wait shown. KEY REJECTED = the provider refused the key: copy it again from the provider’s dashboard and press "New key". Karen simply uses the next key in the meantime.' },
+    { q: 'Is it safe to put API keys in? Where do they go?', a: 'They are encrypted with Windows (DPAPI, tied to your Windows account) in brain.json, and only ever sent to the provider they belong to. The settings window can add or replace a key but can never display one again.' },
     { q: 'The widget disappeared.', a: 'Right-click the tray spider → "Show the web". If it is off-screen: tray → "Reset position".' },
     { q: 'Ctrl+Alt+K / Ctrl+Alt+C does nothing.', a: 'Another program owns that shortcut. Close it, or use the tray menu / Karen instead — everything the hotkeys do is also in the tray.' },
     { q: 'My RAM is always at 97 % — will it tingle forever?', a: 'No. RAM alerts use "Auto" mode: they fire on jumps above this PC’s normal level. Choose a fixed threshold or "never" in tray → RAM alerts.' },

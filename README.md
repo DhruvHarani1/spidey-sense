@@ -42,6 +42,10 @@ Everything the gadget can do is documented in one place, three ways — all gene
 - **In a terminal:** the installer puts `spidey.cmd` next to the app. `spidey help`, `spidey commands`, `spidey features`, `spidey feature guardian`, `spidey hotkeys`, `spidey tray`, `spidey privacy`, `spidey troubleshoot`, `spidey search ram`, `spidey docs`. To type just `spidey` anywhere, add the install folder to your PATH. From a checkout: `npm run help` or `node bin/spidey.js commands`.
 - **On the web:** `docs/index.html` (regenerate with `npm run docs`; it is also what the app shows).
 
+## AI brain: talk to Karen naturally
+
+Say **"api keys"** (or tray → *AI brain: free API keys…*) and paste one or more free keys — **NVIDIA** (build.nvidia.com), **Groq**, **Google Gemini**, **OpenRouter**, or any OpenAI-compatible URL. Karen tries them top to bottom; a key that hits its limit or fails is rested and the next one answers; after three failed tries she switches to a local **Ollama** model, and finally to her built-in rules. Anything that is not a known command is then answered naturally, with your name, the PC's live status and the last 12 turns of the conversation, and she can run the same commands you could type (reminders, timer, voice, notification reading…) — never close programs. Keys are encrypted with Windows DPAPI and never shown again; online providers only get what you type plus one short status line, never your notifications. See the manual (`spidey feature brain`).
+
 ## Karen (the suit AI)
 
 Press **Ctrl+Alt+K** anywhere (or click the box in the panel) and ask in plain words: `status`, `cpu?`, `what is eating my ram`, `remind me to stretch in 20 minutes`, `at 3pm call mum`, `start focus`, `take a break`, `mute`, `opacity 70`, `collapse`, `kill chrome` (always asks first; system processes are protected).

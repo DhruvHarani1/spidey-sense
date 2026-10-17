@@ -1,11 +1,13 @@
 'use strict'
-const { app, BrowserWindow, desktopCapturer, shell, dialog, globalShortcut, Menu, powerMonitor, Notification, Tray, ipcMain, nativeImage, net, screen } = require('electron')
+const { app, BrowserWindow, desktopCapturer, safeStorage, shell, dialog, globalShortcut, Menu, powerMonitor, Notification, Tray, ipcMain, nativeImage, net, screen } = require('electron')
 const fs = require('node:fs')
 const os = require('node:os')
 const path = require('node:path')
 const { execFile } = require('node:child_process')
 const autostart = require('./autostart')
 const speech = require('./speech')
+const { createBrain, PRESETS: BRAIN_PRESETS } = require('./brain')
+const brainPrompt = require('./brain-prompt')
 const { updater } = require('./updater')
 const guardian = require('./guardian')
 const karenLlm = require('./karen-llm')
@@ -272,6 +274,7 @@ function menuTemplate() {
       { type: 'separator' },
       updateMenuItem(),
       { type: 'separator' },
+      { label: 'AI brain: free API keys…', click: () => openBrain() },
       { label: 'Help & all commands (manual)', click: () => openHelp() },
       { label: 'Reset position', click: () => { settings.position = null; const d = defaultPosition(); win?.setPosition(d.x, d.y); saveSettings() } },
       { label: 'Quit Spidey Sense', click: () => app.quit() }
@@ -531,6 +534,172 @@ ipcMain.handle('capture:save', async (e, dataUrl, suggested) => {
 let helpWin = null
 
 /** The offline manual (generated from help-data.js) in its own window. */
+// ---------------------------------------------------------------- AI brain (multi-key failover → local Ollama)
+/** @type {ReturnType<typeof createBrain> | null} */
+let brain = null
+let brainHistory = []
+let brainReady = { at: 0, v: false }
+/** @type {BrowserWindow | null} */
+let brainWin = null
+
+function initBrain() {
+  brain = createBrain({
+    file: path.join(app.getPath('userData'), 'brain.json'),
+    fetch: (...a) => fetch(...a),
+    crypt: {
+      available: () => safeStorage.isEncryptionAvailable(),
+      enc: (s) => safeStorage.encryptString(s).toString('base64'),
+      dec: (b) => safeStorage.decryptString(Buffer.from(b, 'base64'))
+    },
+    ollama: { status: () => karenLlm.status(settings.llmModel) }
+  })
+}
+
+const num = (v) => (Number.isFinite(v) ? v : undefined)
+/** the renderer's status snapshot, reduced to plain numbers/short strings (nothing private ever goes into a prompt) */
+function safeBrainCtx(c) {
+  const o = { now: new Date() }
+  if (c && typeof c === 'object') {
+    const s = c.stats
+    if (s && typeof s === 'object') {
+      o.stats = { cpu: num(s.cpu), ram: num(s.ram), disk: num(s.disk), latencyMs: num(s.latencyMs), online: s.online !== false }
+      if (s.hog && typeof s.hog.name === 'string') o.stats.hog = { name: s.hog.name.slice(0, 30), mb: num(s.hog.mb) || 0 }
+    }
+    const b = c.battery
+    if (b && typeof b === 'object') o.battery = { level: num(b.level) ?? 0, charging: !!b.charging, present: !!b.present }
+    const t = c.timer
+    if (t && typeof t === 'object' && typeof t.mode === 'string') o.timer = { mode: t.mode === 'break' ? 'break' : 'focus', left: num(t.left) ?? 0, running: !!t.running }
+    o.unread = num(c.unread)
+    o.level = num(c.level)
+  }
+  return o
+}
+
+ipcMain.handle('brain:ready', async (e) => {
+  if (e.sender !== win?.webContents || !brain) return false
+  if (Date.now() - brainReady.at < 15_000) return brainReady.v
+  brainReady = { at: Date.now(), v: await brain.ready() }
+  return brainReady.v
+})
+
+ipcMain.handle('brain:chat', async (e, text, ctx) => {
+  if (e.sender !== win?.webContents || !brain || typeof text !== 'string' || !text.trim()) return { ok: false, error: 'not available' }
+  const messages = brainPrompt.buildMessages(brainHistory, text, { name: settings.callMe, ctx: safeBrainCtx(ctx) })
+  const r = await brain.chat(messages)
+  if (!r.ok) {
+    brainReady = { at: 0, v: false }
+    return { ok: false, error: r.error, chain: r.chain }
+  }
+  const p = brainPrompt.parseReply(r.text)
+  if (!p.say && !p.do) return { ok: false, error: 'it sent an empty answer' }
+  brainHistory.push({ role: 'user', content: text.slice(0, 600) }, { role: 'assistant', content: p.say || p.do })
+  brainHistory = brainHistory.slice(-24)
+  return { ok: true, say: p.say, do: p.do, via: r.via, allowed: [...brainPrompt.ALLOWED_ACTIONS] }
+})
+
+ipcMain.on('brain:reset', (e) => {
+  if (e.sender === win?.webContents) brainHistory = []
+})
+ipcMain.on('brain:open', (e) => {
+  if (e.sender === win?.webContents) openBrain()
+})
+
+const BRAIN_LINK_HOSTS = new Set([...Object.values(BRAIN_PRESETS).map((p) => (p.signup ? new URL(p.signup).hostname : '')).filter(Boolean), 'ollama.com'])
+
+function openBrain() {
+  if (brainWin) {
+    brainWin.show()
+    brainWin.focus()
+    return
+  }
+  brainWin = new BrowserWindow({
+    width: 700,
+    height: 860,
+    minWidth: 560,
+    minHeight: 520,
+    backgroundColor: '#0a1131',
+    title: 'Spidey Sense — AI brain',
+    icon: iconPath(),
+    autoHideMenuBar: true,
+    webPreferences: { preload: path.join(__dirname, 'preload-brain.js'), contextIsolation: true, nodeIntegration: false, sandbox: true }
+  })
+  brainWin.setMenuBarVisibility(false)
+  brainWin.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+  brainWin.webContents.on('will-navigate', (e) => e.preventDefault())
+  brainWin.on('closed', () => {
+    brainWin = null
+    brainReady = { at: 0, v: false }
+  })
+  brainWin.loadFile(path.join(__dirname, 'renderer', 'brain.html'))
+}
+
+const fromBrainWin = (e) => !!brainWin && e.sender === brainWin.webContents && !!brain
+const fail = (err) => ({ ok: false, error: String(err && err.message ? err.message : err).slice(0, 200) })
+
+ipcMain.handle('brainwin:state', async (e) => {
+  if (!fromBrainWin(e)) return null
+  return {
+    entries: brain.list(),
+    settings: brain.getSettings(),
+    presets: Object.fromEntries(Object.entries(BRAIN_PRESETS).map(([id, p]) => [id, { name: p.name, baseUrl: p.baseUrl, models: p.models, signup: p.signup, hint: p.hint }])),
+    ollama: await karenLlm.status(settings.llmModel).catch(() => ({ available: false, model: '' })),
+    chain: brain.lastChain()
+  }
+})
+ipcMain.handle('brainwin:add', (e, entry) => {
+  if (!fromBrainWin(e) || !entry || typeof entry !== 'object') return fail('not allowed')
+  try {
+    const id = brain.add({ provider: String(entry.provider), key: String(entry.key || ''), label: String(entry.label || ''), model: String(entry.model || ''), baseUrl: String(entry.baseUrl || '') })
+    brainReady = { at: 0, v: false }
+    return { ok: true, id }
+  } catch (err) {
+    return fail(err)
+  }
+})
+ipcMain.handle('brainwin:update', (e, id, patch) => {
+  if (!fromBrainWin(e) || typeof id !== 'string' || !patch || typeof patch !== 'object') return fail('not allowed')
+  try {
+    const p = {}
+    if (typeof patch.label === 'string') p.label = patch.label
+    if (typeof patch.model === 'string') p.model = patch.model
+    if (typeof patch.enabled === 'boolean') p.enabled = patch.enabled
+    if (typeof patch.baseUrl === 'string') p.baseUrl = patch.baseUrl
+    if (typeof patch.key === 'string') p.key = patch.key
+    brain.update(id, p)
+    brainReady = { at: 0, v: false }
+    return { ok: true }
+  } catch (err) {
+    return fail(err)
+  }
+})
+ipcMain.handle('brainwin:remove', (e, id) => {
+  if (!fromBrainWin(e) || typeof id !== 'string') return fail('not allowed')
+  brain.remove(id)
+  brainReady = { at: 0, v: false }
+  return { ok: true }
+})
+ipcMain.handle('brainwin:move', (e, id, dir) => {
+  if (!fromBrainWin(e) || typeof id !== 'string') return fail('not allowed')
+  brain.move(id, dir < 0 ? -1 : 1)
+  return { ok: true }
+})
+ipcMain.handle('brainwin:test', (e, id) => (fromBrainWin(e) && typeof id === 'string' ? brain.test(id) : fail('not allowed')))
+ipcMain.handle('brainwin:natural', (e, on) => {
+  if (!fromBrainWin(e)) return fail('not allowed')
+  brain.setNaturalChat(!!on)
+  brainReady = { at: 0, v: false }
+  return { ok: true }
+})
+ipcMain.on('brainwin:link', (e, url) => {
+  if (!fromBrainWin(e) || typeof url !== 'string') return
+  try {
+    const u = new URL(url)
+    if (u.protocol === 'https:' && BRAIN_LINK_HOSTS.has(u.hostname)) void shell.openExternal(u.href)
+  } catch {
+    /* ignore */
+  }
+})
+
 let speechVoices = []
 
 /** switch Karen's voice (name, 'zira', 'male', 'next', 'auto' …) and say one line in it so you can hear the change */
@@ -721,6 +890,7 @@ if (!app.requestSingleInstanceLock()) {
     })
     updater.start()
     speech.setVoice(settings.voiceName)
+    initBrain()
     void speech.listVoices().then((v) => {
       speechVoices = v
       buildTray()

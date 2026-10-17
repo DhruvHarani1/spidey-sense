@@ -141,3 +141,13 @@ assert.deepEqual(interpret('are you reading my notifications', ctx).action, { ty
 assert.deepEqual(interpret('speak to me', ctx).action, { type: 'voice', on: true }, 'speak to me is still the reply voice')
 assert.deepEqual(interpret('mute', ctx).action, { type: 'sound', on: false }, 'mute is still the chirp')
 console.log('karen reader: ALL PASS')
+
+
+// brain
+for (const q of ['api keys', 'open the ai settings', 'set up the ai', 'add an api key', 'brain settings']) assert.deepEqual(interpret(q, ctx).action, { type: 'brain-open' }, q)
+for (const q of ['new chat', 'start over', 'forget this conversation']) assert.deepEqual(interpret(q, ctx).action, { type: 'brain-reset' }, q)
+assert.deepEqual(interpret('which ai are you using', ctx).action, { type: 'brain-status' })
+for (const q of ['hi', 'thanks', 'how are you', "what's up", 'good morning', 'who are you']) assert.equal(interpret(q, ctx).chat, true, q + ' is small talk the brain may answer')
+assert.equal(interpret('status', ctx).chat, undefined, 'real commands never go to the brain')
+assert.equal(interpret('tell me a story about spiders', ctx).unknown, true)
+console.log('karen brain: ALL PASS')

@@ -68,6 +68,10 @@ contextBridge.exposeInMainWorld('spidey', {
   },
   pickVoice: (pick) => ipcRenderer.invoke('voice:pick', pick),
   listVoices: () => ipcRenderer.invoke('voice:list'),
+  brainReady: () => ipcRenderer.invoke('brain:ready'),
+  brainChat: (text, ctx) => ipcRenderer.invoke('brain:chat', text, ctx),
+  brainReset: () => ipcRenderer.send('brain:reset'),
+  openBrain: () => ipcRenderer.send('brain:open'),
   setView: (v) => ipcRenderer.send('view:set', v),
   drag: {
     start: () => ipcRenderer.send('drag:start'),
