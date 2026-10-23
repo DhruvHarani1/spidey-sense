@@ -1,13 +1,12 @@
 'use strict'
-/* Guardian feed: shows what the spider-sense noticed. Click the status light to open the log. */
+/* Guardian + Auto-Shield feed: shows what the spider-sense noticed and what Shield did about it. Click the status light to open the log. */
 ;(function () {
   const KEY = 'spidey.guardian.log'
   const MAX = 40
   const $ = (id) => document.getElementById(id)
   const slog = $('slog')
   const sitems = $('sitems')
-  const balert = $('balert')
-  const LABEL = { net: 'NEW CONTACT', startup: 'AUTO-START', hosts: 'HOSTS FILE', drive: 'NEW DRIVE' }
+  const LABEL = { net: 'NEW CONTACT', startup: 'AUTO-START', hosts: 'HOSTS FILE', drive: 'NEW DRIVE', port: 'NEW DOOR', disk: 'DISK', shield: 'SHIELD' }
 
   let log = []
   try {
@@ -24,6 +23,45 @@
     }
   }
 
+  function button(label, onClick) {
+    const b = document.createElement('button')
+    b.className = 'act'
+    b.textContent = label
+    b.addEventListener('click', async (ev) => {
+      ev.stopPropagation()
+      b.disabled = true
+      await onClick(b)
+    })
+    return b
+  }
+
+  async function doUndo(e, b) {
+    const r = await window.spidey.shieldUndo(e.id)
+    if (r && r.ok) {
+      e.undo = false
+      e.text += ' (undone)'
+      save()
+      render()
+      window.Core.say('UNDONE.')
+    } else {
+      b.disabled = false
+      window.Core.say(String((r && r.error) || 'COULD NOT UNDO').toUpperCase())
+    }
+  }
+
+  async function doOffer(e, b) {
+    const r = await window.spidey.shieldDo(e.offer.id)
+    if (r && r.ok) {
+      e.offer = null
+      save()
+      render()
+      window.Core.say(String(r.text || 'DONE.').toUpperCase())
+    } else {
+      b.disabled = false
+      window.Core.say(String((r && r.error) || 'COULD NOT DO THAT').toUpperCase())
+    }
+  }
+
   function render() {
     sitems.replaceChildren(
       ...(log.length
@@ -36,6 +74,8 @@
             const when = document.createElement('em')
             when.textContent = new Date(e.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             li.append(tag, t, when)
+            if (e.undo && e.id) li.append(button('UNDO', (b) => doUndo(e, b)))
+            else if (e.offer && e.offer.id) li.append(button(String(e.offer.label || 'DO IT').toUpperCase(), (b) => doOffer(e, b)))
             return li
           })
         : [Object.assign(document.createElement('li'), { className: 'empty', textContent: 'NOTHING LURKING. SENSE IS QUIET.' })])
@@ -45,18 +85,27 @@
 
   function onEvent(e) {
     if (!e || typeof e.text !== 'string') return
-    log.unshift({ kind: String(e.kind || ''), text: e.text.slice(0, 160), at: Number(e.at) || Date.now() })
+    const entry = { kind: String(e.kind || ''), text: e.text.slice(0, 220), at: Number(e.at) || Date.now() }
+    if (e.id) entry.id = String(e.id).slice(0, 40)
+    if (e.undo) entry.undo = true
+    if (e.offer && e.offer.id) entry.offer = { id: String(e.offer.id).slice(0, 40), label: String(e.offer.label || '').slice(0, 30) }
+    log.unshift(entry)
     log = log.slice(0, MAX)
     save()
     unread++
-    window.Day.add('guardian')
-    window.Suits.award('guardian')
+    window.Day.add(e.kind === 'shield' ? 'shield' : 'guardian')
+    if (e.kind === 'shield' && e.act && e.act !== 'warn') {
+      window.Day.add('shield:' + e.act)
+      window.Suits.award('defend')
+    } else window.Suits.award('guardian')
+    window.WebMemory.mark(e.kind === 'shield' ? 'shield' : 'guardian', e.text)
     render()
-    window.Core.fireNote(`SPIDEY-SENSE: ${e.text.toUpperCase()}`, `guardian:${e.kind}`)
+    window.Core.fireNote(`${e.kind === 'shield' ? 'SPIDEY SHIELD' : 'SPIDEY-SENSE'}: ${e.text.toUpperCase()}`, `guardian:${e.kind}`)
   }
 
   function toggle(open) {
     const show = open ?? slog.hidden
+    if (show) window.Panels.closeOthers('slog')
     slog.hidden = !show
     if (show) {
       unread = 0
@@ -76,6 +125,18 @@
     if (e.key === 'Escape') toggle(false)
   })
 
+  window.Guardian = {
+    lastUndoable: () => log.find((e) => e.undo && e.id) || null,
+    markUndone(id) {
+      const e = log.find((x) => x.id === id)
+      if (e) {
+        e.undo = false
+        e.text += ' (undone)'
+        save()
+        render()
+      }
+    }
+  }
   window.spidey.onGuardian(onEvent)
   render()
   if (window.Core.test) window.__guardian = { onEvent, toggle, get log() { return log }, get unread() { return unread } }

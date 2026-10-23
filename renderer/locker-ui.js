@@ -10,7 +10,7 @@
     $('lvl').textContent = `LEVEL ${s.level}  ·  ${s.xp} XP`
     const span = s.next - s.base
     $('xpfill').style.width = `${Math.min(100, Math.round(((s.xp - s.base) / span) * 100))}%`
-    $('xptext').textContent = `${s.next - s.xp} XP TO LEVEL ${s.level + 1} — focus sessions +40, guardian alerts +10, daily web +15, E.D.I.T.H. scan +10, eye breaks and reminders +5`
+    $('xptext').textContent = `${s.next - s.xp} XP TO LEVEL ${s.level + 1} — focus sessions +40, defending the PC +15 (4 a day), clean E.D.I.T.H. scan +20, guardian alerts +10, daily web +15, E.D.I.T.H. scan +10, eye breaks and reminders +5`
     list.replaceChildren(
       ...window.Suits.SUITS.map((suit) => {
         const locked = suit.level > s.level
@@ -37,7 +37,7 @@
   }
 
   function open() {
-    for (const id of ['slog', 'bugle', 'edith']) $(id).hidden = true
+    window.Panels.closeOthers('locker')
     if (document.body.dataset.view !== 'panel') window.spidey.setView('panel')
     box.hidden = false
     render()

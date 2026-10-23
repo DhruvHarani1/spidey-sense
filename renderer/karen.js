@@ -91,6 +91,16 @@
 
     // ---- UI + settings
     if (/\b(collapse|minimi[sz]e|shrink)\b|^(hide|close)( the)?( panel| widget| this)?$/.test(t)) return { action: { type: 'collapse' } }
+    // ---- Auto-Shield, Web Memory, tour
+    if (/^undo( that| it| the last( one)?| shield)?$/.test(t)) return { action: { type: 'shield-undo' } }
+    if (/\b(auto[- ]?shield|spidey shield|shield)\b/.test(t) && !/\b(captain|america)\b/.test(t)) {
+      if (/\b(off|stop|disable|turn off|pause)\b/.test(t)) return { action: { type: 'shield', mode: 'off' } }
+      if (/\b(ask|careful|manual|confirm)\b/.test(t)) return { action: { type: 'shield', mode: 'ask' } }
+      if (/\b(on|enable|start|smart|auto|automatic|full)\b/.test(t)) return { action: { type: 'shield', mode: 'smart' } }
+      return { action: { type: 'shield', mode: 'status' } }
+    }
+    if (/\b(web memory|history|what happened|last night|past (day|24)|24 ?h(ours?)?|yesterday|earlier today|show me the graph)\b/.test(t)) return { action: { type: 'memory' } }
+    if (/\b(tour|show me around|walk me through|getting started|how does this work)\b/.test(t)) return { action: { type: 'tour' } }
     if (/\b(unmute|sound on|enable sound)\b/.test(t)) return { action: { type: 'sound', on: true }, say: 'SOUND ON.' }
     if (/\b(mute|silence|sound off|quiet)\b/.test(t)) return { action: { type: 'sound', on: false }, say: 'MUTED. SILENT RUNNING.' }
     m = /\bopacity\s+(?:to\s+)?(\d{1,3})\b|\bset opacity (\d{1,3})\b/.exec(t)
@@ -243,6 +253,31 @@
       case 'edith': {
         say('E.D.I.T.H. SCANNING…')
         say(window.Edith.summary(await window.Edith.open()))
+        break
+      }
+      case 'memory':
+        window.Memory.open()
+        break
+      case 'tour':
+        window.Tour.open()
+        break
+      case 'shield': {
+        const names = { smart: 'SMART: I TAME RUNAWAY PROGRAMS AND BLOCK SUSPICIOUS AUTO-START ENTRIES ON MY OWN (EVERYTHING HAS AN UNDO).', ask: 'ASK FIRST: I ONLY OFFER A BUTTON, NEVER ACT ALONE.', off: 'OFF: I ONLY WATCH.' }
+        if (action.mode === 'status') say('AUTO-SHIELD ' + names[window.Core.getSettings().shield || 'smart'])
+        else {
+          window.spidey.patchSettings({ shield: action.mode })
+          say('AUTO-SHIELD ' + names[action.mode])
+        }
+        break
+      }
+      case 'shield-undo': {
+        const e = window.Guardian && window.Guardian.lastUndoable()
+        if (!e) say('NOTHING TO UNDO.')
+        else {
+          const r = await window.spidey.shieldUndo(e.id)
+          say(r && r.ok ? 'UNDONE: ' + e.text.slice(0, 80).toUpperCase() : String((r && r.error) || 'COULD NOT UNDO').toUpperCase())
+          if (r && r.ok) window.Guardian.markUndone(e.id)
+        }
         break
       }
       case 'cancel-kill':

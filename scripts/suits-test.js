@@ -55,3 +55,22 @@ assert.equal(S.findSuit('hello'), undefined)
 for (const s of S.SUITS) assert.ok(!('yellow' in s) && !('redHot' in s), `${s.id} must not recolour alerts`)
 
 console.log('suits: ALL PASS')
+
+// ---- Suit Locker 2.0: defending the PC earns XP (capped per day), a clean E.D.I.T.H. scan once a day, four more suits
+{
+  const st = S.fresh()
+  let gained = 0
+  for (let i = 0; i < 6; i++) gained += S.award(st, 'defend', 'd1').gained
+  assert.equal(gained, 60, 'four defend awards a day at 15 XP')
+  assert.equal(S.award(st, 'defend', 'd2').gained, 15, 'a new day, a new allowance')
+  assert.equal(S.award(st, 'clean', 'd1').gained, 20)
+  assert.equal(S.award(st, 'clean', 'd1').gained, 0, 'once a day')
+  assert.equal(S.award({ xp: 5, suit: 'classic', daily: {} }, 'defend', 'd1').gained, 15, 'old saved state without counters still works')
+  assert.deepEqual(S.SUITS.map((s) => s.level), [1, 2, 3, 4, 5, 6, 7, 9, 11, 13])
+  assert.deepEqual(S.unlocked(6).map((s) => s.id).slice(-1), ['miles'])
+  for (const id of ['miles', 'noir', 'spider2099', 'iron']) assert.ok(S.byId(id), id)
+  assert.equal(S.findSuit('wear the noir suit').id, 'noir')
+  assert.equal(S.findSuit('put on iron spider').id, 'iron')
+  for (const s of S.SUITS) for (const k of ['red', 'blue', 'navy', 'navyHi', 'hi', 'lo', 'line', 'vert']) assert.match(s[k], /^#[0-9a-f]{6}$/i, `${s.id}.${k}`)
+  console.log('suits 2.0: ALL PASS')
+}

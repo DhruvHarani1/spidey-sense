@@ -1,8 +1,8 @@
 'use strict'
 /**
  * E.D.I.T.H.: a quick, read-only security "threat assessment" of this PC.
- * Uses only reg.exe, sc.exe, netstat and tasklist (no admin rights, no PowerShell, no network calls).
- * It reports facts and a simple score; it never changes any setting.
+ * Uses only reg.exe, sc.exe, netstat, tasklist and one read-only Get-HotFix query for the Windows Update age (no admin rights, no network calls).
+ * It reports facts, a simple score and a plain-words fix checklist; it never changes any setting.
  */
 const { execFile } = require('node:child_process')
 
@@ -18,6 +18,20 @@ function parseRegDword(out, name) {
 }
 
 /** `sc query X` → 'running' | 'stopped' | null (missing) */
+/** value of a REG_SZ from `reg query` output, or null */
+function parseRegString(out, name) {
+  const m = new RegExp(String.raw`^\s*${name}\s+REG_SZ\s+(.+?)\s*$`, 'im').exec(out || '')
+  return m ? m[1] : null
+}
+
+/** whole days between a "2026-10-10" or "2026-10-10 05:12:33" timestamp (UTC) and now, or null */
+function daysSince(stamp, nowMs = Date.now()) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}):(\d{2}))?/.exec(String(stamp || '').trim())
+  if (!m) return null
+  const t = Date.UTC(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0))
+  return Number.isFinite(t) && t <= nowMs + 86400000 ? Math.max(0, Math.floor((nowMs - t) / 86400000)) : null
+}
+
 function parseServiceState(out) {
   const m = /STATE\s*:\s*\d+\s+(\w+)/i.exec(out || '')
   return m ? m[1].toLowerCase() : null
@@ -70,9 +84,9 @@ const regq = (key, value) => run('reg.exe', ['query', key, '/v', value])
 
 async function scan({ uptimeS = 0, diskPct = 0, startupItems = [] } = {}) {
   const checks = []
-  const add = (id, status, label, detail, penalty = 0) => checks.push({ id, status, label, detail, penalty })
+  const add = (id, status, label, detail, penalty = 0, fix = []) => checks.push({ id, status, label, detail, penalty, fix: status === 'ok' ? [] : fix })
 
-  const [defender, fwStd, fwPub, fwDom, uac, rdp, reboot, net, tl] = await Promise.all([
+  const [defender, fwStd, fwPub, fwDom, uac, rdp, reboot, net, tl, rtp, pol, lastUpdate] = await Promise.all([
     run('sc.exe', ['query', 'WinDefend']),
     regq(`${FW_BASE}\\StandardProfile`, 'EnableFirewall'),
     regq(`${FW_BASE}\\PublicProfile`, 'EnableFirewall'),
@@ -81,30 +95,35 @@ async function scan({ uptimeS = 0, diskPct = 0, startupItems = [] } = {}) {
     regq(String.raw`HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server`, 'fDenyTSConnections'),
     run('reg.exe', ['query', String.raw`HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired`]),
     run('netstat', ['-ano', '-p', 'tcp']),
-    run('tasklist', ['/fo', 'csv', '/nh'])
+    run('tasklist', ['/fo', 'csv', '/nh']),
+    regq(String.raw`HKLM\SOFTWARE\Microsoft\Windows Defender\Real-Time Protection`, 'DisableRealtimeMonitoring'),
+    regq(String.raw`HKLM\SOFTWARE\Policies\Microsoft\Windows Defender`, 'DisableAntiSpyware'),
+    run('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', "(Get-HotFix -ErrorAction SilentlyContinue | Where-Object { $_.InstalledOn } | Sort-Object InstalledOn -Descending | Select-Object -First 1).InstalledOn.ToString('yyyy-MM-dd')"])
   ])
 
   // antivirus
   const def = parseServiceState(defender)
-  if (def === 'running') add('av', 'ok', 'Antivirus', 'Windows Defender is running.')
-  else add('av', 'unknown', 'Antivirus', 'Windows Defender is not running — another antivirus may be in charge (not verified).')
+  const rtOff = parseRegDword(rtp, 'DisableRealtimeMonitoring') === 1 || parseRegDword(pol, 'DisableAntiSpyware') === 1
+  if (def === 'running' && rtOff) add('av', 'bad', 'Antivirus', 'Windows Defender is running but its real-time protection is switched OFF.', 25, ['Open Windows Security → Virus & threat protection → Manage settings.', 'Turn "Real-time protection" on.', 'If it switches itself off again, scan the PC: some malware does this.'])
+  else if (def === 'running') add('av', 'ok', 'Antivirus', 'Windows Defender is running.')
+  else add('av', 'unknown', 'Antivirus', 'Windows Defender is not running — another antivirus may be in charge (not verified).', 0, ['If you use another antivirus (Norton, Kaspersky, …), open it and check that it is on and up to date.', 'If you use none: Windows Security → Virus & threat protection → turn Defender on.'])
 
   // firewall
   const fw = { private: parseRegDword(fwStd, 'EnableFirewall'), public: parseRegDword(fwPub, 'EnableFirewall'), domain: parseRegDword(fwDom, 'EnableFirewall') }
   const known = Object.entries(fw).filter(([, v]) => v !== null)
   const off = known.filter(([, v]) => v === 0).map(([k]) => k)
   if (!known.length) add('fw', 'unknown', 'Firewall', 'Could not read the firewall state.')
-  else if (off.length) add('fw', 'bad', 'Firewall', `Windows Firewall is OFF for: ${off.join(', ')}.`, 30)
+  else if (off.length) add('fw', 'bad', 'Firewall', `Windows Firewall is OFF for: ${off.join(', ')}.`, 30, ['Open Windows Security → Firewall & network protection.', 'Select each network type shown as off and press "Turn on".'])
   else add('fw', 'ok', 'Firewall', 'Windows Firewall is on for all network types.')
 
   // UAC
   const lua = parseRegDword(uac, 'EnableLUA')
-  if (lua === 0) add('uac', 'bad', 'User Account Control', 'UAC is disabled — programs can change the system without asking.', 20)
+  if (lua === 0) add('uac', 'bad', 'User Account Control', 'UAC is disabled — programs can change the system without asking.', 20, ['Search the Start menu for "Change User Account Control settings".', 'Move the slider up from "Never notify" (the default is the second step from the top), then restart.'])
   else if (lua === 1) add('uac', 'ok', 'User Account Control', 'UAC is on.')
 
   // remote desktop
   const deny = parseRegDword(rdp, 'fDenyTSConnections')
-  if (deny === 0) add('rdp', 'warn', 'Remote Desktop', 'Remote Desktop is enabled. Turn it off if you do not use it.', 15)
+  if (deny === 0) add('rdp', 'warn', 'Remote Desktop', 'Remote Desktop is enabled. Turn it off if you do not use it.', 15, ['Settings → System → Remote Desktop → switch it off.', 'If you do need it, use a strong password and never expose it to the internet.'])
   else if (deny === 1) add('rdp', 'ok', 'Remote Desktop', 'Remote Desktop is off.')
 
   // listening ports
@@ -114,26 +133,32 @@ async function scan({ uptimeS = 0, diskPct = 0, startupItems = [] } = {}) {
   const other = listening.filter((l) => !RISKY_PORTS[l.port] && !USUAL_PORTS.has(l.port))
   if (risky.length) {
     const txt = risky.map((l) => `${RISKY_PORTS[l.port]} (${l.port}${names.get(l.pid) ? `, ${names.get(l.pid)}` : ''})`).join('; ')
-    add('ports', 'warn', 'Open doors', `Listening to the network: ${txt}.`, Math.min(20, risky.length * 10))
+    add('ports', 'warn', 'Open doors', `Listening to the network: ${txt}.`, Math.min(20, risky.length * 10), ['These ports let other computers try to connect. If you do not use the service named, disable it (Services app) or block the port in Windows Firewall.', 'Never forward these ports on your router.'])
   } else {
     add('ports', 'ok', 'Open doors', `${listening.length} port${listening.length === 1 ? '' : 's'} listening to the network${other.length ? `, ${other.length} from apps (${[...new Set(other.map((l) => names.get(l.pid)).filter(Boolean))].slice(0, 3).join(', ') || 'unknown'})` : ''}. None are high-risk.`)
   }
 
   // startup items running from temp/download folders
   const sketchy = startupItems.filter((s) => TEMPISH.test(s))
-  if (sketchy.length) add('startup', 'warn', 'Auto-start', `${sketchy.length} startup entr${sketchy.length === 1 ? 'y runs' : 'ies run'} from a Temp or Downloads folder.`, 15)
+  if (sketchy.length) add('startup', 'warn', 'Auto-start', `${sketchy.length} startup entr${sketchy.length === 1 ? 'y runs' : 'ies run'} from a Temp or Downloads folder.`, 15, ['Task Manager → Startup apps: disable the entries you do not recognise.', 'Starting from Temp or Downloads is a classic malware trick. Scan the PC if you did not add them.'])
   else add('startup', 'ok', 'Auto-start', 'No startup entries run from Temp or Downloads.')
 
   // restart needed / long uptime
   const rebootPending = /RebootRequired/i.test(reboot) && !/unable to find/i.test(reboot)
-  if (rebootPending) add('reboot', 'warn', 'Updates', 'Windows is waiting for a restart to finish installing updates.', 5)
-  else if (uptimeS > 14 * 86400) add('reboot', 'warn', 'Updates', `The PC has been on for ${Math.floor(uptimeS / 86400)} days — restart to apply updates.`, 5)
+  if (rebootPending) add('reboot', 'warn', 'Updates', 'Windows is waiting for a restart to finish installing updates.', 5, ['Save your work and restart the PC.'])
+  else if (uptimeS > 14 * 86400) add('reboot', 'warn', 'Updates', `The PC has been on for ${Math.floor(uptimeS / 86400)} days — restart to apply updates.`, 5, ['Save your work and restart the PC.'])
   else add('reboot', 'ok', 'Updates', 'No restart pending.')
 
+  // how long since Windows last installed an update
+  const age = daysSince(String(lastUpdate || '').trim(), Date.now())
+  if (age === null) add('winupdate', 'unknown', 'Windows Update', 'Could not tell when Windows last installed an update.')
+  else if (age > 60) add('winupdate', 'warn', 'Windows Update', `Windows last installed an update ${age} days ago.`, 10, ['Settings → Windows Update → Check for updates, then install and restart.', 'If it keeps failing: Settings → System → Troubleshoot → Other troubleshooters → Windows Update.'])
+  else add('winupdate', 'ok', 'Windows Update', age === 0 ? 'Windows installed an update today.' : `Windows last installed an update ${age} day${age === 1 ? '' : 's'} ago.`)
+
   // disk headroom (ransomware / update failures love a full disk)
-  if (diskPct >= 95) add('disk', 'warn', 'Disk space', `System drive is ${Math.round(diskPct)}% full.`, 5)
+  if (diskPct >= 95) add('disk', 'warn', 'Disk space', `System drive is ${Math.round(diskPct)}% full.`, 5, ['Settings → System → Storage: clean up temporary files (Storage Sense).', 'Uninstall programs you no longer use and move big files to another drive.'])
 
   return { at: Date.now(), ...score(checks), checks }
 }
 
-module.exports = { scan, score, parseRegDword, parseServiceState, parseListening, parseTasklist, TEMPISH }
+module.exports = { scan, score, parseRegDword, parseRegString, daysSince, parseServiceState, parseListening, parseTasklist, TEMPISH }

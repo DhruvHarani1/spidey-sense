@@ -10,7 +10,7 @@
     const composed = window.Bugle.compose(day)
     window.Suits.award('bugle')
     window.Bugle.render(paper, composed, day)
-    $('slog').hidden = true
+    window.Panels.closeOthers('bugle')
     box.hidden = false
     if (document.body.dataset.view !== 'panel') window.spidey.setView('panel')
     return composed

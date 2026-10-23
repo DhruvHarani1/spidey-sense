@@ -7,6 +7,7 @@ const { execFile } = require('node:child_process')
 const autostart = require('./autostart')
 const { updater } = require('./updater')
 const guardian = require('./guardian')
+const shieldMod = require('./shield')
 const edith = require('./edith')
 
 const SIZES = { badge: { w: 96, h: 124 }, panel: { w: 300, h: 580 } }
@@ -26,7 +27,8 @@ const DEFAULTS = {
   bugleDaily: true, // 21:00 nudge that the day's front page is ready
   lastBugle: '',
   trayHinted: false,
-  guardian: true, // danger sense: first-time internet contact, new auto-start, hosts change, new drive
+  guardian: true, // danger sense: first-time internet contact, new auto-start, hosts change, new drive, new open port, filling disk
+  shield: 'smart', // Auto-Shield: smart = acts alone on safe, reversible things | ask = only offers a button | off
   eyeBreak: true, // 20-20-20 nudge after 20 min of continuous use
   view: 'badge', // badge = small swinging spider | panel = full widget
   ramMode: 'auto', // auto = alert on spikes above this PC's usual level | 90 | 95 | off
@@ -73,7 +75,7 @@ function update(patch) {
   buildTray()
 }
 
-const publicSettings = () => ({ opacity: settings.opacity, sound: settings.sound, notifications: settings.notifications, netProbe: settings.netProbe, ramMode: settings.ramMode, eyeBreak: settings.eyeBreak, view: settings.view })
+const publicSettings = () => ({ opacity: settings.opacity, sound: settings.sound, notifications: settings.notifications, netProbe: settings.netProbe, ramMode: settings.ramMode, eyeBreak: settings.eyeBreak, shield: settings.shield, view: settings.view })
 
 // ---------------------------------------------------------------- window
 /** @type {BrowserWindow | null} */
@@ -81,6 +83,7 @@ let win = null
 let tray = null
 let topTimer = null
 let stopGuardian = null
+let shield = null
 let bugleTimer = null
 let quitting = false
 
@@ -241,7 +244,16 @@ function menuTemplate() {
       check('Daily Web ready nudge (9 pm)', 'bugleDaily'),
       { label: 'E.D.I.T.H. threat assessment', click: () => openEdith() },
       { label: 'Suit locker (XP)', click: () => openLocker() },
+      { label: 'Web Memory (last 24 hours)', click: () => openMemory() },
       check('Guardian (danger sense)', 'guardian'),
+      {
+        label: 'Auto-Shield (acts on its own, with UNDO)',
+        submenu: [
+          ['smart', 'Smart: tame runaway programs, block suspicious auto-start entries'],
+          ['ask', 'Ask first: only offer a button'],
+          ['off', 'Off: watch only']
+        ].map(([v, label]) => ({ label, type: 'radio', checked: settings.shield === v, click: () => update({ shield: v }) }))
+      },
       check('Desktop notifications', 'notifications'),
       check('Network check (pings gstatic.com)', 'netProbe'),
       check('Launch at startup', 'startup'),
@@ -338,27 +350,8 @@ async function probeNetwork() {
   }
 }
 
-let hog = null
-function refreshHog() {
-  execFile('tasklist', ['/fo', 'csv', '/nh'], { windowsHide: true, maxBuffer: 8e6 }, (err, out) => {
-    if (err) return
-    const by = new Map()
-    for (const line of out.split(/\r?\n/)) {
-      const c = line.match(/"([^"]*)"/g)
-      if (!c || c.length < 5) continue
-      const name = c[0].slice(1, -1).replace(/\.exe$/i, '')
-      const kb = parseInt(c[4].replace(/[^0-9]/g, ''), 10) || 0
-      by.set(name, (by.get(name) || 0) + kb)
-    }
-    let best = null
-    for (const [name, kb] of by) if (!best || kb > best.kb) best = { name, kb }
-    hog = best ? { name: best.name, mb: Math.round(best.kb / 1024) } : null
-  })
-}
-
 async function sample() {
   tick++
-  if (tick % 10 === 1) refreshHog()
   if (settings.netProbe) {
     if (tick % PROBE_EVERY === 1) void probeNetwork()
   } else {
@@ -374,9 +367,10 @@ async function sample() {
     online,
     uptimeS: os.uptime(),
     probing: settings.netProbe,
-    hog,
+    hog: shield ? shield.hog() : null,
     idleS: powerMonitor.getSystemIdleTime()
   }
+  if (shield) shield.hint(stats.cpu)
   win?.webContents.send('stats', stats)
 }
 
@@ -404,11 +398,12 @@ ipcMain.on('settings:patch', (e, patch) => {
     if (typeof patch[k] !== type) continue
     clean[k] = k === 'opacity' ? Math.min(1, Math.max(0.3, patch[k])) : patch[k]
   }
+  if (patch.shield === 'smart' || patch.shield === 'ask' || patch.shield === 'off') clean.shield = patch.shield
   if (Object.keys(clean).length) update(clean)
 })
 
 // never let a chat command take down the OS or this app
-const PROTECTED = /^(system|registry|smss|csrss|wininit|winlogon|services|lsass|svchost|dwm|explorer|fontdrvhost|spidey sense|electron|conhost|sihost|ctfmon|taskhostw|searchhost|startmenuexperiencehost|shellexperiencehost|runtimebroker|audiodg|msmpeng|securityhealthservice|wudfhost)$/i
+const PROTECTED = shieldMod.PROTECTED
 ipcMain.handle('proc:kill', (e, name) => {
   if (e.sender !== win?.webContents) return { ok: false, error: 'not allowed' }
   const n = String(name || '').replace(/\.exe$/i, '').trim()
@@ -464,6 +459,18 @@ function openHelp() {
 ipcMain.on('help:open', (e) => {
   if (e.sender === win?.webContents) openHelp()
 })
+
+function openMemory() {
+  if (!win) return
+  win.show()
+  setView('panel')
+  win.webContents.send('open-memory')
+}
+
+// Auto-Shield buttons. Everything is checked in main: the window can only name an offer id or a process id from the last scan.
+ipcMain.handle('shield:takedown', (e, pid) => (e.sender === win?.webContents && shield && Number.isInteger(pid) ? shield.takeDown(pid) : { ok: false, error: 'not allowed' }))
+ipcMain.handle('shield:do', (e, id) => (e.sender === win?.webContents && shield && typeof id === 'string' ? shield.apply(id) : { ok: false, error: 'not allowed' }))
+ipcMain.handle('shield:undo', (e, id) => (e.sender === win?.webContents && shield && typeof id === 'string' ? shield.undo(id) : { ok: false, error: 'not allowed' }))
 
 function openLocker() {
   if (!win) return
@@ -547,12 +554,22 @@ if (!app.requestSingleInstanceLock()) {
     createWindow()
     buildTray()
     syncLoginItem(settings.startup)
+    shield = shieldMod.createShield({
+      dataDir: app.getPath('userData'),
+      selfNames: ['Spidey Sense', 'electron'],
+      mode: () => settings.shield,
+      emit: (ev) => win?.webContents.send('guardian', ev),
+      onCulprit: (c) => win?.webContents.send('culprit', c)
+    })
+    shield.start()
     stopGuardian = guardian.start({
       dataDir: app.getPath('userData'),
       selfNames: ['Spidey Sense', 'electron'],
       emit: (ev) => {
         if (settings.guardian) win?.webContents.send('guardian', ev)
-      }
+      },
+      onStartup: (item) => settings.guardian && shield.onStartup(item),
+      diskPercent
     })
     const summon = () => {
       if (!win) return
@@ -613,6 +630,7 @@ if (!app.requestSingleInstanceLock()) {
   app.on('before-quit', () => {
     globalShortcut.unregisterAll()
     stopGuardian?.()
+    shield?.stop()
     clearInterval(bugleTimer)
     updater.dispose()
     quitting = true

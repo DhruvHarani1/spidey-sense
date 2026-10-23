@@ -10,6 +10,21 @@ Always-on-top comic-book desktop widget. Your PC's vitals drawn as a spider web;
 
 > **0.3.0 is the focus release.** Voice, the wake word, the AI brain, notification reading and the inbox moved to a separate app, **Jarvis**; Web-Capture is parked in *Spidey Lab*. Spidey Sense is now only the danger-sense widget. See `FOCUS-PLAN.md` for the why. The last all-in-one version is tag `v0.2.7-final-with-jarvis-features`.
 
+## New in 0.4.0: it defends, not just warns
+
+- **Auto-Shield** (tray → Auto-Shield: *Smart* / *Ask first* / *Off*): acts on its own, but only on things that are safe and reversible, and logs each with an **UNDO** button (sense log, or say "undo"):
+  - a program that keeps using about a third of the whole CPU gets its **priority lowered** (it keeps working, everything else goes first);
+  - a **new, suspicious auto-start entry** in your own startup (runs from Temp/Downloads, encoded PowerShell, mshta/wscript…) is **disabled and backed up**.
+  It never kills anything alone, never touches Windows, Defender, the firewall or services, and needs no admin rights. Offers (you click): end a hog, or block a program that started from Temp/Downloads from the internet (Windows asks permission first).
+- **Culprit bar**: when RAM or CPU tingles, the panel names the program ("CHROME · 2.1 GB · 38 PROCESSES") and offers **TAKE DOWN** (asks twice, protected programs refused).
+- **Web Memory** (🕘): the last 24 hours of CPU/RAM, the worst moments and what was running; tap any minute.
+- **Guardian** also warns about a program opening a new network port and about the system drive filling fast.
+- **E.D.I.T.H.** checks Defender real-time protection and Windows Update age, and gives a numbered **fix-it checklist** for every problem (read-only: it never changes a setting).
+- **Suit Locker 2.0**: XP for defending the PC and for a clean scan; four new suits (Miles, Noir, Spider-2099, Iron Spider). The **Daily Web** headline now reports what Shield really did.
+- **First-run tour** (five cards; "give me a tour" replays it).
+
+Idle footprint on a busy test PC (badge view, Shield on): roughly 120 MB of private memory and under 10 % of one CPU core, measured over a minute; Shield adds a one-second `tasklist` every 10 s. Not covered: battery health and temperatures (they need admin rights or vendor drivers).
+
 ## Install
 
 `npm run dist` builds `release/Spidey-Sense-Setup-<version>.exe` (per-user NSIS).
@@ -52,7 +67,7 @@ Karen is a fast offline rule engine, not a chatbot: no AI, no network, no microp
 
 ## The Daily Web (end-of-day front page)
 
-A comic newspaper built from your own day: focus time, tingles by cause, the memory hog, notifications received, guardian alerts, with a headline like `CHROME HOARDS MEMORY — CITY ON EDGE!`. Ask Karen ("daily web", "how was my day"), use the tray, or click the 9 pm nudge. **Save** or **Copy** it as a PNG. Everything is computed locally from counters kept for the last 14 days.
+A comic newspaper built from your own day: focus time, tingles by cause, the memory hog, guardian alerts, what Auto-Shield did, with a headline like `CHROME HOARDS MEMORY — CITY ON EDGE!`. Ask Karen ("daily web", "how was my day"), use the tray, or click the 9 pm nudge. **Save** or **Copy** it as a PNG. Everything is computed locally from counters kept for the last 14 days.
 
 ## E.D.I.T.H. (threat assessment)
 
@@ -60,7 +75,7 @@ Ask Karen "am I safe?" (or tray → E.D.I.T.H.) for a read-only security check: 
 
 ## Suit Locker (XP and suits)
 
-Healthy habits earn XP: focus session +40, guardian alert +10, Daily Web +15 and E.D.I.T.H. scan +10 (once a day each), eye break / reminder +5. Levels unlock colour schemes — Classic, Midnight, Gold Armor, Neon Noir, Pop Art, Prism. Click ★ in the banner, or ask Karen ("my level", "wear the neon suit"). Alert colours (yellow/red) never change with a suit.
+Healthy habits and defending the PC earn XP: focus session +40, defending +15 (4 a day), clean E.D.I.T.H. scan +20, guardian alert +10, Daily Web +15 and E.D.I.T.H. scan +10 (once a day each), eye break / reminder +5. Levels unlock colour schemes — Classic, Midnight, Gold Armor, Neon Noir, Pop Art, Miles, Prism, Noir, Spider-2099, Iron Spider. Click ★ in the banner, or ask Karen ("my level", "wear the neon suit"). Alert colours (yellow/red) never change with a suit.
 
 ## Reminders
 
@@ -75,5 +90,6 @@ Type into the panel's THWIP box (or press **Ctrl+Alt+S** anywhere to open it foc
 
 ## Ideas for later
 
-- Per-process panel (top 5 RAM/CPU hogs).
-- Daily "web strength" history.
+- A full per-process panel (top 5 RAM/CPU hogs).
+- Battery health and temperature checks (need a helper with admin rights).
+- Putting Jarvis on GitHub with its own installer.

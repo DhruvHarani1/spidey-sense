@@ -46,3 +46,17 @@ Day.peak('cpu', NaN)
 assert.equal(t.peak.cpu, undefined)
 
 console.log('bugle: ALL PASS')
+
+// ---- headlines from what Auto-Shield really did
+{
+  const { compose } = require('../renderer/bugle.js')
+  const d = new Date(2026, 9, 16)
+  const day = (n) => ({ n, peak: {}, hog: null })
+  assert.match(compose(day({ 'shield:block': 1, guardian: 1, shield: 1 }), d).headline, /SHIELD FOILS/, 'a blocked intruder beats everything')
+  assert.match(compose(day({ 'shield:tame': 2, shield: 2 }), d).headline, /2 RUNAWAY PROGRAMS TAMED/)
+  assert.match(compose(day({ 'shield:tame': 1 }), d).headline, /^RUNAWAY PROGRAM TAMED/)
+  assert.match(compose(day({ 'shield:takedown': 1 }), d).headline, /ENDS A MEMORY MENACE/)
+  assert.ok(compose(day({ 'shield:tame': 2, 'shield:block': 1 }), d).lines.includes('SHIELD: 2 TAMED · 1 BLOCKED'))
+  assert.match(compose(day({ guardian: 1 }), d).headline, /STRANGE VISITOR/, 'guardian alone is unchanged')
+  console.log('bugle shield headlines: ALL PASS')
+}

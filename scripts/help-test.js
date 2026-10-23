@@ -52,6 +52,8 @@ const probes = {
   'E.D.I.T.H.': 'E.D.I.T.H.',
   'Daily Web': 'Daily Web',
   'Guardian': 'Guardian',
+  'Auto-Shield': 'Auto-Shield',
+  'Web Memory': 'Web Memory',
   'Desktop notifications': 'Desktop notifications',
   'Network check': 'Network check',
   'Launch at startup': 'Launch at startup',

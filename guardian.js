@@ -5,18 +5,24 @@
  *  - a new auto-start entry (registry Run keys / Startup folder)
  *  - the hosts file changing
  *  - a new drive (USB stick, card, phone) appearing
+ *  - a program opening a port that other computers on the network can reach (after a learning period)
+ *  - the system drive filling up fast
+ * Suspicious new auto-start entries are first offered to Auto-Shield (shield.js), which may block them.
  * No admin rights, no network calls, no PowerShell: only netstat, tasklist and reg.exe.
  */
 const { execFile } = require('node:child_process')
 const crypto = require('node:crypto')
 const fs = require('node:fs')
 const path = require('node:path')
+const { parseListening } = require('./edith')
 
 const LEARN_MS = 3 * 60 * 1000
 const NET_EVERY_MS = 20_000
 const FILE_EVERY_MS = 30_000
 const DRIVE_EVERY_MS = 4_000
 const MIN_GAP_MS = 20_000
+const DISK_EVERY_MS = 60_000
+const DISK_WINDOW_MS = 15 * 60_000
 const MAX_NAMES = 600
 const RUN_KEYS = [
   String.raw`HKCU\Software\Microsoft\Windows\CurrentVersion\Run`,
@@ -70,6 +76,29 @@ function parseRegRun(key, out) {
 
 const newItems = (current, known) => current.filter((x) => !known.has(x))
 
+/**
+ * Is the drive filling up fast? samples = [{t, pct}] oldest first. Alerts on +3 points or more within the window
+ * (a big download or a runaway log/dump file), or when it is nearly full and still growing.
+ * @returns {null|{rise:number, minutes:number, now:number}}
+ */
+function diskTrend(samples, window = DISK_WINDOW_MS) {
+  if (!samples || samples.length < 2) return null
+  const last = samples[samples.length - 1]
+  const recent = samples.filter((x) => last.t - x.t <= window)
+  const first = recent[0]
+  const minutes = (last.t - first.t) / 60000
+  const rise = last.pct - first.pct
+  if (minutes < 3) return null
+  if (rise >= 3 || (last.pct >= 92 && rise >= 1)) return { rise: Math.round(rise * 10) / 10, minutes: Math.round(minutes), now: Math.round(last.pct) }
+  return null
+}
+
+/** a listening socket we have not seen before: "name:port" (high dynamic ports are ignored: apps pick them at random) */
+const listenerKeys = (listening, byPid) =>
+  listening
+    .filter((l) => l.port < 49152 && byPid.get(l.pid))
+    .map((l) => ({ key: `${byPid.get(l.pid).toLowerCase()}:${l.port}`, name: byPid.get(l.pid), port: l.port }))
+
 // ------------------------------------------------------------ runtime
 function run(cmd, args) {
   return new Promise((resolve) => {
@@ -93,9 +122,9 @@ async function currentStartup() {
   return items
 }
 
-function start({ dataDir, emit, selfNames = [] }) {
+function start({ dataDir, emit, selfNames = [], onStartup = null, diskPercent = null }) {
   const file = path.join(dataDir, 'guardian.json')
-  let st = { born: Date.now(), names: [], startup: [], hosts: '', drives: [] }
+  let st = { born: Date.now(), names: [], startup: [], hosts: '', drives: [], listeners: [] }
   let fresh = true
   try {
     st = { ...st, ...JSON.parse(fs.readFileSync(file, 'utf8')) }
@@ -108,6 +137,9 @@ function start({ dataDir, emit, selfNames = [] }) {
   let startup = new Set(st.startup)
   let hosts = st.hosts
   let drives = new Set(st.drives)
+  const listeners = new Set(st.listeners)
+  const diskSamples = []
+  let lastDiskAlert = 0
   let lastEmit = 0
   let dirty = false
   const timers = []
@@ -122,6 +154,7 @@ function start({ dataDir, emit, selfNames = [] }) {
       st.startup = [...startup]
       st.hosts = hosts
       st.drives = [...drives]
+      st.listeners = [...listeners].slice(-MAX_NAMES)
       fs.writeFileSync(file, JSON.stringify(st))
     } catch {
       /* best effort */
@@ -150,6 +183,13 @@ function start({ dataDir, emit, selfNames = [] }) {
       dirty = true
       if (!learning() && !fresh) say('net', `${name} just reached the internet for the first time (${remote})`)
     }
+    // doors other computers could knock on
+    for (const l of listenerKeys(parseListening(net), byPid)) {
+      if (listeners.has(l.key)) continue
+      listeners.add(l.key)
+      dirty = true
+      if (!learning() && !fresh) say('port', `${l.name} started listening for connections from the network on port ${l.port}`)
+    }
     fresh = false
     save()
   }
@@ -164,7 +204,10 @@ function start({ dataDir, emit, selfNames = [] }) {
         startup.add(it)
         dirty = true
         const [, name] = it.split('|')
-        if (!/^spideysense$/i.test(name)) say('startup', `new auto-start entry added: ${name}`)
+        if (/^spideysense$/i.test(name)) continue
+        // Auto-Shield may block it (and tell you itself); otherwise this is just a warning
+        if (onStartup && onStartup(it)) continue
+        say('startup', `new auto-start entry added: ${name}`)
       }
     }
     try {
@@ -206,11 +249,25 @@ function start({ dataDir, emit, selfNames = [] }) {
     }
   }
 
+  async function checkDisk() {
+    if (!diskPercent) return
+    const pct = await diskPercent()
+    if (!Number.isFinite(pct)) return
+    diskSamples.push({ t: Date.now(), pct })
+    while (diskSamples.length > 1 && Date.now() - diskSamples[0].t > DISK_WINDOW_MS) diskSamples.shift()
+    const trend = diskTrend(diskSamples)
+    if (trend && Date.now() - lastDiskAlert > 60 * 60_000) {
+      lastDiskAlert = Date.now()
+      say('disk', `the system drive is filling fast: +${trend.rise} points in ${trend.minutes} min (now ${trend.now}% full)`)
+    }
+  }
+
   // stagger so startup stays light
   timers.push(setTimeout(checkNet, 8_000), setInterval(checkNet, NET_EVERY_MS))
   timers.push(setTimeout(checkFiles, 12_000), setInterval(checkFiles, FILE_EVERY_MS))
   timers.push(setTimeout(checkDrives, 1_000), setInterval(checkDrives, DRIVE_EVERY_MS))
+  timers.push(setTimeout(checkDisk, 15_000), setInterval(checkDisk, DISK_EVERY_MS))
   return () => timers.forEach((t) => (clearTimeout(t), clearInterval(t)))
 }
 
-module.exports = { start, currentStartup, parseNetstat, parseTasklist, parseRegRun, isPrivateIp, newItems }
+module.exports = { start, currentStartup, parseNetstat, parseTasklist, parseRegRun, isPrivateIp, newItems, diskTrend, listenerKeys }

@@ -23,6 +23,19 @@ contextBridge.exposeInMainWorld('spidey', {
     ipcRenderer.on('guardian', l)
     return () => ipcRenderer.removeListener('guardian', l)
   },
+  onCulprit: (cb) => {
+    const l = (_e, c) => cb(c)
+    ipcRenderer.on('culprit', l)
+    return () => ipcRenderer.removeListener('culprit', l)
+  },
+  shieldTakeDown: (pid) => ipcRenderer.invoke('shield:takedown', pid),
+  shieldDo: (offerId) => ipcRenderer.invoke('shield:do', offerId),
+  shieldUndo: (id) => ipcRenderer.invoke('shield:undo', id),
+  onOpenMemory: (cb) => {
+    const l = () => cb()
+    ipcRenderer.on('open-memory', l)
+    return () => ipcRenderer.removeListener('open-memory', l)
+  },
   patchSettings: (patch) => ipcRenderer.send('settings:patch', patch),
   killProcess: (name) => ipcRenderer.invoke('proc:kill', name),
   bugleSave: (dataUrl, name) => ipcRenderer.invoke('bugle:save', dataUrl, name),

@@ -36,3 +36,25 @@ assert.ok(TEMPISH.test('C:\\Users\\x\\Downloads\\setup.exe'))
 assert.ok(!TEMPISH.test('C:\\Program Files\\App\\app.exe'))
 
 console.log('edith: ALL PASS')
+
+// ---- Windows Update age + fix checklist
+{
+  const { daysSince, parseRegString, scan } = require('../edith')
+  const now = Date.UTC(2026, 9, 18, 12, 0, 0)
+  assert.equal(daysSince('2026-10-14', now), 4)
+  assert.equal(daysSince('2026-10-18 05:00:00', now), 0)
+  assert.equal(daysSince('2026-08-01', now), 78)
+  assert.equal(daysSince('', now), null)
+  assert.equal(daysSince('not a date', now), null)
+  assert.equal(daysSince('2031-01-01', now), null, 'a date in the future is not believable')
+  assert.equal(parseRegString('    LastSuccessTime    REG_SZ    2026-10-10 05:12:33\r\n', 'LastSuccessTime'), '2026-10-10 05:12:33')
+  scan({ uptimeS: 20 * 86400, diskPct: 97, startupItems: [String.raw`HKCU\x|a|C:\Users\a\Downloads\a.exe`] }).then((r) => {
+    for (const c of r.checks) {
+      assert.ok(Array.isArray(c.fix), c.id + ' has a fix list')
+      if (c.status === 'ok') assert.equal(c.fix.length, 0, c.id + ': nothing to fix')
+      if (c.status === 'warn' || c.status === 'bad') assert.ok(c.fix.length >= 1, c.id + ' says how to fix it')
+    }
+    assert.ok(r.checks.find((c) => c.id === 'startup' && c.status === 'warn'), 'startup from Downloads is flagged')
+    console.log('edith fixes: ALL PASS')
+  })
+}

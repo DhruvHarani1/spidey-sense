@@ -41,10 +41,23 @@
     const hog = day && day.hog
     const ramTingles = num(day, 'tingle:ram')
     const cpuTingles = num(day, 'tingle:cpu')
+    const tamed = num(day, 'shield:tame')
+    const blocked = num(day, 'shield:block') + num(day, 'shield:net')
+    const ended = num(day, 'shield:takedown')
+    const shielded = tamed + blocked + ended
 
     let headline
     let deck
-    if (guardian >= 1) {
+    if (blocked >= 1) {
+      headline = 'SHIELD FOILS A SNEAKY INTRUDER — BLOCKED BEFORE BREAKFAST!'
+      deck = `${blocked} suspicious thing${blocked > 1 ? 's were' : ' was'} stopped from settling in. Every move is undoable.`
+    } else if (tamed >= 1) {
+      headline = tamed > 1 ? `${tamed} RUNAWAY PROGRAMS TAMED — CITY BREATHES EASY!` : 'RUNAWAY PROGRAM TAMED — CITY BREATHES EASY!'
+      deck = 'Priority lowered, nothing crashed, the rest of the PC kept its speed.'
+    } else if (ended >= 1) {
+      headline = 'HERO ENDS A MEMORY MENACE ON REQUEST!'
+      deck = `${ended} hog${ended > 1 ? 's were' : ' was'} taken down at your word.`
+    } else if (guardian >= 1) {
       headline = 'STRANGE VISITOR SPOTTED ON THE WEB!'
       deck = `Spider-sense raised ${guardian} security alert${guardian > 1 ? 's' : ''} today. Hero is on the case.`
     } else if (ramTingles >= 3) {
@@ -77,6 +90,7 @@
     if (peak(day, 'ram')) lines.push(`PEAK RAM: ${Math.round(peak(day, 'ram'))}%${hog ? ` — ${hog.name.toUpperCase()} ${(hog.mb / 1024).toFixed(1)} GB` : ''}`)
     if (peak(day, 'cpu')) lines.push(`PEAK CPU: ${Math.round(peak(day, 'cpu'))}%`)
     if (guardian) lines.push(`GUARDIAN ALERTS: ${guardian}`)
+    if (shielded) lines.push(`SHIELD: ${[tamed && `${tamed} TAMED`, blocked && `${blocked} BLOCKED`, ended && `${ended} ENDED`].filter(Boolean).join(' · ')}`)
     if (num(day, 'note:eye')) lines.push(`EYE-REST NUDGES: ${num(day, 'note:eye')}`)
     if (num(day, 'note:remind')) lines.push(`REMINDERS FIRED: ${num(day, 'note:remind')}`)
     if (!lines.length) lines.push('NO DATA YET — THE REPORTERS JUST CLOCKED IN.')

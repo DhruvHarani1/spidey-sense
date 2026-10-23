@@ -61,6 +61,15 @@ const DATA = {
       ]
     },
     {
+      group: 'Shield, memory and tour',
+      items: [
+        { say: 'undo', does: 'Reverses the last thing Auto-Shield did on its own (restores a blocked auto-start entry, puts a program’s priority back).', try: 'undo', aka: ['undo that', 'undo shield'] },
+        { say: 'shield status', does: 'Tells you which Auto-Shield mode is on. "shield off", "shield ask" (only offer buttons) and "shield smart" switch it.', try: 'shield status', aka: ['shield off', 'shield ask', 'turn on the shield'] },
+        { say: 'show me the history', does: 'Opens Web Memory: the last 24 hours of CPU and RAM and what was running at the worst moments.', try: 'show me the history', aka: ['web memory', 'what happened last night', 'cpu history'] },
+        { say: 'give me a tour', does: 'Replays the five-card first-run tour.', try: 'give me a tour', aka: ['show me around', 'walk me through'] }
+      ]
+    },
+    {
       group: 'The widget itself',
       items: [
         { say: 'open the manual', does: 'Opens this manual in its own window (also: "docs", "all commands", "what can you do").', try: 'open the manual', aka: ['docs', 'what can you do'] },
@@ -76,7 +85,7 @@ const DATA = {
         { say: 'am I safe?', does: 'Runs E.D.I.T.H., the security assessment.', try: 'am i safe' },
         { say: 'daily web', does: 'Opens today’s comic newspaper front page.', try: 'show me the daily web' },
         { say: 'my level', does: 'Opens the Suit Locker and tells you your XP.', try: 'show my level' },
-        { say: 'wear the neon suit', does: 'Equips a suit you have unlocked (midnight, gold, neon, pop, prism).', try: 'wear the neon suit' },
+        { say: 'wear the neon suit', does: 'Equips a suit you have unlocked (midnight, gold, neon, pop, miles, prism, noir, 2099, iron).', try: 'wear the neon suit' },
         { say: 'check for updates', does: 'Asks GitHub for a newer version.', try: 'check for updates' },
         { say: 'install update', does: 'Restarts and installs a downloaded update.', try: 'install update' }
       ]
@@ -158,11 +167,54 @@ const DATA = {
       icon: '🛡',
       summary: 'Notices things that should make you look twice.',
       how: [
-        'It tingles (and logs, see the status light in the banner) when: a program contacts the internet for the first time; a new auto-start entry appears; the hosts file changes; or a new drive (USB stick, card, phone) is connected.',
+        'It tingles (and logs, see the status light in the banner) when: a program contacts the internet for the first time; a new auto-start entry appears; the hosts file changes; a new drive (USB stick, card, phone) is connected; a program starts listening for connections from the network on a new port; or the system drive is filling fast (+3 points in 15 minutes).',
         'For the first 3 minutes after the very first run it only learns what is normal, so it does not alert on everything you already use.',
         'At most one alert every 20 seconds. Click the round status light in the banner to read the log.'
       ],
-      reads: 'Uses netstat, tasklist and reg.exe plus a hash of the hosts file. No admin rights, no network calls. Tray → "Guardian" turns it off.'
+      reads: 'Uses netstat, tasklist and reg.exe plus a hash of the hosts file. No admin rights, no network calls. Tray → "Guardian" turns it off. Not covered (they need admin rights or vendor drivers): battery health and temperatures.'
+    },
+    {
+      id: 'shield',
+      name: 'Auto-Shield — acts on its own, carefully',
+      icon: '⚔',
+      summary: 'Tames runaway programs and blocks suspicious auto-start entries by itself. Every move has an UNDO.',
+      how: [
+        'Smart mode (default). (1) A program that keeps using about a third or more of the whole CPU for a while gets its priority lowered: Windows lets everything else go first, the program keeps working. (2) A NEW auto-start entry in your own startup that runs from Temp/Downloads or uses a script trick (encoded PowerShell, mshta, wscript…) is disabled and backed up, so malware cannot come back after a restart.',
+        'Everything it does appears in the SENSE LOG (click the status light) with an UNDO button, or say "undo". It never kills anything by itself, never touches Windows, Defender, the firewall or any service, and needs no admin rights.',
+        'It only OFFERS (you click): lowering a program’s priority in Ask mode, blocking a program that started from Temp/Downloads from the internet (a firewall rule: Windows shows its own permission prompt), and ending a program with TAKE DOWN.',
+        'Tray → Auto-Shield: Smart / Ask first (only buttons) / Off (watch only). Karen: "shield off", "shield ask", "shield smart", "shield status".',
+        'Protected programs (Windows itself, Explorer, your antivirus, this app…) are never touched in any mode.'
+      ],
+      reads: 'Lists running programs with tasklist (memory, every 10 s), measures per-program CPU with typeperf only while the CPU has been busy for 8 seconds, and looks up the file location of a few brand-new programs with Get-Process. Changes only: a program’s priority, your own Run-key / Startup-folder entries (backed up), and a firewall rule only when you click and approve it. Nothing is sent anywhere. Costs a little RAM and CPU; "Off" stops the actions but the radar still names the biggest memory user.'
+    },
+    {
+      id: 'culprit',
+      name: 'The culprit bar — who is behind the tingle',
+      icon: '🎯',
+      summary: 'When RAM or CPU tingles, the panel names the program and offers TAKE DOWN.',
+      how: [
+        'A red bar appears under the readings while the web is yellow or red because of memory or CPU: "CHROME · 2.1 GB · 38 PROCESSES".',
+        'TAKE DOWN ends the single heaviest process of that name (one Chrome tab, not every Chrome window). It asks twice (the button turns white: "SURE? CLICK AGAIN") and refuses protected programs.',
+        'Unsaved work in that program is lost, so use it on things you can afford to close.'
+      ]
+    },
+    {
+      id: 'memory',
+      name: 'Web Memory — the last 24 hours',
+      icon: '🕘',
+      summary: 'CPU and RAM for the past day, and what was running at the worst moments.',
+      how: [
+        'Click 🕘 in the banner (or say "show me the history", or tray → Web Memory). Red line = RAM, blue = CPU, yellow ticks = events (tingles, Shield actions, Guardian alerts). The faint lines are each minute’s peak.',
+        'Tap or drag on the chart to inspect any minute: averages, peaks, the biggest program and what happened. "Worst moments" lists up to three spikes at least 20 minutes apart with the culprit. RAM only counts when it jumped above this PC’s usual level.',
+        'One point per minute, 24 hours, kept on your PC.'
+      ]
+    },
+    {
+      id: 'tour',
+      name: 'Quick tour',
+      icon: '🧭',
+      summary: 'Five cards on first run; replay any time.',
+      how: ['Shows once after install. Say "give me a tour" to see it again.']
     },
     {
       id: 'edith',
@@ -170,9 +222,9 @@ const DATA = {
       icon: '🔍',
       summary: 'A read-only security check with a score.',
       how: [
-        'Ask Karen "am I safe?" or use the tray. It checks: antivirus running, Windows Firewall, User Account Control, Remote Desktop, which ports listen to the network (and which app owns them), startup entries running from Temp/Downloads, and whether Windows is waiting for a restart.',
+        'Ask Karen "am I safe?" or use the tray. It checks: antivirus running (and its real-time protection), Windows Firewall, User Account Control, Remote Desktop, which ports listen to the network (and which app owns them), startup entries running from Temp/Downloads, how long since Windows installed an update, and whether Windows is waiting for a restart.',
         'You get a score out of 100 and GREEN / AMBER / RED, with one line of explanation per check (✔ fine, ⚠ worth a look, ✖ fix this, ? could not tell).',
-        'It never changes any setting. A third-party antivirus shows as "?" because it cannot be verified from outside.'
+        'Every check that is not fine comes with a numbered fix-it checklist in plain words (where to click in Windows). It never changes any setting itself. A third-party antivirus shows as "?" because it cannot be verified from outside.'
       ]
     },
     {
@@ -181,7 +233,7 @@ const DATA = {
       icon: '📰',
       summary: 'An end-of-day comic newspaper made from your own day.',
       how: [
-        'Ask Karen "daily web" or "how was my day", or use the tray. A front page opens with a headline chosen from your day (a memory hog, a long focus run, a security scare, or "quiet day"), a photo of the web at its peak, and stats: focus time, tingles by cause, notifications, guardian alerts, eye breaks.',
+        'Ask Karen "daily web" or "how was my day", or use the tray. A front page opens with a headline chosen from your day (a memory hog, a long focus run, a security scare, or "quiet day"), a photo of the web at its peak, and stats: focus time, tingles by cause, guardian alerts, what Auto-Shield did, eye breaks. When Shield stepped in, that is the headline.',
         'SAVE writes a PNG, COPY puts it on the clipboard. After 9 pm Spidey Sense also nudges you once that today’s edition is out (tray toggle).',
         'The counters behind it are kept on your PC for 14 days.'
       ]
@@ -192,8 +244,8 @@ const DATA = {
       icon: '★',
       summary: 'Healthy habits earn XP; levels unlock colour suits.',
       how: [
-        'XP: focus session +40 · guardian alert +10 · Daily Web opened +15 (once a day) · E.D.I.T.H. scan +10 (once a day) · eye-rest nudge +5 · reminder fired +5.',
-        'Level = floor(√(XP ÷ 50)) + 1. Suits: Classic (L1), Midnight (L2), Gold Armor (L3), Neon Noir (L4), Pop Art (L5), Prism (L7).',
+        'XP: focus session +40 · defending the PC +15 (Auto-Shield acted or you ended a hog; 4 a day) · clean E.D.I.T.H. scan (all green) +20 (once a day) · guardian alert +10 · Daily Web opened +15 (once a day) · E.D.I.T.H. scan +10 (once a day) · eye-rest nudge +5 · reminder fired +5.',
+        'Level = floor(√(XP ÷ 50)) + 1. Suits: Classic (L1), Midnight (L2), Gold Armor (L3), Neon Noir (L4), Pop Art (L5), Miles (L6), Prism (L7), Noir (L9), Spider-2099 (L11), Iron Spider (L13).',
         'Click ★ in the banner, or tell Karen "wear the neon suit". Alert colours (yellow / red) never change with a suit, so a warning always looks like a warning.'
       ]
     },
@@ -225,10 +277,12 @@ const DATA = {
     'Spider-sense sound',
     'Eye-rest nudge (20-20-20)',
     'Suit locker (XP)',
+    'Web Memory (last 24 hours)',
     'E.D.I.T.H. threat assessment',
     'Today’s Daily Web (front page)',
     'Daily Web ready nudge (9 pm)',
     'Guardian (danger sense)',
+    'Auto-Shield (Smart / Ask first / Off)',
     'Desktop notifications',
     'Network check (pings gstatic.com)',
     'Launch at startup',
@@ -241,7 +295,9 @@ const DATA = {
   data: [
     { what: 'Settings', where: '%APPDATA%\\Spidey Sense\\settings.json', note: 'opacity, toggles, window position, view' },
     { what: 'Guardian memory', where: '%APPDATA%\\Spidey Sense\\guardian.json', note: 'which programs / startup entries / drives are "normal"' },
-    { what: 'Reminders, XP, daily counters', where: 'the widget’s local storage under %APPDATA%\\Spidey Sense', note: '14 days of counters' },
+    { what: 'Auto-Shield log and memory', where: '%APPDATA%\\Spidey Sense\\shield.json', note: 'what it did (with undo information), program names seen before' },
+    { what: 'Quarantined Startup-folder items', where: '%APPDATA%\\Spidey Sense\\quarantine', note: 'moved here, not deleted; UNDO moves them back' },
+    { what: 'Reminders, XP, daily counters, Web Memory', where: 'the widget’s local storage under %APPDATA%\\Spidey Sense', note: '14 days of counters, 24 hours of CPU/RAM history' },
     { what: 'Startup log', where: '%APPDATA%\\Spidey Sense\\startup.log', note: 'only written if enabling launch-at-login ever fails' },
     { what: 'Downloaded updates', where: '<install folder>-updates', note: 'removed on uninstall' }
   ],
@@ -249,11 +305,15 @@ const DATA = {
   privacy: [
     'No accounts, no analytics, no API keys, no microphone. Nothing you do is uploaded.',
     'Network use, in full: a tiny HEAD request to gstatic.com every 8 seconds (can be turned off) and a GitHub check for updates (30 s after start, then every 6 h). Nothing else.',
-    'Read-only access to Windows facilities: `netstat`, `tasklist`, `reg query`, `sc query`, and a hash of the hosts file. It changes nothing on your system except its own startup entry and its own files.'
+    'Read-only access to Windows facilities: `netstat`, `tasklist`, `typeperf`, `reg query`, `sc query`, `Get-Process` / `Get-HotFix` and a hash of the hosts file. It changes nothing on your system except: its own startup entry and files; what Auto-Shield does and logs with an UNDO (a running program’s priority, your own startup entries); and a firewall rule only when you click "BLOCK ITS INTERNET" and approve Windows’ permission prompt.'
   ],
 
   troubleshooting: [
     { q: 'Where is the tray menu? I can’t find the tray icon.', a: 'Right-click the little spider badge (or anywhere on the open panel): it shows the exact same menu. The tray icon is the red spider next to the clock, but Windows 11 hides new icons under the ^ arrow: click the ^ and drag the spider onto the taskbar so it stays visible.' },
+    { q: 'Auto-Shield blocked something I need.', a: 'Open the sense log (click the round status light) and press UNDO on that line, or say "undo". The auto-start entry is restored exactly as it was. If it keeps blocking something you trust, set tray → Auto-Shield → Ask first.' },
+    { q: 'Did Auto-Shield slow my programs down?', a: 'It only lowers the priority of a program that kept hogging the CPU, so everything else stays responsive; that program still runs. Press UNDO in the log (or say "undo") to restore its priority.' },
+    { q: 'TAKE DOWN says protected, or does nothing.', a: 'Windows itself, Explorer, antivirus and this app are protected on purpose. A program running as administrator cannot be ended by a normal app either: close it yourself.' },
+    { q: 'The culprit bar shows nothing for CPU.', a: 'CPU culprits need English Windows counter names. On other languages the bar still names the biggest memory user.' },
     { q: 'The widget disappeared.', a: 'Right-click the tray spider → "Show the web". If it is off-screen: tray → "Reset position".' },
     { q: 'Ctrl+Alt+K does nothing.', a: 'Another program owns that shortcut. Close it, or use the tray menu / the command box on the open panel instead.' },
     { q: 'Karen says "not sure I follow".', a: 'Karen is a rule engine, not a chatbot: say "help" for the phrasing she knows. For talking, voice and an AI brain use Jarvis (a separate app).' },

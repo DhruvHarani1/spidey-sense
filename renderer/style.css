@@ -751,3 +751,181 @@ body[data-idle='1'] .badge__body::after {
   flex: 1;
   min-width: 0;
 }
+
+/* ---------- culprit bar ---------- */
+.culprit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 2px;
+  padding: 3px 4px 3px 8px;
+  font-size: 9px;
+  line-height: 1.2;
+  color: #fff;
+  background: rgba(212, 32, 42, 0.85);
+  border: 2px solid #000;
+  border-radius: 6px;
+  box-shadow: 2px 2px 0 #000;
+}
+.culprit[hidden] {
+  display: none;
+}
+.culprit span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.culprit button {
+  flex: none;
+  padding: 3px 7px;
+  font-size: 8px;
+  color: #000;
+  background: var(--yellow);
+  border: 2px solid #000;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.culprit button[data-armed='1'] {
+  background: #fff;
+  animation: micpulse2 0.5s steps(2) infinite;
+}
+@keyframes micpulse2 {
+  50% {
+    background: #ff9d00;
+  }
+}
+
+/* ---------- action buttons in the sense log ---------- */
+#sitems li button.act {
+  grid-column: 1 / 3;
+  justify-self: start;
+  padding: 2px 8px;
+  font-size: 8px;
+  color: #000;
+  background: var(--yellow);
+  cursor: pointer;
+}
+#sitems li button.act:disabled {
+  opacity: 0.5;
+}
+#echecks li .fix {
+  grid-column: 1 / 3;
+  margin-top: 2px;
+  padding: 3px 5px;
+  font-size: 8px;
+  color: #ffe9a8;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 4px;
+}
+#echecks li .fix p {
+  margin: 1px 0;
+}
+
+/* ---------- web memory ---------- */
+#memory {
+  bottom: 70px;
+}
+.mkey {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 8px;
+  color: #c9d2ff;
+}
+.mkey i {
+  display: inline-block;
+  width: 10px;
+  height: 3px;
+  margin-left: 4px;
+}
+.mkey .k-ram {
+  background: #ff5a5a;
+}
+.mkey .k-cpu {
+  background: #4a9bff;
+}
+.mkey .k-ev {
+  background: var(--yellow);
+}
+#mcanvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 232 / 104;
+  border: 2px solid #000;
+  border-radius: 4px;
+  cursor: crosshair;
+}
+.mtip {
+  margin: 0;
+  min-height: 34px;
+  white-space: pre-line;
+  font-size: 8px;
+  line-height: 1.3;
+  color: var(--yellow);
+}
+#memory h4 {
+  margin: 2px 0 0;
+  font-size: 8px;
+  color: #c9d2ff;
+}
+#mworst {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+#mworst li {
+  display: flex;
+  flex-direction: column;
+  padding: 3px 6px;
+  font-size: 8px;
+  background: rgba(29, 63, 216, 0.3);
+  border: 2px solid #000;
+  border-radius: 5px;
+  cursor: pointer;
+}
+#mworst li b {
+  color: var(--yellow);
+}
+#mworst li.empty {
+  background: none;
+  border: none;
+  text-align: center;
+  color: #7d8bc4;
+  cursor: default;
+}
+
+/* ---------- quick tour ---------- */
+#tour {
+  bottom: 70px;
+  justify-content: flex-start;
+}
+#tour h3 {
+  margin: 8px 2px 0;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--yellow);
+}
+#tour p {
+  margin: 4px 2px;
+  font-size: 10px;
+  line-height: 1.4;
+  color: #e3e8ff;
+}
+.bigbtn {
+  margin-top: auto;
+  padding: 7px;
+  font-size: 11px;
+  color: #000;
+  background: var(--yellow);
+  border: 2.5px solid #000;
+  border-radius: 6px;
+  box-shadow: 2px 2px 0 #000;
+  cursor: pointer;
+}

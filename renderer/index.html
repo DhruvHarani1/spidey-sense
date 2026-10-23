@@ -20,6 +20,7 @@
         <header class="banner">
           <span class="banner__a">SPIDEY</span><span class="banner__b">SENSE</span>
           <i class="led" id="led" title="Spider-sense status"></i>
+          <button class="fold" id="membtn" title="Web Memory: the last 24 hours" aria-label="Web Memory">🕘</button>
           <button class="fold" id="lockerbtn" title="Suit locker (XP and suits)" aria-label="Suit locker">★</button>
           <button class="fold" id="collapse" title="Collapse to badge" aria-label="Collapse to badge">▲</button>
         </header>
@@ -46,6 +47,22 @@
           <ul id="suits"></ul>
         </aside>
 
+        <aside class="slog" id="memory" hidden aria-label="Web Memory, the last 24 hours">
+          <header><b>WEB MEMORY · 24 H</b><button id="mclose" aria-label="Close">✕</button></header>
+          <div class="mkey"><i class="k-ram"></i>RAM <i class="k-cpu"></i>CPU <i class="k-ev"></i>EVENT</div>
+          <canvas id="mcanvas" aria-label="CPU and RAM over the last 24 hours"></canvas>
+          <p id="mtip" class="mtip"></p>
+          <h4>WORST MOMENTS</h4>
+          <ul id="mworst"></ul>
+        </aside>
+
+        <aside class="slog" id="tour" hidden aria-label="Quick tour">
+          <header><b>QUICK TOUR</b><button id="tskip">SKIP</button></header>
+          <h3 id="ttitle"></h3>
+          <p id="ttext"></p>
+          <button id="tnext" class="bigbtn">NEXT</button>
+        </aside>
+
         <canvas id="web" width="260" height="248" aria-label="System load drawn as a spider web"></canvas>
 
         <ul class="readout" id="readout" aria-label="Current readings">
@@ -55,6 +72,8 @@
           <li data-k="bat"><b>BAT</b><span>–</span></li>
           <li data-k="net"><b>NET</b><span>–</span></li>
         </ul>
+
+        <div class="culprit" id="culprit" hidden><span id="ctext"></span><button id="cgo" title="End this program (asks twice)">TAKE DOWN</button></div>
 
         <p class="caption" id="caption" role="status" aria-live="polite">ALL QUIET… FOR NOW.</p>
 
@@ -74,13 +93,18 @@
     <script src="spider.js"></script>
     <script src="suits.js"></script>
     <script src="daystats.js"></script>
+    <script src="history.js"></script>
+    <script src="panels.js"></script>
     <script src="app.js"></script>
     <script src="reminders.js"></script>
     <script src="karen.js"></script>
     <script src="guardian.js"></script>
+    <script src="culprit-ui.js"></script>
     <script src="bugle.js"></script>
     <script src="bugle-ui.js"></script>
     <script src="edith-ui.js"></script>
     <script src="locker-ui.js"></script>
+    <script src="memory-ui.js"></script>
+    <script src="tour.js"></script>
   </body>
 </html>

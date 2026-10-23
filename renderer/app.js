@@ -117,6 +117,7 @@
     if (override) raw = { ...raw, ...override.raw }
     state.raw = raw
     trackActivity(raw.idleS)
+    if (!override) window.WebMemory.push(raw)
     window.Day.peak('cpu', raw.cpu)
     window.Day.peak('ram', raw.ram, raw.hog)
     window.Day.peak('disk', raw.disk)
@@ -227,6 +228,7 @@
 
   function onTingle() {
     window.Day.add('tingle:' + AXES[state.alert.indexOf(Math.max(...state.alert))])
+    window.WebMemory.mark('tingle', culprit(state.raw || { cpu: 0, ram: 0, disk: 0, online: true }).replace(/!$/, ''))
     if (focusQuiet()) return
     chirp()
     if (state.timerAlert > Date.now()) return
@@ -319,7 +321,10 @@
     document.body.dataset.unread = total ? '1' : '0'
   }
 
-  window.Core = { fireNote, say, timerOp, snapshot, setUnread, repaint: () => schedule(), getSettings: () => settings, test }
+  /** which of the five axes is worst right now ('cpu' | 'ram' | 'disk' | 'bat' | 'net') */
+  const hotAxis = () => AXES[state.alert.indexOf(Math.max(...state.alert))]
+
+  window.Core = { fireNote, say, timerOp, snapshot, setUnread, hotAxis, repaint: () => schedule(), getSettings: () => settings, test }
 
   function timerDone() {
     state.note = null
@@ -435,6 +440,7 @@
     settings.sound = !!s.sound
     settings.ramMode = s.ramMode || 'auto'
     settings.eyeBreak = s.eyeBreak !== false
+    settings.shield = s.shield || 'smart'
     document.body.dataset.view = s.view === 'panel' ? 'panel' : 'badge'
     schedule()
   }

@@ -1,7 +1,8 @@
 'use strict'
 // Unit tests for guardian's pure parsers. Run: npm run test:unit
 const assert = require('node:assert/strict')
-const { parseNetstat, parseTasklist, parseRegRun, isPrivateIp, newItems } = require('../guardian')
+const G = require('../guardian')
+const { parseNetstat, parseTasklist, parseRegRun, isPrivateIp, newItems } = G
 
 const netstat = `
 Active Connections
@@ -37,3 +38,19 @@ assert.ok(!isPrivateIp('172.32.0.1') && !isPrivateIp('8.8.8.8') && !isPrivateIp(
 
 assert.deepEqual(newItems(['a', 'b', 'c'], new Set(['a', 'c'])), ['b'])
 console.log('guardian parsers: ALL PASS')
+
+// ---- disk filling fast
+{
+  const { diskTrend, listenerKeys } = G
+  const min = 60000
+  assert.equal(diskTrend([{ t: 0, pct: 50 }]), null)
+  assert.equal(diskTrend([{ t: 0, pct: 50 }, { t: 2 * min, pct: 60 }]), null, 'too short a window to judge')
+  assert.deepEqual(diskTrend([{ t: 0, pct: 50 }, { t: 5 * min, pct: 54.4 }]), { rise: 4.4, minutes: 5, now: 54 })
+  assert.equal(diskTrend([{ t: 0, pct: 50 }, { t: 10 * min, pct: 51 }]), null, 'slow growth is normal')
+  assert.ok(diskTrend([{ t: 0, pct: 93 }, { t: 6 * min, pct: 94.2 }]), 'nearly full and still growing')
+  assert.equal(diskTrend([{ t: 0, pct: 60 }, { t: 6 * min, pct: 55 }]), null, 'freeing space is fine')
+  // new listening ports: only named, non-dynamic ones
+  const byPid = new Map([[10, 'node'], [20, 'Spotify']])
+  assert.deepEqual(listenerKeys([{ port: 3000, pid: 10 }, { port: 50000, pid: 20 }, { port: 8080, pid: 99 }], byPid), [{ key: 'node:3000', name: 'node', port: 3000 }])
+  console.log('guardian disk + ports: ALL PASS')
+}

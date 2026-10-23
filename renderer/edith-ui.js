@@ -23,6 +23,16 @@
         const s = document.createElement('span')
         s.textContent = c.detail
         li.append(i, b, s)
+        if (c.fix && c.fix.length) {
+          const fix = document.createElement('div')
+          fix.className = 'fix'
+          for (const [n, step] of c.fix.entries()) {
+            const st = document.createElement('p')
+            st.textContent = `${n + 1}. ${step}`
+            fix.append(st)
+          }
+          li.append(fix)
+        }
         return li
       })
     )
@@ -37,6 +47,7 @@
       .then((r) => {
         last = r
         if (r) window.Suits.award('edith')
+        if (r && r.level === 'green') window.Suits.award('clean')
         paint(r)
         return r
       })
@@ -48,8 +59,7 @@
   }
 
   function open() {
-    $('slog').hidden = true
-    $('bugle').hidden = true
+    window.Panels.closeOthers('edith')
     box.hidden = false
     if (document.body.dataset.view !== 'panel') window.spidey.setView('panel')
     return scan()
