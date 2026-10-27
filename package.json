@@ -2,7 +2,7 @@
   "name": "spidey-sense",
   "productName": "Spidey Sense",
   "version": "0.4.0",
-  "description": "A Spider-Man themed always-on-screen danger sense for your PC: a hanging spider-web radar that tingles when something is wrong.",
+  "description": "Smart, lightweight system monitoring and protection for Windows: a live radar, culprit detection, E.D.I.T.H. security posture and reversible Auto-Shield, in a Spider-Man skin.",
   "main": "main.js",
   "private": true,
   "license": "MIT",

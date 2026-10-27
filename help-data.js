@@ -6,10 +6,10 @@
  */
 const DATA = {
   name: 'Spidey Sense',
-  tagline: 'Your PC’s friendly neighbourhood spider-sense.',
+  tagline: 'Smart, lightweight system monitoring and protection for Windows.',
   repo: 'https://github.com/DhruvHarani1/spidey-sense',
   intro:
-    'Spidey Sense is a small always-on-top comic-book widget for Windows. It watches your PC the way a spider-sense would — CPU, RAM, disk, battery, network — and "tingles" when something is wrong. Around that core it has Guardian (danger sense), E.D.I.T.H. (a security check), a command bar (Karen), a focus timer, an end-of-day comic newspaper and a suit locker. Everything runs locally; there are no accounts, no API keys, no microphone. (Voice and AI chat live in a separate app, Jarvis.)',
+    'Spidey Sense is a small always-on-top system monitor and security sentinel for Windows. It watches CPU, RAM, disk, battery and network, names the program behind a spike, warns about things that deserve a second look (first-time internet contact, new auto-start entries, new open ports, hosts-file changes, a filling disk), scores your security posture (E.D.I.T.H.) and, through Auto-Shield, defends in ways that are safe and reversible, with an UNDO for everything. It is not an antivirus and does not replace one. Everything runs locally: no accounts, no API keys, no microphone, no admin rights. A Spider-Man skin (a swinging spider badge, a web radar, a comic Daily Web newspaper) keeps it friendly; voice and AI chat live in a separate app, Jarvis.',
 
   quickstart: [
     'Install it, run it: a small swinging spider badge appears at the top-right of your screen.',
