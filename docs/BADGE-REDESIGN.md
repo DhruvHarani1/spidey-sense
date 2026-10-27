@@ -1,6 +1,6 @@
 # Badge redesign: the Spider-Man mask (design proposal v2, nothing implemented yet)
 
-Status: **proposal, waiting for final approval.** Demo v2 was shown in the chat; this file is the written plan. Decisions marked (decided) were delegated to the maintainer's assistant.
+Status: **approved and implemented in 0.5.0** (`renderer/mask.js`, `renderer/badge.js`). Kept as the design record.
 
 ## Goal
 

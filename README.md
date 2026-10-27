@@ -15,7 +15,7 @@ It watches your PC's vital signs, notices what is wrong *and who is behind it*, 
 | **Assess** | **E.D.I.T.H.** scores your security posture (antivirus, firewall, UAC, Remote Desktop, open ports, Windows Update age, pending restart) and gives a numbered fix-it checklist for every problem. Read-only. |
 | **Understand** | The **Daily Web** summarises your day in a headline built from real events; **Web Memory** lets you tap any minute of the last 24 hours. |
 
-It lives in a small always-on-top widget (a swinging spider badge that opens into the full panel), with a Spider-Man skin because monitoring should not be dull. Under the skin it is a plain, tested, offline engine.
+It lives in a small always-on-top widget: a Spider-Man mask dangling on a thread whose eyes show the state of the PC (calm, alert, tingle with spider-sense shock waves, asleep upside down), opening into the full panel. The Spider-Man skin is there because monitoring should not be dull. Under the skin it is a plain, tested, offline engine.
 
 ## How it works
 

@@ -298,12 +298,11 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .hang,
-  .panel[data-level='tingle'],
-  .led {
-    animation: none !important;
-  }
+/* motion setting (tray → Motion): "reduced", or "follow Windows" while Windows has animations off, sets body[data-reduce='1'] */
+body[data-reduce='1'] .hang,
+body[data-reduce='1'] .panel[data-level='tingle'],
+body[data-reduce='1'] .led {
+  animation: none !important;
 }
 
 /* ---------- collapse button ---------- */
@@ -341,59 +340,72 @@ body[data-view='panel'] .badge {
     transform: rotate(7deg);
   }
 }
+.badge__wob {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 0;
+}
+.badge.dropin {
+  animation: bdrop 1.05s cubic-bezier(0.3, 0.9, 0.4, 1) 1, bswing 3.4s ease-in-out 1.05s infinite;
+}
+@keyframes bdrop {
+  0% {
+    transform: translateY(-150px);
+  }
+  55% {
+    transform: translateY(0);
+  }
+  72% {
+    transform: translateY(-14px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
 .badge__thread {
   position: absolute;
   left: 50%;
   top: 0;
   width: 2px;
-  height: 56px;
+  height: 58px;
   margin-left: -1px;
   background: linear-gradient(#ffffff00, #e8ecff 45%, #ffffffcc);
 }
 .badge__body {
   position: absolute;
   left: 50%;
-  top: 52px;
+  top: 56px;
   width: 56px;
   height: 56px;
   margin-left: -28px;
-  border-radius: 50%;
-  border: 3px solid #000;
-  background: radial-gradient(circle at 35% 30%, var(--suit-hi, #ff5a5a), var(--suit-lo, #a50f1a));
-  box-shadow:
-    3px 3px 0 #000,
-    0 0 0 3px transparent;
-  transition: box-shadow 0.2s;
 }
 .badge__body canvas {
   position: absolute;
-  inset: -3px;
-  width: 56px;
-  height: 56px;
-  margin: 0;
+  left: -28px;
+  top: -56px;
+  width: 112px;
+  height: 140px;
+  pointer-events: none;
 }
-.badge:hover .badge__body {
+.badge:hover .badge__body canvas {
   filter: brightness(1.12);
 }
-.badge__body[data-level='alert'] {
-  box-shadow:
-    3px 3px 0 #000,
-    0 0 0 3px var(--yellow);
-}
 .badge__body[data-level='tingle'] {
-  box-shadow:
-    3px 3px 0 #000,
-    0 0 0 3px var(--red-hot),
-    0 0 18px 4px rgba(255, 59, 59, 0.7);
   animation: shake 0.16s linear infinite;
+}
+body[data-reduce='1'] .badge__body {
+  animation: none !important;
+}
+body[data-reduce='1'] .badge.dropin {
+  animation: none;
 }
 .badge:has(.badge__body[data-level='tingle']) {
   animation-duration: 1.1s;
 }
-@media (prefers-reduced-motion: reduce) {
-  .badge {
-    animation: none !important;
-  }
+body[data-reduce='1'] .badge,
+body[data-reduce='1'] .badge.dropin,
+body[data-reduce='1'] .badge__body {
+  animation: none !important;
 }
 
 /* ---------- reminders ---------- */
@@ -564,11 +576,11 @@ body[data-idle='1'] .badge__body::after {
 }
 .badge__alert {
   position: absolute;
-  right: -10px;
-  bottom: -8px;
-  min-width: 18px;
+  right: -12px;
+  bottom: -6px;
+  min-width: 22px;
   height: 18px;
-  padding: 0 4px;
+  padding: 0 6px;
   display: grid;
   place-items: center;
   font-style: normal;
@@ -577,6 +589,7 @@ body[data-idle='1'] .badge__body::after {
   background: var(--yellow);
   border: 2px solid #000;
   border-radius: 9px;
+  box-shadow: 2px 2px 0 #000;
 }
 .badge__alert[hidden] {
   display: none;

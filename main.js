@@ -10,7 +10,7 @@ const guardian = require('./guardian')
 const shieldMod = require('./shield')
 const edith = require('./edith')
 
-const SIZES = { badge: { w: 96, h: 124 }, panel: { w: 300, h: 580 } }
+const SIZES = { badge: { w: 112, h: 140 }, panel: { w: 300, h: 580 } }
 const size = () => SIZES[settings.view] || SIZES.badge
 const MARGIN = 20
 const SAMPLE_MS = 1000
@@ -30,6 +30,7 @@ const DEFAULTS = {
   guardian: true, // danger sense: first-time internet contact, new auto-start, hosts change, new drive, new open port, filling disk
   shield: 'smart', // Auto-Shield: smart = acts alone on safe, reversible things | ask = only offers a button | off
   eyeBreak: true, // 20-20-20 nudge after 20 min of continuous use
+  motion: 'full', // 'full' = all animation | 'auto' = follow Windows' "animation effects" setting | 'reduced' = no swing, shake, blink or shock waves
   view: 'badge', // badge = small swinging spider | panel = full widget
   ramMode: 'auto', // auto = alert on spikes above this PC's usual level | 90 | 95 | off
   position: null
@@ -75,7 +76,7 @@ function update(patch) {
   buildTray()
 }
 
-const publicSettings = () => ({ opacity: settings.opacity, sound: settings.sound, notifications: settings.notifications, netProbe: settings.netProbe, ramMode: settings.ramMode, eyeBreak: settings.eyeBreak, shield: settings.shield, view: settings.view })
+const publicSettings = () => ({ opacity: settings.opacity, sound: settings.sound, notifications: settings.notifications, netProbe: settings.netProbe, ramMode: settings.ramMode, eyeBreak: settings.eyeBreak, motion: settings.motion, shield: settings.shield, view: settings.view })
 
 // ---------------------------------------------------------------- window
 /** @type {BrowserWindow | null} */
@@ -240,6 +241,14 @@ function menuTemplate() {
       { type: 'separator' },
       check('Spider-sense sound', 'sound'),
       check('Eye-rest nudge (20-20-20)', 'eyeBreak'),
+      {
+        label: 'Motion (swing, blink, shock waves)',
+        submenu: [
+          ['full', 'Full: all animation'],
+          ['auto', 'Follow Windows animation setting'],
+          ['reduced', 'Reduced: still pictures, no movement']
+        ].map(([v, label]) => ({ label, type: 'radio', checked: settings.motion === v, click: () => update({ motion: v }) }))
+      },
       { label: "Today's Daily Web (front page)", click: () => openBugle() },
       check('Daily Web ready nudge (9 pm)', 'bugleDaily'),
       { label: 'E.D.I.T.H. threat assessment', click: () => openEdith() },
@@ -398,6 +407,7 @@ ipcMain.on('settings:patch', (e, patch) => {
     if (typeof patch[k] !== type) continue
     clean[k] = k === 'opacity' ? Math.min(1, Math.max(0.3, patch[k])) : patch[k]
   }
+  if (patch.motion === 'full' || patch.motion === 'auto' || patch.motion === 'reduced') clean.motion = patch.motion
   if (patch.shield === 'smart' || patch.shield === 'ask' || patch.shield === 'off') clean.shield = patch.shield
   if (Object.keys(clean).length) update(clean)
 })

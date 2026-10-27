@@ -11,8 +11,10 @@
   </head>
   <body data-view="badge">
     <div class="badge" id="badge" role="button" tabindex="0" aria-label="Open Spidey Sense" title="Click to open">
-      <div class="badge__thread"></div>
-      <div class="badge__body" id="bbody" data-level="calm"><canvas id="bcanvas" width="56" height="56"></canvas><i class="badge__alert" id="balert" hidden>0</i></div>
+      <div class="badge__wob" id="bwob">
+        <div class="badge__thread"></div>
+        <div class="badge__body" id="bbody" data-level="calm"><canvas id="bcanvas" width="112" height="140"></canvas><i class="badge__alert" id="balert" hidden>0</i></div>
+      </div>
     </div>
     <div class="hang" id="hang">
       <div class="thread"><i></i></div>
@@ -91,6 +93,7 @@
       </main>
     </div>
     <script src="spider.js"></script>
+    <script src="mask.js"></script>
     <script src="suits.js"></script>
     <script src="daystats.js"></script>
     <script src="history.js"></script>
@@ -105,6 +108,7 @@
     <script src="edith-ui.js"></script>
     <script src="locker-ui.js"></script>
     <script src="memory-ui.js"></script>
+    <script src="badge.js"></script>
     <script src="tour.js"></script>
   </body>
 </html>

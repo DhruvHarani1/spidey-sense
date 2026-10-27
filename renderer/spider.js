@@ -125,22 +125,10 @@
       ctx.stroke()
     })
 
-    // tingle lines radiating from the emblem
-    if (s.level !== 'calm') {
-      const count = s.level === 'tingle' ? 14 : 8
-      ctx.lineCap = 'round'
-      ctx.strokeStyle = s.level === 'tingle' ? '#fff6c8' : '#ffd83a'
-      ctx.lineWidth = 2.4
-      for (let i = 0; i < count; i++) {
-        const a = (i * TAU) / count + Math.sin(s.t * 3) * 0.05
-        const jitter = s.level === 'tingle' ? Math.abs(Math.sin(s.t * 22 + i * 1.7)) * 9 : Math.abs(Math.sin(s.t * 5 + i)) * 4
-        const r0 = disc + 6
-        const r1 = disc + 11 + jitter
-        ctx.beginPath()
-        ctx.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0)
-        ctx.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1)
-        ctx.stroke()
-      }
+    // spider-sense shock waves: wavy comic squiggles ripple out from the emblem (see mask.js)
+    if (s.level !== 'calm' && window.Mask) {
+      const around = s.level === 'tingle' ? [-170, -140, -110, -80, -50, -20, 10, 40, 70, 100, 130, 160] : [-160, -110, -60, -10, 40, 100, 150]
+      window.Mask.drawWaves(ctx, cx, cy, disc + 5, disc + 5, s.level, s.t, !!s.reduce, { positions: around, travel: 30, len: 20, amp: 4, lw: 3.2, gap: 8, waves: s.level === 'tingle' ? 3 : 2 })
     }
 
     // emblem disc

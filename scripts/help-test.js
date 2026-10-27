@@ -48,6 +48,7 @@ const probes = {
   'RAM alerts': 'RAM alerts',
   'Spider-sense sound': 'Spider-sense sound',
   'Eye-rest nudge': 'Eye-rest nudge',
+  Motion: 'Motion (swing, blink, shock waves)',
   'Suit locker': 'Suit locker',
   'E.D.I.T.H.': 'E.D.I.T.H.',
   'Daily Web': 'Daily Web',

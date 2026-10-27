@@ -96,6 +96,7 @@
     window.Day.add(e.kind === 'shield' ? 'shield' : 'guardian')
     if (e.kind === 'shield' && e.act && e.act !== 'warn') {
       window.Day.add('shield:' + e.act)
+      if (window.Badge) window.Badge.shieldShot()
       window.Suits.award('defend')
     } else window.Suits.award('guardian')
     window.WebMemory.mark(e.kind === 'shield' ? 'shield' : 'guardian', e.text)

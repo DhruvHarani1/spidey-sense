@@ -264,6 +264,49 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
   await sleep(400)
   check('Karen reports the shield mode', /AUTO-SHIELD (SMART|ASK|OFF)/.test(await cap()), await cap())
 
+  // ---- the Spider-Man mask badge: expression, ring colours, shock waves, motion setting
+  await ev('window.spidey.setView("badge")')
+  await sleep(1500)
+  await ev('window.spidey.patchSettings({ motion: "full" })')
+  await sleep(500)
+  const count = (rule) =>
+    ev('(() => { window.__badge.draw(); const c = window.__badge.canvas; const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 0; i < d.length; i += 4) { const r = d[i], g = d[i + 1], b = d[i + 2], a = d[i + 3]; if (a > 200 && (' + rule + ')) n++ } return n })()')
+  const countMax = async (rule) => { let m = 0; for (let i = 0; i < 8; i++) { m = Math.max(m, await count(rule)); await sleep(180) } return m } // waves fade in and out: take the best of a few frames
+  const RED = 'r > 230 && g < 90 && b < 90'
+  const YEL = 'r > 235 && g > 190 && b < 110'
+  const BLU = 'b > 200 && r < 90 && g < 110'
+  const force = async (level, idle, moods) => {
+    await ev('document.getElementById("bbody").dataset.level = "' + level + '"; document.body.dataset.idle = "' + (idle ? 1 : 0) + '"; window.__badge.force({ level: "' + level + '", idle: ' + idle + ', moods: ' + JSON.stringify(moods || {}) + ' })')
+    await sleep(200)
+  }
+  await force('calm', false)
+  check('badge canvas is the new size', (await ev('window.__badge.canvas.width')) >= 112)
+  const faceCalm = await count('r > 180 && g < 70 && b < 80')
+  check('calm mask is drawn (red face)', faceCalm > 300, String(faceCalm))
+  check('calm: no yellow ring, no shock waves', (await count(YEL)) < 15 && (await count(BLU)) < 5)
+  await force('alert', false)
+  check('alert: yellow ring and squiggles', (await count(YEL)) > 40)
+  check('alert: shock waves are printed with a blue offset', (await countMax(BLU)) > 5)
+  await force('tingle', false)
+  check('tingle: red ring', (await count(RED)) > 150)
+  check('tingle: shock waves (blue offset print)', (await countMax(BLU)) > 8)
+  await force('calm', true)
+  await sleep(1500)
+  check('asleep: the mask hangs upside down', (await ev('window.__badge.flip()')) > 3)
+  await force('calm', false, { lowbat: true, offline: true, hot: true, focus: 0.5 })
+  check('moods draw (battery chip and cross in pink-red)', (await count('r > 240 && g > 90 && g < 130 && b < 130')) > 30)
+  await ev('document.body.dataset.idle = "0"')
+  await ev('window.spidey.patchSettings({ motion: "reduced" })')
+  await sleep(500)
+  check('Motion: reduced stills everything', (await ev('document.body.dataset.reduce')) === '1')
+  await ev('window.spidey.patchSettings({ motion: "full" })')
+  await sleep(500)
+  check('Motion: full brings it back', (await ev('document.body.dataset.reduce')) === '0')
+  await ev('window.__badge.Badge.click(); window.__badge.Badge.shieldShot(); window.__badge.Badge.nudge(2); window.__badge.Badge.levelUp(); window.__badge.Badge.twirl(); window.__badge.Badge.dropIn()')
+  await sleep(600)
+  check('effects (web pop, strand, nudge, level-up, twirl, drop-in) run without errors', true)
+  await force('calm', false)
+
   ws.close()
   console.log(failed ? `${failed} FAILED` : 'ALL PASS')
   process.exit(failed ? 1 : 0)

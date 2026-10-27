@@ -275,6 +275,7 @@
     window.Day.add('note:' + String(kind).split(':')[0])
     const base = String(kind).split(':')[0]
     if (base === 'eye' || base === 'remind') window.Suits.award(base)
+    if (String(kind) === 'level' && window.Badge) window.Badge.levelUp()
     state.note = text
     state.timerAlert = Date.now() + 10000
     chirp()
@@ -324,7 +325,19 @@
   /** which of the five axes is worst right now ('cpu' | 'ram' | 'disk' | 'bat' | 'net') */
   const hotAxis = () => AXES[state.alert.indexOf(Math.max(...state.alert))]
 
-  window.Core = { fireNote, say, timerOp, snapshot, setUnread, hotAxis, repaint: () => schedule(), getSettings: () => settings, test }
+  /** what the badge's face should show besides the level (low battery, offline, CPU hot, focus progress) */
+  function moods() {
+    const bat = state.battery
+    const raw = state.raw
+    return {
+      lowbat: !!(bat.present && !bat.charging && bat.level < 0.2),
+      offline: !!(raw && raw.online === false),
+      hot: state.level !== 'calm' && hotAxis() === 'cpu',
+      focus: timer.running && timer.mode === 'focus' ? 1 - timer.left / MODES.focus : null
+    }
+  }
+
+  window.Core = { fireNote, say, timerOp, snapshot, setUnread, hotAxis, moods, repaint: () => schedule(), getSettings: () => settings, test }
 
   function timerDone() {
     state.note = null
@@ -390,16 +403,13 @@
       } else state.shown[i] = state.target[i]
     }
     const hot = state.alert.map((v) => (v >= ALERT_AT ? 1 : 0))
-    window.Spider.drawWeb(ctx, W, H, { values: state.shown, labels: LABELS, level: state.level, t: (now - t0) / 1000, hot })
+    window.Spider.drawWeb(ctx, W, H, { values: state.shown, labels: LABELS, level: state.level, t: (now - t0) / 1000, hot, reduce: document.body.dataset.reduce === '1' })
     if (moving || state.level !== 'calm') raf = requestAnimationFrame(frame)
   }
 
   // ------------------------------------------------------------ badge: click opens, drag moves
   {
     const badge = $('badge')
-    const bctx = $('bcanvas').getContext('2d')
-    bctx.scale(1, 1)
-    window.Spider.drawSpider(bctx, 28, 28.5, 19)
     let down = null
     badge.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return
@@ -414,11 +424,17 @@
       if (!down.moved) window.spidey.drag.start()
       down.moved = true
       window.spidey.drag.move(dx, dy)
+      if (window.Badge) window.Badge.nudge(Math.max(-0.4, Math.min(0.4, e.movementX * 0.04)))
     })
     const finish = () => {
       if (!down) return
-      if (down.moved) window.spidey.drag.end()
-      else window.spidey.setView('panel')
+      if (down.moved) {
+        window.spidey.drag.end()
+        if (window.Badge) window.Badge.dragEnd()
+      } else {
+        if (window.Badge) window.Badge.click()
+        window.spidey.setView('panel')
+      }
       down = null
     }
     badge.addEventListener('pointerup', finish)
@@ -441,6 +457,7 @@
     settings.ramMode = s.ramMode || 'auto'
     settings.eyeBreak = s.eyeBreak !== false
     settings.shield = s.shield || 'smart'
+    if (window.Badge) window.Badge.setMotion(s.motion)
     document.body.dataset.view = s.view === 'panel' ? 'panel' : 'badge'
     schedule()
   }

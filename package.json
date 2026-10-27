@@ -1,7 +1,7 @@
 {
   "name": "spidey-sense",
   "productName": "Spidey Sense",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Smart, lightweight system monitoring and protection for Windows: a live radar, culprit detection, E.D.I.T.H. security posture and reversible Auto-Shield, in a Spider-Man skin.",
   "main": "main.js",
   "private": true,
@@ -11,7 +11,7 @@
     "icons": "electron scripts/make-icons.js",
     "test": "node scripts/selftest.js",
     "dist": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dist-local.ps1",
-    "test:unit": "node scripts/guardian-test.js && node scripts/karen-test.js && node scripts/bugle-test.js && node scripts/edith-test.js && node scripts/suits-test.js && node scripts/autostart-test.js && node scripts/updater-test.js && node scripts/help-test.js && node scripts/shield-test.js && node scripts/history-test.js",
+    "test:unit": "node scripts/guardian-test.js && node scripts/karen-test.js && node scripts/bugle-test.js && node scripts/edith-test.js && node scripts/suits-test.js && node scripts/autostart-test.js && node scripts/updater-test.js && node scripts/help-test.js && node scripts/shield-test.js && node scripts/history-test.js && node scripts/mask-test.js",
     "docs": "node scripts/build-docs.js",
     "help": "node bin/spidey.js help"
   },

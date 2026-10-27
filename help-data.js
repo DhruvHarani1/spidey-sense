@@ -121,13 +121,14 @@ const DATA = {
     },
     {
       id: 'badge',
-      name: 'Badge & panel',
+      name: 'Badge & panel: the Spider-Man mask',
       icon: '🕷',
-      summary: 'A tiny swinging spider that opens into the full widget.',
+      summary: 'A Spider-Man mask dangling on a thread; its eyes show how the PC feels, and it opens into the full widget.',
       how: [
-        'The widget starts as a small badge hanging from a thread. A coloured ring shows the mood: none = calm, yellow = alert, red + shake = tingle. A number on it counts unread items.',
-        'Click it to open the panel; ▲ in the panel banner folds it back. Drag either to move; the position is remembered and clamped to your screen (tray → Reset position if it ever goes missing).',
-        'After 3 minutes without keyboard or mouse the badge naps (dims, "z z") and wakes when you come back.',
+        'The widget starts as a small badge: a Spider-Man mask hanging from a thread. Click it to open the panel; ▲ in the panel banner folds it back. Drag either to move (the badge swings to its new spot); the position is remembered and clamped to your screen (tray → Reset position if it ever goes missing).',
+        'The eyes are the status: calm = relaxed lenses with slow blinks that follow your cursor; alert = narrowed, slanted lenses and a yellow ring; tingle = lenses flare wide, a red ring and spider-sense SHOCK WAVES: wavy comic squiggles ripple out from the mask (and from the emblem in the panel). Moods stack on top: low battery (droopy eyes, battery chip), offline (dashed "broken web" and a red cross), CPU hot (a sweat drop), focus timer running (a ring fills around the mask), unread alerts (a number pill).',
+        'After 3 minutes without keyboard or mouse the mask falls asleep and hangs upside down ("z z"), and wakes when you come back. Now and then it glints, twirls, and drops in from above when the app starts; click it for a web-pop and a soft "thwip" (follows the sound setting); Shield actions shoot a web strand at the culprit; a new suit flashes the mask. The colours follow your suit.',
+        'Tray → Motion: Full (all animation), Follow Windows animation setting, or Reduced (still pictures, no movement).',
         'Always-on-top and opacity are in the tray menu; close (Alt+F4) only hides the widget — Quit is in the tray.'
       ]
     },
@@ -276,6 +277,7 @@ const DATA = {
     'RAM alerts (Auto / above 90 % / above 95 % / never)',
     'Spider-sense sound',
     'Eye-rest nudge (20-20-20)',
+    'Motion (Full / Follow Windows / Reduced)',
     'Suit locker (XP)',
     'Web Memory (last 24 hours)',
     'E.D.I.T.H. threat assessment',
