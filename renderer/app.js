@@ -26,6 +26,14 @@
   const activity = { activeS: 0 }
   const EYE_AFTER_S = 20 * 60
   const ramHistory = []
+  const RAM_BASELINE_KEY = 'spidey.ramBaseline'
+  const ramBaseline = require('./ram-baseline')
+  const ramAlert = ramBaseline.createRamAlert(
+    ramBaseline.createStore(localStorage, RAM_BASELINE_KEY),
+    settings,
+    ramHistory,
+    () => new Date().getHours()
+  )
   const state = {
     target: [0, 0, 0, 0, 0], // 0-100 value drawn per axis
     alert: [0, 0, 0, 0, 0], // what actually drives alert levels (RAM is baseline-aware)
@@ -77,25 +85,6 @@
     if (!raw.online) net = 100
     else if (raw.latencyMs != null) net = Math.min(100, raw.latencyMs / 5)
     return [raw.cpu, raw.ram, raw.disk, batDanger, net]
-  }
-
-  function median(xs) {
-    const s = [...xs].sort((p, q) => p - q)
-    return s[Math.floor(s.length / 2)]
-  }
-  /** RAM on most PCs sits near full (cache). Alert on a jump above the usual level, or a user threshold. */
-  function ramAlert(ram) {
-    ramHistory.push(ram)
-    if (ramHistory.length > 600) ramHistory.shift()
-    const mode = settings.ramMode
-    if (mode === 'off') return 0
-    if (mode === 'auto') {
-      if (ramHistory.length < 30) return 0
-      const spike = ram - median(ramHistory)
-      return spike >= 6 ? 92 : spike >= 3 ? 78 : 0
-    }
-    const t = Number(mode) || 90
-    return ram >= t + (100 - t) / 2 ? 92 : ram >= t ? 78 : 0
   }
 
   /** idle => badge naps; 20 min of continuous use => look-away nudge; a 2 min pause counts as a real break */
